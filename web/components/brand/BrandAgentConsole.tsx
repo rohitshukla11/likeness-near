@@ -1,102 +1,120 @@
 "use client";
 
 /**
- * The brand's workspace below the campaign form: what its agent did (the activity log, every pick and skip with a
- * reason), the licences it holds (each an on-chain licence token) and the ads it made, each waiting for or decided by
- * its creator. "Agents propose. Only the human consents to their face being used."
+ * The brand dashboard's lower half: the licences the agent holds (each an on-chain licence
+ * token, with "Make the next ad" while it has room), the ads it made, and the agent's activity log with a reason for
+ * every step. Pure views: BrandWorkspace loads the data. "Agents propose. Only the human consents."
  */
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Card, EmptyState, ErrorCard, StatusPill } from "@/components/ds";
-import { NotConnected } from "@/components/ds/NotConnected";
+import { StatusPill, type PillKind } from "@/components/ds";
+import { MUTED, SURFACE } from "@/components/likeness/Dash";
 import { ReceiptTile } from "@/components/likeness/ReceiptTile";
 import { SelfLicenceBadge } from "@/components/likeness/SelfLicence";
-import { MakeAd } from "./MakeAd";
-import { api, NotConnectedError } from "@/lib/api";
+import { CreatorAvatar, SyntheticBadge } from "@/components/likeness/Synthetic";
 import { txUrl } from "@/lib/near/config";
 import { formatNear, USE_LABELS } from "@/lib/rules";
-import type { BrandOverview } from "@/lib/types";
+import { creatorLabel } from "@/lib/synthetic";
+import type { ActivityEvent, LicenceStatus, LicenceView, RenderItem } from "@/lib/types";
+import { MakeAd } from "./MakeAd";
 
-export function BrandAgentConsole({ reload }: { reload: number }) {
-  const [data, setData] = useState<BrandOverview | null>(null);
-  const [error, setError] = useState<unknown>(null);
-  const [bump, setBump] = useState(0);
+const LICENCE_PILL: Record<LicenceStatus, PillKind> = { Pending: "waiting", Declined: "neutral", Active: "licensed", Exhausted: "expired", Expired: "expired", Revoked: "revoked" };
+const EVENT_PILL: Record<ActivityEvent["kind"], PillKind> = { shortlist: "lime", skip: "neutral", request: "waiting", render: "waiting", check: "waiting", submit: "licensed", blocked: "revoked", error: "revoked" };
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const d = await api<BrandOverview>("/api/brand/overview");
-        if (!cancelled) {
-          setData(d);
-          setError(null);
-        }
-      } catch (e) {
-        if (!cancelled) setError(e);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [reload, bump]);
-
-  if (error instanceof NotConnectedError) return <NotConnected what="Your agent's activity, licences and ads (/api/brand/overview)" />;
-  if (error) return <ErrorCard>{(error as Error).message}</ErrorCard>;
-  if (!data) return null;
+export function BrandLicences({ licences, onChanged, preview = false }: { licences: LicenceView[]; onChanged: () => void; preview?: boolean }) {
   return (
-    <div className="flex flex-col gap-[18px]">
-      <Card title="Ads">
-        {data.renders.length === 0 ? (
-          <EmptyState title="No ads yet">Ads appear here once a creator approves a licence and your agent makes them.</EmptyState>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {data.renders.map((it) => (
-              <ReceiptTile key={it.receipt.sha256} item={it} />
-            ))}
-          </div>
-        )}
-      </Card>
-      <Card title="Licences (on-chain licence tokens)">
-        {data.licences.length === 0 ? (
-          <EmptyState title="No licences yet" />
-        ) : (
-          <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[14px]">
-            {data.licences.map((l) => (
-              <li key={l.id} className="flex flex-wrap items-center gap-2 rounded-[14px] border border-line p-3">
-                <b>{l.creator}</b>
-                <StatusPill kind={l.status === "Active" ? "licensed" : l.status === "Pending" ? "waiting" : l.status === "Revoked" ? "revoked" : "expired"}>{l.status}</StatusPill>
-                <SelfLicenceBadge l={l} />
-                <span className="text-grey">
-                  {USE_LABELS[l.use]} · {formatNear(l.price)} · {l.rendersUsed}/{l.renderCap}
-                  {l.tokenId ? ` · token #${l.tokenId}` : ""}
+    <section id="licences" className={`${SURFACE} flex scroll-mt-4 flex-col gap-3 p-5`} aria-label="Licences">
+      <h2 className="m-0 text-[20px] font-bold">Licences</h2>
+      {licences.length ? (
+        <ul className="m-0 flex list-none flex-col gap-2 p-0">
+          {licences.map((l) => (
+            <li key={l.id} className="flex gap-3 rounded-[16px] bg-paper p-3">
+              <CreatorAvatar accountId={l.creator} size={56} />
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <b className="text-[15px]">
+                    {creatorLabel(l.creator)} · {USE_LABELS[l.use]} at {formatNear(l.price)}
+                  </b>
+                  <StatusPill kind={LICENCE_PILL[l.status]}>{l.status === "Pending" ? "Waiting for the creator" : l.status}</StatusPill>
+                </div>
+                <span className="flex flex-wrap gap-1.5">
+                  <SelfLicenceBadge l={l} />
+                  <SyntheticBadge accountId={l.creator} />
                 </span>
-                {l.status === "Active" && l.rendersUsed + l.rendersReserved < l.renderCap && <MakeAd licenceId={l.id} onDone={() => setBump((n) => n + 1)} />}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-      <Card title="Agent activity">
-        {data.activity.length === 0 ? (
-          <EmptyState title="Nothing yet">Start a campaign above.</EmptyState>
-        ) : (
-          <ol className="m-0 flex list-none flex-col gap-2 p-0 text-[14px]">
-            {data.activity.map((a, i) => (
-              <li key={i} className="flex flex-wrap gap-2">
-                <span className="text-grey">{new Date(a.at).toLocaleTimeString()}</span>
-                <span className="font-semibold">{a.kind}</span>
-                <span className="min-w-0 flex-1">{a.summary}</span>
-                {a.sha256 && <Link href={`/verify?sha256=${a.sha256}`}>verify</Link>}
-                {a.tx && (
-                  <a href={txUrl(a.tx)} target="_blank" rel="noreferrer">
-                    tx
+                <span className={`text-[13px] ${MUTED}`}>
+                  {l.rendersUsed}/{l.renderCap} renders used{l.rendersReserved ? `, ${l.rendersReserved} waiting for the creator` : ""}
+                  {l.tokenId ? ` · licence token #${l.tokenId}` : " · no token until the creator approves"}
+                </span>
+                {!preview && l.status === "Active" && l.rendersUsed + l.rendersReserved < l.renderCap && <MakeAd licenceId={l.id} onDone={onChanged} />}
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="flex flex-col items-start gap-2 rounded-[16px] bg-paper p-4">
+          <b className="text-[15px]">No licences yet</b>
+          <span className={`text-[14px] ${MUTED}`}>Brief your agent above; it asks a creator whose terms fit, and the creator decides.</span>
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function BrandAds({ renders }: { renders: RenderItem[] }) {
+  return (
+    <section className="flex flex-col gap-3" aria-label="Ads">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <h2 className="m-0 text-[20px] font-bold">Ads</h2>
+        {renders.length > 0 && <span className={`text-[13px] ${MUTED}`}>{renders.filter((r) => r.receipt.status === "Approved").length} approved by their creators</span>}
+      </div>
+      {renders.length ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {renders.map((it) => (
+            <ReceiptTile key={it.receipt.sha256} item={it} />
+          ))}
+        </div>
+      ) : (
+        <div className={`${SURFACE} p-5 text-[14px] ${MUTED}`}>An ad is paid for only after its creator approves that exact file in their wallet; until then its price is only reserved.</div>
+      )}
+    </section>
+  );
+}
+
+export function AgentActivity({ events }: { events: ActivityEvent[] }) {
+  return (
+    <section className="flex flex-col gap-3 rounded-[22px] bg-ink p-5 text-white" aria-label="Agent activity">
+      <h2 className="m-0 text-[20px] font-bold">Agent activity</h2>
+      {events.length ? (
+        <ol className="m-0 flex list-none flex-col gap-2 p-0">
+          {events.map((e, i) => (
+            <li key={i} className="flex flex-col gap-0.5 border-b border-white/10 pb-2 text-[13px] last:border-0">
+              <span className="flex items-center gap-2">
+                <StatusPill kind={EVENT_PILL[e.kind] ?? "neutral"}>{e.kind}</StatusPill>
+                <time dateTime={new Date(e.at).toISOString()} suppressHydrationWarning className="text-[#B9BCC4]">
+                  {new Date(e.at).toLocaleTimeString()}
+                </time>
+              </span>
+              <span className="text-white [overflow-wrap:anywhere]">{e.summary}</span>
+              <span className="flex gap-3">
+                {e.sha256 && (
+                  <Link href={`/verify?sha256=${e.sha256}`} className="text-lime">
+                    verify
+                  </Link>
+                )}
+                {e.tx && (
+                  <a href={txUrl(e.tx)} target="_blank" rel="noreferrer" className="text-lime">
+                    transaction ↗
                   </a>
                 )}
-              </li>
-            ))}
-          </ol>
-        )}
-      </Card>
-    </div>
+              </span>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="m-0 text-[14px] text-[#B9BCC4]">
+          The agent&apos;s steps show here: screened → shortlisted (a reason for every pick and skip) → licence asked → ad made → similarity checked →
+          submitted, or blocked with the reason.
+        </p>
+      )}
+    </section>
   );
 }

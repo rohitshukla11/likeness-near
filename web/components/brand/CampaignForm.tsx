@@ -13,7 +13,7 @@ import { api, NotConnectedError } from "@/lib/api";
 import { BRIEF_MAX, FIELD_MAX, MAX_DAYS_LIMIT, textProblems, USE_LABELS, USES, type Use } from "@/lib/rules";
 import type { CampaignRequest } from "@/lib/types";
 
-export function CampaignForm({ onStarted }: { onStarted: () => void }) {
+export function CampaignForm({ onStarted, bare = false }: { onStarted: () => void; bare?: boolean }) {
   const [brief, setBrief] = useState("");
   const [use, setUse] = useState<Use>("Fitness");
   const [durationDays, setDays] = useState(30);
@@ -25,8 +25,7 @@ export function CampaignForm({ onStarted }: { onStarted: () => void }) {
 
   const problems = [...textProblems(brief), ...textProblems(scene, "the scene", FIELD_MAX), ...textProblems(product, "the product", FIELD_MAX)];
 
-  return (
-    <Card title="Ask your agent for a campaign">
+  const form = (
       <form
         className="flex flex-col gap-4"
         onSubmit={async (e) => {
@@ -89,6 +88,6 @@ export function CampaignForm({ onStarted }: { onStarted: () => void }) {
         </button>
         {error instanceof NotConnectedError ? <NotConnected what="The brand agent (/api/agent/campaign)" /> : error ? <ErrorCard>{(error as Error).message}</ErrorCard> : null}
       </form>
-    </Card>
   );
+  return bare ? form : <Card title="Ask your agent for a campaign">{form}</Card>;
 }

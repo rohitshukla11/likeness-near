@@ -1,13 +1,16 @@
 /** Labels for synthetic demo creators: a badge, a one-line note, and their (public) face. */
-import { Initial, StatusPill } from "@/components/ds";
+import { Initial } from "@/components/ds";
 import { SYNTHETIC_DECIDER, SYNTHETIC_NOTE, syntheticOf } from "@/lib/synthetic";
 
 export function SyntheticBadge({ accountId }: { accountId: string | null | undefined }) {
   if (!syntheticOf(accountId)) return null;
   return (
-    <StatusPill kind="waiting" title={`${SYNTHETIC_NOTE}. ${SYNTHETIC_DECIDER}`}>
-      Synthetic demo creator
-    </StatusPill>
+    <span
+      title={`${SYNTHETIC_NOTE}. ${SYNTHETIC_DECIDER}`}
+      className="inline-flex max-w-full items-center gap-1 rounded-full bg-[#FFF1D6] px-2.5 py-1 text-[12px] font-semibold text-[#7A4B00] ring-1 ring-[#E9C27A]"
+    >
+      ◆ Synthetic demo creator
+    </span>
   );
 }
 

@@ -45,6 +45,8 @@ function RoleSwitch({ role }: { role: Role }) {
 
 function Dashboard() {
   const w = useWallet();
+  const router = useRouter();
+  const path = usePathname();
   const role: Role = useSearchParams().get("role") === "brand" ? "brand" : "creator";
   const [load, setLoad] = useState<Load>({ kind: "loading" });
   const [signing, setSigning] = useState<unknown>(null);
@@ -119,7 +121,11 @@ function Dashboard() {
             <Link href={role === "creator" ? "?role=brand" : "?"}>Switch to the {role === "creator" ? "brand" : "creator"} side</Link>
           </p>
           {role === "creator" ? (
-            me?.creator ? <CreatorHome creator={me.creator} /> : <Onboarding me={me} onDone={refresh} />
+            me?.creator ? (
+              <CreatorHome creator={me.creator} captureSha={me.capture?.captureSha256 ?? null} onSwitchToBrand={() => router.replace(`${path}?role=brand`)} />
+            ) : (
+              <Onboarding me={me} onDone={refresh} />
+            )
           ) : (
             <BrandWorkspace accountId={w.accountId} />
           )}
