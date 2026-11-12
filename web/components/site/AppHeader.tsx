@@ -1,6 +1,6 @@
 "use client";
 
-/** The app header: home mark, the destinations, and (from the wallet commit on) the NEAR account. */
+/** The app header: home mark, the destinations, and the NEAR account with its Creator | Brand switch. */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -8,7 +8,6 @@ import { IconPerson } from "@/components/ds/icons";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/brand", label: "Brand" },
   { href: "/creators", label: "Creators" },
   { href: "/verify", label: "Verify" },
   { href: "/how", label: "How it works" },

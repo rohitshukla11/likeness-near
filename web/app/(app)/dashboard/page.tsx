@@ -6,8 +6,7 @@
  * (escrow, limits, the agent's key, campaigns). One account can play both roles for demos; licences it grants itself
  * are labelled "Self-licence (demo)" everywhere.
  */
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { AppPage, btnClass, Card, ErrorCard, Skeleton } from "@/components/ds";
 import { NotConnected } from "@/components/ds/NotConnected";
@@ -17,37 +16,16 @@ import { CreatorHome } from "@/components/likeness/CreatorHome";
 import { api, NotConnectedError } from "@/lib/api";
 import { signInToApi } from "@/lib/near/signin";
 import { useWallet } from "@/lib/near/wallet";
+import { rememberRole, useRole } from "@/components/site/AccountMenu";
 import type { MeResponse } from "@/lib/types";
 
 type Load = { kind: "loading" } | { kind: "ok"; me: MeResponse } | { kind: "error"; error: unknown };
-type Role = "creator" | "brand";
-
-function RoleSwitch({ role }: { role: Role }) {
-  const router = useRouter();
-  const path = usePathname();
-  return (
-    <div role="tablist" aria-label="Side of this account" className="inline-flex self-start rounded-full bg-white p-1 ring-1 ring-black/5">
-      {(["creator", "brand"] as const).map((r) => (
-        <button
-          key={r}
-          type="button"
-          role="tab"
-          aria-selected={role === r}
-          onClick={() => router.replace(r === "creator" ? path : `${path}?role=brand`)}
-          className={`min-h-10 rounded-full px-5 text-[14px] font-semibold ${role === r ? "bg-ink text-white" : "text-grey hover:text-ink"}`}
-        >
-          {r === "creator" ? "Creator" : "Brand"}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 function Dashboard() {
   const w = useWallet();
   const router = useRouter();
   const path = usePathname();
-  const role: Role = useSearchParams().get("role") === "brand" ? "brand" : "creator";
+  const role = useRole();
   const [load, setLoad] = useState<Load>({ kind: "loading" });
   const [signing, setSigning] = useState<unknown>(null);
   const [reload, setReload] = useState(0);
@@ -113,16 +91,22 @@ function Dashboard() {
       )}
       {signedIn && (
         <>
-          <RoleSwitch role={role} />
           <p className="m-0 text-[14px] text-grey">
             {role === "creator"
               ? "Your face, your terms: approve or decline licence requests and every ad made with your face."
               : "Your escrow, limits and agent. Your agent may ask any registered creator, including this same account (a self-licence, labelled as such)."}{" "}
-            <Link href={role === "creator" ? "?role=brand" : "?"}>Switch to the {role === "creator" ? "brand" : "creator"} side</Link>
+            Switch sides with <b>Creator | Brand</b> at the top right.
           </p>
           {role === "creator" ? (
             me?.creator ? (
-              <CreatorHome creator={me.creator} captureSha={me.capture?.captureSha256 ?? null} onSwitchToBrand={() => router.replace(`${path}?role=brand`)} />
+              <CreatorHome
+                creator={me.creator}
+                captureSha={me.capture?.captureSha256 ?? null}
+                onSwitchToBrand={() => {
+                  rememberRole("brand");
+                  router.replace(`${path}?role=brand`);
+                }}
+              />
             ) : (
               <Onboarding me={me} onDone={refresh} />
             )

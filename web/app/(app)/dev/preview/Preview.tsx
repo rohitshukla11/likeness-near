@@ -12,6 +12,7 @@ import { CampaignForm } from "@/components/brand/CampaignForm";
 import { DepositCard } from "@/components/brand/DepositCard";
 import { LimitsCard } from "@/components/brand/LimitsCard";
 import { CreatorDashboardView } from "@/components/likeness/CreatorHome";
+import { AccountMenuView } from "@/components/site/AccountMenu";
 import { brandDemo, brandEmpty, creatorDemo, creatorEmpty, PREVIEW_BRAND } from "@/lib/preview-fixtures";
 import { syntheticOf } from "@/lib/synthetic";
 
@@ -27,6 +28,10 @@ export function Preview() {
       <div role="note" className="rounded-[16px] border-2 border-dashed border-wait bg-wait-bg p-4 text-[14px] text-ink">
         <b>Local preview with TEST DATA.</b> Not real records: nothing here is on-chain, and buttons do nothing. Images are the synthetic demo faces standing in
         for ads. Only available in development.
+        <span className="mt-3 flex flex-wrap items-center justify-end gap-3 rounded-[14px] bg-ink px-4 py-3">
+          <span className="mr-auto text-[12px] text-grey-dark">Header when signed in (test account):</span>
+          <AccountMenuView accountId={side === "brand" ? PREVIEW_BRAND : (demo ? creatorDemo : creatorEmpty).creator.accountId} role={side} onRole={() => undefined} onSignOut={() => undefined} />
+        </span>
         <span className="mt-2 flex flex-wrap gap-3">
           {links.map((l) => (
             <Link key={l.href} href={l.href} className="underline">
