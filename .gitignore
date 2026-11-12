@@ -1,0 +1,35 @@
+# env and secrets
+.env*
+!.env.example
+*.pem
+*.key
+keys/
+keystores/
+*.keystore
+.near-credentials/
+near-credentials/
+
+# NEAR AI spike: output folder, and the script itself until step 10
+spike-out/
+scripts/near-ai-spike*.ts
+
+# captures and generated media
+captures/
+media/
+generated/
+
+# node / next
+node_modules/
+.next/
+out/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+
+# rust contract
+contract/target/
+target/
+
+# local working notes (never committed)
+AUDIT.md
+.DS_Store

@@ -1,0 +1,4 @@
+# No dependency may run a build/install script during `pnpm install`.
+allowBuilds:
+  sharp: false
+  unrs-resolver: false
