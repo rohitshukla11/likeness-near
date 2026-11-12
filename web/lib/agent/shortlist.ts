@@ -5,6 +5,7 @@
  */
 import { checkAsk, formatNear, type LicenceAsk } from "../rules";
 import type { BrandView, CreatorView } from "../types";
+import { syntheticOf } from "../synthetic";
 
 export interface ShortlistEntry {
   creator: CreatorView;
@@ -21,7 +22,8 @@ export function shortlist(creators: CreatorView[], ask: LicenceAsk, brand: Brand
       if (BigInt(c.terms.pricePerRender) > BigInt(brand.maxPerRender)) {
         return { creator: c, pick: false, reason: `${formatNear(c.terms.pricePerRender)} per render is above the brand's limit (${formatNear(brand.maxPerRender)})` };
       }
-      const self = c.accountId === brand.accountId ? "same account as the brand: a self-licence for demo; " : "";
+      const synth = syntheticOf(c.accountId);
+      const self = c.accountId === brand.accountId ? "same account as the brand: a self-licence for demo; " : synth ? `${synth.name}, a synthetic demo creator (AI-generated face, not a real person); ` : "";
       return { creator: c, pick: true, reason: `${self}fits: ${formatNear(c.terms.pricePerRender)} per render, up to ${c.terms.renderCap} renders, ${c.terms.maxDays} days max` };
     })
     .sort((a, b) => Number(b.pick) - Number(a.pick) || (BigInt(a.creator.terms.pricePerRender) < BigInt(b.creator.terms.pricePerRender) ? -1 : 1));

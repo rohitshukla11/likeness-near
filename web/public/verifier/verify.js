@@ -13,6 +13,8 @@
   $("contract").textContent = CONTRACT;
   $("rpc").textContent = RPC;
 
+  // Synthetic demo creators (AI-generated faces, not real people): the same list as web/lib/synthetic.ts.
+  var SYNTHETIC = { "likeness-synth-asha.testnet": "Asha", "likeness-synth-daniel.testnet": "Daniel", "likeness-synth-ana.testnet": "Ana Reyes" };
   var LOOK = {
     Licensed: ["ok", "Licensed", "The creator approved this exact file in their own wallet, was paid, and the licence is in force."],
     Expired: ["muted", "Expired", "Approved once, but the licence has ended."],
@@ -46,6 +48,7 @@
       var html = '<p class="verdict ' + look[0] + '">' + look[1] + (v.token_id ? ' <span class="small">licence token #' + esc(v.token_id) + "</span>" : "") + "</p><p>" + look[2] + "</p>";
       if (v.licence) {
         var l = v.licence, rc = v.receipt;
+        if (SYNTHETIC[l.creator]) html += '<p class="small"><b>Synthetic demo creator:</b> ' + esc(SYNTHETIC[l.creator]) + " is an AI-generated face, not a real person.</p>";
         if (l.creator === l.brand) html += '<p class="small"><b>Self-licence (demo):</b> the creator and the brand are the same account.</p>';
         html += "<dl><dt>Creator</dt><dd>" + esc(l.creator) + "</dd><dt>Brand</dt><dd>" + esc(l.brand) + "</dd><dt>Use</dt><dd>" + esc(l.use) + "</dd>" +
           "<dt>Licence</dt><dd>#" + esc(l.id) + ", " + esc(l.status) + ", " + l.renders_used + "/" + l.render_cap + " renders, until " + day(l.expires_at_ms) + "</dd>";

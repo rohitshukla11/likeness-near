@@ -7,6 +7,7 @@ import { AiTag, StatusPill, type PillKind } from "@/components/ds";
 import { formatNear } from "@/lib/rules";
 import type { RenderItem, ReceiptStatus } from "@/lib/types";
 import { SelfLicenceBadge } from "./SelfLicence";
+import { SyntheticBadge } from "./Synthetic";
 
 const PILL: Record<ReceiptStatus, PillKind> = { Reserved: "waiting", Approved: "licensed", Rejected: "revoked", Released: "expired" };
 const LABEL: Record<ReceiptStatus, string> = { Reserved: "Waiting for you", Approved: "Approved, paid", Rejected: "Rejected", Released: "Released (not paid)" };
@@ -28,6 +29,7 @@ export function ReceiptTile({ item, href }: { item: RenderItem; href?: string })
         {item.licence.brand}
       </span>
       <SelfLicenceBadge l={item.licence} />
+      <SyntheticBadge accountId={item.licence.creator} />
       <span className="flex gap-3">
         {href && (
           <Link href={href} className="underline">

@@ -12,6 +12,7 @@ import { AiTag, AppPage, btnClass, Card, ErrorCard, StatusPill } from "@/compone
 import { NotConnected } from "@/components/ds/NotConnected";
 import { runTx, TxLine, type TxState } from "./TxLine";
 import { isSelfLicence, SELF_LICENCE_NOTE } from "./SelfLicence";
+import { SyntheticNote } from "./Synthetic";
 import { api, NotConnectedError } from "@/lib/api";
 import { sha256OfBytes } from "@/lib/capture";
 import { calls } from "@/lib/near/methods";
@@ -87,6 +88,7 @@ export function RequestPage({ sha256 }: { sha256: string }) {
                 <b>{item.licence.brand}</b> · {USE_LABELS[item.licence.use]} · {formatNear(item.receipt.amount)} to you on approval
               </p>
               {isSelfLicence(item.licence) && <p className="m-0 text-[14px] font-semibold text-wait">{SELF_LICENCE_NOTE}</p>}
+              <SyntheticNote accountId={item.licence.creator} />
               <p className="m-0 text-[14px] text-grey">
                 Licence #{item.licence.id}: {item.licence.rendersUsed}/{item.licence.renderCap} renders used
               </p>

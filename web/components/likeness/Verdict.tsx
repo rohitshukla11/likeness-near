@@ -7,6 +7,8 @@ import { accountUrl } from "@/lib/near/config";
 import { formatNear, USE_LABELS } from "@/lib/rules";
 import type { Verdict as V, VerifyResult } from "@/lib/types";
 import { isSelfLicence, SELF_LICENCE_NOTE } from "./SelfLicence";
+import { SyntheticNote } from "./Synthetic";
+import { creatorLabel } from "@/lib/synthetic";
 
 const LOOK: Record<V, { pill: PillKind; title: string; body: string }> = {
   Licensed: { pill: "licensed", title: "Licensed", body: "The creator approved this exact file in their own wallet, was paid for it, and the licence is in force." },
@@ -28,6 +30,7 @@ export function Verdict({ r }: { r: VerifyResult }) {
       </span>
       <p className="m-0">{look.body}</p>
       {l && isSelfLicence(l) && <p className="m-0 text-[14px] font-semibold text-wait">{SELF_LICENCE_NOTE}</p>}
+      {l && <SyntheticNote accountId={l.creator} />}
       <p className="m-0 break-all text-[13px] text-grey">
         sha256 <code>{r.sha256}</code>
       </p>
@@ -36,7 +39,7 @@ export function Verdict({ r }: { r: VerifyResult }) {
           <dt className="text-grey">Creator</dt>
           <dd className="m-0">
             <a href={accountUrl(l.creator)} target="_blank" rel="noreferrer">
-              {l.creator}
+              {creatorLabel(l.creator)}
             </a>
           </dd>
           <dt className="text-grey">Brand</dt>

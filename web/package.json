@@ -16,7 +16,8 @@
     "lint": "eslint .",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/db-migrate.ts",
     "secrets:init": "node scripts/secrets-init.ts",
-    "test": "node --test \"test/**/*.test.ts\""
+    "test": "node --test \"test/**/*.test.ts\"",
+    "seed:synthetic": "node --env-file-if-exists=.env.local scripts/seed-synthetic.ts"
   },
   "dependencies": {
     "@hot-labs/near-connect": "0.12.0",
