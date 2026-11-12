@@ -172,6 +172,9 @@ importers:
       '@mediapipe/tasks-vision':
         specifier: 1.1.1
         version: 1.1.1
+      '@neondatabase/serverless':
+        specifier: 1.2.0
+        version: 1.2.0
       next:
         specifier: 16.3.8
         version: 16.3.8(@babel/core@7.29.13(supports-color@7.2.0))(@types/node@22.20.5)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -530,6 +533,10 @@ packages:
 
   '@mediapipe/tasks-vision@1.1.1':
     resolution: {integrity: sha512-jwntgT5tzDrKOkqg6xNDNpRcTUnGvmylZE5DFnzPXossiWOIDdZX+C81LI75hlXhsG58YZW+lGzcmjH1qrQE/Q==}
+
+  '@neondatabase/serverless@1.2.0':
+    resolution: {integrity: sha512-tnaqgixUengZQNd9ZrS3ytQfamJzLKY8QxgqWQTNHHtB+KrFQWk77JTbbpg4RD+J3qE4eO2lVytvGDX5Kj6FdQ==}
+    engines: {node: '>=19.0.0'}
 
   '@next/env@16.3.8':
     resolution: {integrity: sha512-Al9zqHVV7TJv0eFuOU4U7Lvv74PTih4Ch63sk2xCIpSTkE3udFnaOcnzP2lQVymiL7yS9Cj2iClUXlR3EQ5sEw==}
@@ -2459,6 +2466,8 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.6.0
 
   '@mediapipe/tasks-vision@1.1.1': {}
+
+  '@neondatabase/serverless@1.2.0': {}
 
   '@next/env@16.3.8': {}
 

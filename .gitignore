@@ -14,9 +14,9 @@ spike-out/
 scripts/near-ai-spike*.ts
 
 # captures and generated media
-captures/
-media/
-generated/
+/captures/
+/media/
+/generated/
 
 # node / next
 node_modules/
