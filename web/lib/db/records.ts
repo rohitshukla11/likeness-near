@@ -11,6 +11,28 @@ export async function addCampaign(brand: string, c: CampaignRequest): Promise<nu
   return Number(r[0]!.id);
 }
 
+/** The creator chosen and the licence requested for a campaign. */
+export async function linkCampaign(id: number, creator: string, licenceId: string) {
+  await q(`update campaigns set creator = $2, licence_id = $3 where id = $1`, [id, creator, licenceId]);
+}
+
+export interface CampaignRow {
+  id: string;
+  brand: string;
+  brief: string;
+  usage: string;
+  scene: string;
+  product: string;
+  creator: string | null;
+  licence_id: string | null;
+}
+
+/** The campaign behind a licence (its scene and product feed the image prompt). */
+export async function campaignByLicence(licenceId: string): Promise<CampaignRow | null> {
+  const r = await q<CampaignRow>(`select id, brand, brief, usage, scene, product, creator, licence_id from campaigns where licence_id = $1 order by id desc limit 1`, [licenceId]);
+  return r[0] ?? null;
+}
+
 export interface RenderRow {
   sha256: string;
   licence_id: string;

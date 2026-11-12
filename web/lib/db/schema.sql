@@ -40,6 +40,9 @@ create table if not exists campaigns (
   created_at     timestamptz not null default now()
 );
 create index if not exists campaigns_brand on campaigns (brand, created_at desc);
+alter table campaigns add column if not exists creator text;
+alter table campaigns add column if not exists licence_id text;
+create index if not exists campaigns_licence on campaigns (licence_id);
 
 -- Each ad the agent made: its exact prompt, the advisory check's answer, the model's provenance, the transactions.
 create table if not exists renders (
