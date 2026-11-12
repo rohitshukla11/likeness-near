@@ -138,4 +138,16 @@ export const views = {
     return c && toCreator(c);
   },
   listCreators: async (from = 0, limit = 50) => (await viewCall<CreatorJson[]>("list_creators", { from_index: from, limit })).map(toCreator),
+  getLicence: async (id: string) => {
+    const l = await viewCall<LicenceJson | null>("get_licence", { licence_id: id });
+    return l && toLicence(l);
+  },
+  getReceipt: async (sha256: string) => {
+    const r = await viewCall<ReceiptJson | null>("get_receipt", { sha256 });
+    return r && toReceipt(r);
+  },
+  licencesForCreator: async (accountId: string, from = 0, limit = 50) =>
+    (await viewCall<LicenceJson[]>("licences_for_creator", { creator_id: accountId, from_index: from, limit })).map(toLicence),
+  licencesForBrand: async (accountId: string, from = 0, limit = 50) =>
+    (await viewCall<LicenceJson[]>("licences_for_brand", { brand_id: accountId, from_index: from, limit })).map(toLicence),
 };
