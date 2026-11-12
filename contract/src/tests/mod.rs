@@ -4,6 +4,7 @@ mod brand;
 mod licence;
 mod nft;
 mod render;
+mod self_licence;
 
 use crate::*;
 use near_sdk::json_types::{U128, U64};

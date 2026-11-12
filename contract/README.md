@@ -6,7 +6,7 @@ Face licences, escrow and per-render receipts, with non-transferable NEP-171 lic
 
 ```sh
 cd contract
-cargo test                       # 53 unit tests
+cargo test                       # 54 unit tests
 scripts/build.sh                 # tests, then cargo near build non-reproducible-wasm --no-abi --locked
 ```
 
@@ -64,6 +64,12 @@ The agent's key can't attach deposits, so storage for its calls is charged to th
 
 Licence + mint storage is reserved at `request_licence`, released on decline/cancel (the request is removed) and spent
 on approval (the unused part of the mint reserve is released). Receipt storage is charged at `submit_render`.
+
+## One account as creator and brand
+
+Nothing forbids `brand == creator` (a self-licence, for demos): every method checks only that the caller holds the
+role it needs, so the creator still approves the licence and each ad with their full-access key, while the agent's
+function-call key can't call any approval. `one_account_can_license_itself_end_to_end` covers the whole path.
 
 ## Accounting notes
 

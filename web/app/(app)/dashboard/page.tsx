@@ -1,13 +1,17 @@
 "use client";
 
 /**
- * The dashboard, by who is connected: connect a NEAR wallet, sign in to Likeness with it (a signed message, no
- * transaction), then a creator gets onboarding until registered on-chain, and their requests, ads and terms after.
+ * The dashboard: connect a NEAR wallet, sign in to Likeness with it (a signed message, no transaction), then switch
+ * between the two sides of the same account: Creator (capture, terms, licence requests, ads to approve) and Brand
+ * (escrow, limits, the agent's key, campaigns). One account can play both roles for demos; licences it grants itself
+ * are labelled "Self-licence (demo)" everywhere.
  */
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { AppPage, btnClass, Card, ErrorCard, Skeleton } from "@/components/ds";
 import { NotConnected } from "@/components/ds/NotConnected";
+import { BrandWorkspace } from "@/components/brand/BrandWorkspace";
 import { Onboarding } from "@/components/dashboard/Onboarding";
 import { CreatorHome } from "@/components/likeness/CreatorHome";
 import { api, NotConnectedError } from "@/lib/api";
@@ -16,14 +20,37 @@ import { useWallet } from "@/lib/near/wallet";
 import type { MeResponse } from "@/lib/types";
 
 type Load = { kind: "loading" } | { kind: "ok"; me: MeResponse } | { kind: "error"; error: unknown };
+type Role = "creator" | "brand";
 
-export default function DashboardPage() {
+function RoleSwitch({ role }: { role: Role }) {
+  const router = useRouter();
+  const path = usePathname();
+  return (
+    <div role="tablist" aria-label="Side of this account" className="inline-flex self-start rounded-full bg-white p-1 ring-1 ring-black/5">
+      {(["creator", "brand"] as const).map((r) => (
+        <button
+          key={r}
+          type="button"
+          role="tab"
+          aria-selected={role === r}
+          onClick={() => router.replace(r === "creator" ? path : `${path}?role=brand`)}
+          className={`min-h-10 rounded-full px-5 text-[14px] font-semibold ${role === r ? "bg-ink text-white" : "text-grey hover:text-ink"}`}
+        >
+          {r === "creator" ? "Creator" : "Brand"}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Dashboard() {
   const w = useWallet();
+  const role: Role = useSearchParams().get("role") === "brand" ? "brand" : "creator";
   const [load, setLoad] = useState<Load>({ kind: "loading" });
   const [signing, setSigning] = useState<unknown>(null);
-
   const [reload, setReload] = useState(0);
   const refresh = useCallback(() => setReload((n) => n + 1), []);
+
   useEffect(() => {
     if (!w.accountId) return;
     let cancelled = false;
@@ -40,24 +67,25 @@ export default function DashboardPage() {
     };
   }, [w.accountId, reload]);
 
-  if (!w.ready) return <AppPage title="Dashboard"><Skeleton className="h-40" /></AppPage>;
+  if (!w.ready) return <Skeleton className="h-40" />;
   if (!w.accountId)
     return (
-      <AppPage title="Dashboard" description="Creators license their face here; brands run their agent here.">
-        <Card tone="lime" title="Connect your NEAR wallet">
-          <p className="m-0 text-[15px]">Testnet only. Your wallet signs every licence, every ad decision and every payment; Likeness never holds your keys.</p>
-          <button type="button" className={btnClass("ink", "self-start")} onClick={() => void w.connect().catch(() => undefined)}>
-            Connect NEAR wallet
-          </button>
-        </Card>
-      </AppPage>
+      <Card tone="lime" title="Connect your NEAR wallet">
+        <p className="m-0 text-[15px]">
+          Testnet only. Your wallet signs every licence, every ad decision and every payment; Likeness never holds your keys. One account can be
+          both a creator and a brand.
+        </p>
+        <button type="button" className={btnClass("ink", "self-start")} onClick={() => void w.connect().catch(() => undefined)}>
+          Connect NEAR wallet
+        </button>
+      </Card>
     );
 
   const me = load.kind === "ok" ? load.me : null;
   const signedIn = me?.accountId === w.accountId;
   return (
-    <AppPage title="Dashboard" description={`Connected as ${w.accountId} (testnet).`}>
-      {load.kind === "loading" && <Skeleton className="h-40" />}
+    <div className="flex flex-col gap-[18px]">
+      {load.kind === "loading" && <Skeleton className="h-24" />}
       {load.kind === "error" &&
         (load.error instanceof NotConnectedError ? <NotConnected what="Your Likeness account (/api/me)" /> : <ErrorCard>{(load.error as Error).message}</ErrorCard>)}
       {me && !signedIn && (
@@ -81,11 +109,33 @@ export default function DashboardPage() {
           {signing instanceof NotConnectedError ? <NotConnected what="Sign-in (/api/auth)" /> : signing ? <ErrorCard>{(signing as Error).message}</ErrorCard> : null}
         </Card>
       )}
-      <p className="m-0 text-[14px] text-grey">
-        Here for a brand? Your escrow, limits, agent key and campaigns are in the <Link href="/brand">brand workspace</Link>.
-      </p>
-      {signedIn && me?.creator && <CreatorHome creator={me.creator} />}
-      {(signedIn && !me?.creator) || (load.kind === "error" && load.error instanceof NotConnectedError) ? <Onboarding me={me} onDone={refresh} /> : null}
+      {signedIn && (
+        <>
+          <RoleSwitch role={role} />
+          <p className="m-0 text-[14px] text-grey">
+            {role === "creator"
+              ? "Your face, your terms: approve or decline licence requests and every ad made with your face."
+              : "Your escrow, limits and agent. Your agent may ask any registered creator, including this same account (a self-licence, labelled as such)."}{" "}
+            <Link href={role === "creator" ? "?role=brand" : "?"}>Switch to the {role === "creator" ? "brand" : "creator"} side</Link>
+          </p>
+          {role === "creator" ? (
+            me?.creator ? <CreatorHome creator={me.creator} /> : <Onboarding me={me} onDone={refresh} />
+          ) : (
+            <BrandWorkspace accountId={w.accountId} />
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  const w = useWallet();
+  return (
+    <AppPage title="Dashboard" description={w.accountId ? `Connected as ${w.accountId} (testnet): creator and brand on one account.` : "Creators license their face here; brands run their agent here."}>
+      <Suspense fallback={<Skeleton className="h-40" />}>
+        <Dashboard />
+      </Suspense>
     </AppPage>
   );
 }

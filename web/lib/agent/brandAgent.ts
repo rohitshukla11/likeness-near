@@ -109,7 +109,8 @@ export async function runCampaign(brand: string, req: CampaignRequest): Promise<
   try {
     const r = await agentCall("request_licence", { creator_id: c.creator, usage: req.use, days: req.durationDays, render_cap: req.renderCap });
     const licenceId = typeof r.value === "string" ? r.value : String(r.value ?? "");
-    await log(brand, { kind: "request", summary: `asked ${c.creator} for a ${USE_LABELS[req.use]} licence (${req.durationDays} days, ${req.renderCap} renders); waiting for the creator`, licenceId, tx: r.hash });
+    const self = c.creator === brand ? " (self-licence for demo: creator and brand are the same account; the creator still approves in their own wallet)" : "";
+    await log(brand, { kind: "request", summary: `asked ${c.creator} for a ${USE_LABELS[req.use]} licence (${req.durationDays} days, ${req.renderCap} renders); waiting for the creator${self}`, licenceId, tx: r.hash });
     await linkCampaign(campaignId, c.creator, licenceId);
     return { campaignId, status: "requested", reasons: [], creator: c.creator, licenceId, tx: r.hash, chosenBy: c.by };
   } catch (e) {

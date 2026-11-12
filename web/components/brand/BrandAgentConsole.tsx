@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { Card, EmptyState, ErrorCard, StatusPill } from "@/components/ds";
 import { NotConnected } from "@/components/ds/NotConnected";
 import { ReceiptTile } from "@/components/likeness/ReceiptTile";
+import { SelfLicenceBadge } from "@/components/likeness/SelfLicence";
 import { api, NotConnectedError } from "@/lib/api";
 import { txUrl } from "@/lib/near/config";
 import { formatNear, USE_LABELS } from "@/lib/rules";
@@ -62,6 +63,7 @@ export function BrandAgentConsole({ reload }: { reload: number }) {
               <li key={l.id} className="flex flex-wrap items-center gap-2 rounded-[14px] border border-line p-3">
                 <b>{l.creator}</b>
                 <StatusPill kind={l.status === "Active" ? "licensed" : l.status === "Pending" ? "waiting" : l.status === "Revoked" ? "revoked" : "expired"}>{l.status}</StatusPill>
+                <SelfLicenceBadge l={l} />
                 <span className="text-grey">
                   {USE_LABELS[l.use]} · {formatNear(l.price)} · {l.rendersUsed}/{l.renderCap}
                   {l.tokenId ? ` · token #${l.tokenId}` : ""}

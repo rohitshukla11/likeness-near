@@ -9,6 +9,14 @@ Built for NEAR HACKATHON 2026, from FaceVisa (GitHub: rohitshukla11/eth_mumbai @
 
 > Work in progress. The full README (try it, run it, what's on-chain) lands with the docs commit.
 
+## One account, both roles (demos)
+
+One NEAR account can be both a creator and a brand: sign in once, then switch between **Creator** and **Brand** on
+the dashboard. A licence the account grants itself is labelled **"Self-licence (demo)"** in the app, the agent's
+activity log, Verify and the standalone verifier, and its payment moves from the account's escrow back to itself.
+The consent rules don't change: the creator still approves every licence and every ad from their own wallet, and the
+agent's function-call key can only call `request_licence` and `submit_render`, never an approval.
+
 ## Layout
 
 - `web/`: the Next.js app (pages and API routes), deployed on Vercel.

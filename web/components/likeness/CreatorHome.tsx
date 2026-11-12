@@ -11,6 +11,7 @@ import { btnClass, Card, EmptyState, ErrorCard, StatCard, StatusPill, type PillK
 import { NotConnected } from "@/components/ds/NotConnected";
 import { ReceiptTile } from "./ReceiptTile";
 import { RulesForm } from "./RulesForm";
+import { SelfLicenceBadge } from "./SelfLicence";
 import { runTx, TxLine, type TxState } from "./TxLine";
 import { api, NotConnectedError } from "@/lib/api";
 import { calls } from "@/lib/near/methods";
@@ -152,6 +153,7 @@ function LicenceRow({ l, children }: { l: LicenceView; children?: React.ReactNod
         <span className="flex flex-wrap items-center gap-2">
           <b className="truncate">{l.brand}</b>
           <StatusPill kind={STATUS_PILL[l.status]}>{l.status}</StatusPill>
+          <SelfLicenceBadge l={l} />
           {l.tokenId && <span className="text-grey">token #{l.tokenId}</span>}
         </span>
         <span className="text-grey">
