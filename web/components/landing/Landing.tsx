@@ -14,8 +14,6 @@ import { IconArrowLeft, IconArrowRight, IconChevron } from "@/components/ds/icon
 import { useCountUp, useInView } from "@/components/ds/motion";
 import { BUILT_ON, MEASUREMENTS, TESTIMONIALS } from "@/lib/site-content";
 
-export const AI_FACES_NOTE = "Every face on this page is AI-generated: an example, not a real person or a listed creator.";
-
 const RIBBON_A = ["Advertising", "✳", "Social", "✳", "Editorial", "✳", "Product", "✳", "Campaigns", "✳"];
 const RIBBON_B = ["Agents propose", "✳", "Only you approve your face", "✳", "Paid per render on NEAR", "✳", "Verify any file", "✳"];
 
@@ -103,7 +101,6 @@ function Hero() {
         {BUILT_ON.map((b) => (
           <span key={b}>{b}</span>
         ))}
-        <span className="w-full text-center text-[12px] font-medium text-[#5F636B]">{AI_FACES_NOTE}</span>
       </div>
     </section>
   );
