@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Likeness verifier</title>
+    <meta name="description" content="Check whether an image is licensed by the person in it, straight from the NEAR contract. No Likeness server involved." />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Likeness verifier</h1>
+      <p class="lead">
+        Is this exact file licensed by the person in it? This page hashes the file in your browser and asks the Likeness contract on NEAR
+        testnet directly, through the public RPC. It never talks to a Likeness server and never uploads the file.
+      </p>
+      <form id="form">
+        <label class="drop">
+          <span>Choose an image</span>
+          <input id="file" type="file" accept="image/*" />
+        </label>
+        <div class="row">
+          <input id="sha" placeholder="or paste a sha256 (64 hex characters)" aria-label="sha256" autocomplete="off" />
+          <button type="submit">Verify</button>
+        </div>
+        <p class="small">Contract <code id="contract"></code> · RPC <code id="rpc"></code> · override with <code>?contract=</code> and <code>?rpc=</code></p>
+      </form>
+      <section id="out" aria-live="polite"></section>
+    </main>
+    <script src="verify.js"></script>
+  </body>
+</html>

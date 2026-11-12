@@ -148,3 +148,41 @@ export interface CreatorInbox {
   /** Sum of approved amounts paid to this creator. */
   earned: Yocto;
 }
+
+// ---------------------------------------------------------------- brand side
+
+/** GET /api/agent-key: the agent's function-call key the server holds for this brand (public half only). */
+export interface AgentKeyInfo {
+  brand: AccountId;
+  publicKey: string;
+  contractId: AccountId;
+  methods: string[];
+  allowance: Yocto;
+}
+
+/** POST /api/agent/campaign: what the brand asks its agent for. Scene and product are screened for banned uses. */
+export interface CampaignRequest {
+  brief: string;
+  use: Use;
+  durationDays: number;
+  renderCap: number;
+  scene: string;
+  product: string;
+}
+
+/** One line of the agent's activity log. */
+export interface ActivityEvent {
+  at: number;
+  kind: "shortlist" | "skip" | "request" | "render" | "check" | "submit" | "blocked" | "error";
+  summary: string;
+  licenceId?: string | null;
+  sha256?: Sha256Hex | null;
+  tx?: string | null;
+}
+
+/** GET /api/brand/overview: the signed-in brand's licences, ads and agent activity. */
+export interface BrandOverview {
+  licences: LicenceView[];
+  renders: RenderItem[];
+  activity: ActivityEvent[];
+}

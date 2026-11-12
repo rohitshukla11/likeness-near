@@ -4,6 +4,7 @@
  * The dashboard, by who is connected: connect a NEAR wallet, sign in to Likeness with it (a signed message, no
  * transaction), then a creator gets onboarding until registered on-chain, and their requests, ads and terms after.
  */
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AppPage, btnClass, Card, ErrorCard, Skeleton } from "@/components/ds";
 import { NotConnected } from "@/components/ds/NotConnected";
@@ -80,6 +81,9 @@ export default function DashboardPage() {
           {signing instanceof NotConnectedError ? <NotConnected what="Sign-in (/api/auth)" /> : signing ? <ErrorCard>{(signing as Error).message}</ErrorCard> : null}
         </Card>
       )}
+      <p className="m-0 text-[14px] text-grey">
+        Here for a brand? Your escrow, limits, agent key and campaigns are in the <Link href="/brand">brand workspace</Link>.
+      </p>
       {signedIn && me?.creator && <CreatorHome creator={me.creator} />}
       {(signedIn && !me?.creator) || (load.kind === "error" && load.error instanceof NotConnectedError) ? <Onboarding me={me} onDone={refresh} /> : null}
     </AppPage>
