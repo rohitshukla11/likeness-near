@@ -4,6 +4,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   devIndicators: false,
   poweredByHeader: false,
+  // Images are served as committed (no runtime optimizer, so no image-processing dependency at runtime).
+  images: { unoptimized: true },
 };
 
 export default nextConfig;

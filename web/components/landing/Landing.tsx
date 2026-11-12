@@ -1,18 +1,20 @@
 "use client";
 
 /**
- * The landing page: lime hero with dropping nav and headline, an abstract figure and two endless ribbons; the
- * "Built on" strip; the dark benefits block with a counter; the four-step accordion; the tilted, overlapping example
- * cards; the testimonial marquee (only with real quotes); the CTA band. Motion is CSS plus an IntersectionObserver
- * hook, and static under reduced motion. No photographs anywhere: initials and abstract shapes only.
+ * The landing page: lime hero with dropping nav and headline, a rising portrait and two endless ribbons; the "Built on"
+ * strip; the dark benefits block with a counter; the four-step accordion; the tilted, overlapping example cards; the
+ * testimonial marquee (only with real quotes); the CTA band. Motion is CSS plus an IntersectionObserver hook, and static
+ * under reduced motion. Every face on the page is AI-generated (public/landing/PROVENANCE.md): examples, never creators.
  */
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { pillClass } from "@/components/ds";
 import { IconArrowLeft, IconArrowRight, IconChevron } from "@/components/ds/icons";
 import { useCountUp, useInView } from "@/components/ds/motion";
 import { BUILT_ON, MEASUREMENTS, TESTIMONIALS } from "@/lib/site-content";
-import { InitialDisc, PALETTES, ShapePortrait } from "./Placeholders";
+
+export const AI_FACES_NOTE = "Every face on this page is AI-generated: an example, not a real person or a listed creator.";
 
 const RIBBON_A = ["Advertising", "✳", "Social", "✳", "Editorial", "✳", "Product", "✳", "Campaigns", "✳"];
 const RIBBON_B = ["Agents propose", "✳", "Only you approve your face", "✳", "Paid per render on NEAR", "✳", "Verify any file", "✳"];
@@ -87,10 +89,10 @@ function Hero() {
         </h1>
         <div
           aria-hidden="true"
-          className="lk-rise absolute left-1/2 top-[58px] h-[230px] w-[164px] overflow-hidden rounded-t-[90px] [mask-image:linear-gradient(to_bottom,#000_92%,transparent)] sm:top-[128px] sm:h-[412px] sm:w-[294px] sm:rounded-t-[160px]"
+          className="lk-rise absolute left-1/2 top-[58px] h-[230px] w-[164px] [mask-image:linear-gradient(to_bottom,#000_92%,transparent)] sm:top-[128px] sm:h-[412px] sm:w-[294px]"
           style={{ transform: "translateX(-50%)" }}
         >
-          <ShapePortrait palette={PALETTES[0]} variant={0} />
+          <Image src="/landing/hero-cutout.webp" alt="" fill priority sizes="(min-width: 640px) 300px, 170px" className="object-contain object-bottom" />
         </div>
         <Ribbon words={RIBBON_A} dir="l" className="top-[236px] z-10 bg-violet text-white sm:top-[476px]" style={{ transform: "rotate(4deg)" }} />
         <Ribbon words={RIBBON_B} dir="r" className="top-[266px] z-10 bg-[#4C5230] text-white sm:top-[514px]" style={{ transform: "rotate(-3deg)" }} />
@@ -101,6 +103,7 @@ function Hero() {
         {BUILT_ON.map((b) => (
           <span key={b}>{b}</span>
         ))}
+        <span className="w-full text-center text-[12px] font-medium text-[#5F636B]">{AI_FACES_NOTE}</span>
       </div>
     </section>
   );
@@ -139,26 +142,31 @@ function Stats() {
               <span className="h-8 w-8 rounded-full border-2 border-ink bg-lime" />
             </span>
             <div aria-hidden="true" className="absolute right-10 top-10 hidden h-[230px] w-[260px] sm:block">
-              <span className="absolute left-5 top-2.5">
-                <InitialDisc letters="AI" size={86} palette={PALETTES[0]} ring="#FFFFFF" />
+              <span className="absolute left-5 top-2.5 h-[86px] w-[86px] overflow-hidden rounded-full border-4 border-white">
+                <Image src="/landing/avatar-1.png" alt="" fill sizes="86px" className="scale-[1.06] object-cover" />
               </span>
               <span className="absolute left-[70px] top-24 h-1 w-[120px] origin-left rotate-[38deg] rounded bg-violet" />
-              <span className="absolute bottom-0 right-2.5">
-                <InitialDisc letters="You" size={96} palette={PALETTES[3]} ring="#FFFFFF" />
+              <span className="absolute bottom-0 right-2.5 h-24 w-24 overflow-hidden rounded-full border-4 border-white">
+                <Image src="/landing/avatar-2.png" alt="" fill sizes="96px" className="scale-[1.06] object-cover" />
               </span>
             </div>
             <span className="mt-auto self-start rounded-full bg-violet-deep px-3.5 py-1.5 text-[13px] font-semibold text-white">For brands</span>
-            <h3 className="m-0 font-display text-[clamp(20px,2.4vw,26px)] font-extrabold">AGENTS PROPOSE. HUMANS CONSENT.</h3>
+            <h3 className="m-0 max-w-[460px] font-display text-[clamp(20px,2.4vw,26px)] font-extrabold">AGENTS PROPOSE. HUMANS CONSENT.</h3>
             <p className="m-0 max-w-[460px] text-[15px] leading-relaxed text-[#3E4148]">
               A brand&apos;s agent works inside the brand&apos;s on-chain limits and the creator&apos;s terms. Its key can call two contract methods
               and nothing else. Nothing is paid until the creator approves that exact ad in their own wallet.
             </p>
           </article>
           <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-5">
-            <article className={`rv${seen ? " in" : ""} flex flex-1 flex-col gap-1.5 rounded-[30px] bg-ink-line p-7 text-white`} style={{ transitionDelay: ".4s" }} title={MEASUREMENTS.rendersWithReceipt.source}>
+            <article className={`rv${seen ? " in" : ""} flex flex-1 flex-col gap-1.5 rounded-[30px] bg-ink-line p-7 text-white`} style={{ transitionDelay: ".25s" }} title={MEASUREMENTS.rendersWithReceipt.source}>
               <span className="tnum font-display text-[clamp(40px,5vw,52px)] font-black leading-none text-lime">{pct}%</span>
               <span className="font-display text-[17px] font-bold leading-snug">OF ADS CARRY AN ON-CHAIN RECEIPT</span>
               <span className="text-[13px] text-grey-dark">By design: no receipt for the file&apos;s sha256, no payment.</span>
+            </article>
+            <article className={`rv${seen ? " in" : ""} flex flex-1 flex-col gap-1.5 rounded-[30px] bg-lime bg-[url(/landing/card-lime.png)] bg-cover bg-center p-7 text-ink`} style={{ transitionDelay: ".4s" }}>
+              <span className="tnum font-display text-[clamp(40px,5vw,52px)] font-black leading-none">0</span>
+              <span className="font-display text-[17px] font-bold leading-snug">PAYMENTS WITHOUT THE CREATOR&apos;S APPROVAL</span>
+              <span className="text-[13px] text-[#3E4148]">The agent&apos;s key can&apos;t call approve_render; only the creator&apos;s wallet can.</span>
             </article>
           </div>
         </div>
@@ -193,9 +201,9 @@ function HowItWorks() {
   const { ref, seen } = useInView<HTMLDivElement>();
   const c = (k: string) => `${k}${seen ? " in" : ""}`;
   const rows = [
-    { letters: "LI", label: "Fashion licence", dot: "bg-ok", state: "licensed", palette: PALETTES[1] },
-    { letters: "RQ", label: "Product request", dot: "bg-violet", state: "waiting", palette: PALETTES[0] },
-    { letters: "RV", label: "Travel licence", dot: "bg-bad", state: "revoked", palette: PALETTES[2] },
+    { avatar: "/landing/avatar-3.png", label: "Advertising licence", dot: "bg-ok", state: "licensed" },
+    { avatar: "/landing/avatar-4.png", label: "Social request", dot: "bg-violet", state: "waiting" },
+    { avatar: "/landing/avatar-5.png", label: "Product licence", dot: "bg-bad", state: "revoked" },
   ];
   return (
     <section id="how" className="scroll-mt-4 overflow-hidden bg-white">
@@ -244,14 +252,16 @@ function HowItWorks() {
               transaction.
             </p>
             <div className="relative aspect-[5/4] overflow-hidden rounded-[28px] bg-[#25B6D2]">
-              <ShapePortrait palette={PALETTES[1]} variant={1} />
+              <Image src="/landing/portrait-cyan.png" alt="" fill sizes="(min-width: 1024px) 540px, 92vw" className="scale-[1.03] object-cover object-[50%_22%]" />
               <div
                 className={`${c("from-l")} absolute left-[18px] top-1/2 -mt-[70px] flex flex-col gap-2.5 rounded-[18px] bg-white px-3.5 py-3 text-[13px] shadow-[0_12px_30px_rgba(18,19,22,0.15)]`}
                 style={{ transitionDelay: ".7s" }}
               >
                 {rows.map((r) => (
                   <span key={r.label} className="flex items-center gap-2">
-                    <InitialDisc letters={r.letters} size={28} palette={r.palette} />
+                    <span aria-hidden="true" className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full">
+                      <Image src={r.avatar} alt="" fill sizes="28px" className="scale-[1.06] object-cover" />
+                    </span>
                     <b className="font-semibold">{r.label}</b>
                     <span className="flex items-center gap-1.5 text-grey">
                       <span aria-hidden="true" className={`h-2 w-2 rounded-full ${r.dot}`} />
@@ -273,11 +283,11 @@ function HowItWorks() {
 
 // ---------------------------------------------------------------- example cards
 
-/** Abstract example cards only, never a face: each is labelled Example and invites a creator. */
+/** AI-generated example faces only, never a creator: each card is labelled Example and invites a creator. */
 const EXAMPLES = [
-  { palette: PALETTES[2], variant: 0, frame: "#ECE6FD" },
-  { palette: PALETTES[0], variant: 1, frame: "#FBE3EC" },
-  { palette: PALETTES[1], variant: 2, frame: "#E3EFF9" },
+  { photo: "/landing/portrait-pink.png", frame: "/landing/card-violet.png" },
+  { photo: "/landing/portrait-glasses.png", frame: "/landing/card-ribbons.png" },
+  { photo: "/landing/portrait-curly.png", frame: "/landing/card-sky.png" },
 ];
 const TILTS = ["-7deg", "-3deg", "6deg"];
 /** Grid placement at sm and up: first card tall on the left, heading top right, the others below it. */
@@ -286,7 +296,7 @@ const PLACE = ["sm:col-start-1 sm:row-span-2 sm:row-start-1", "sm:col-start-2 sm
 function Examples() {
   const [shift, setShift] = useState(0);
   const { ref, seen } = useInView<HTMLDivElement>();
-  const shown = [0, 1, 2].map((i) => ({ ...EXAMPLES[(i + shift) % EXAMPLES.length]!, key: (i + shift) % EXAMPLES.length }));
+  const shown = [0, 1, 2].map((i) => EXAMPLES[(i + shift) % EXAMPLES.length]!);
   return (
     <section className="relative overflow-hidden bg-sky">
       <svg aria-hidden="true" viewBox="0 0 1440 800" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
@@ -298,12 +308,12 @@ function Examples() {
       <div ref={ref} className="relative mx-auto grid max-w-[1120px] grid-cols-1 gap-8 px-4 pb-24 pt-20 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-6 sm:px-8">
         <div className={`rv${seen ? " in" : ""} flex flex-wrap items-end gap-4 sm:col-span-2 sm:col-start-2 sm:row-start-1 sm:self-start sm:pl-6 sm:pt-8`}>
           <h2 className="m-0 font-display text-[clamp(26px,3.4vw,40px)] font-extrabold leading-[1.15]">
-            YOUR FACE,{" "}
-            <span className="inline-block align-middle">
-              <InitialDisc letters="✳" size={40} palette={PALETTES[3]} />
+            LICENSE YOUR{" "}
+            <span aria-hidden="true" className="relative inline-block h-10 w-10 overflow-hidden rounded-full align-middle">
+              <Image src="/landing/avatar-7.png" alt="" fill sizes="40px" className="scale-[1.06] object-cover" />
             </span>
             <br />
-            YOUR TERMS
+            FACE
           </h2>
           <span className="flex gap-1 pb-1">
             <button
@@ -328,21 +338,21 @@ function Examples() {
           const transform = seen ? `rotate(${TILTS[i]})` : "translateX(160px) rotate(8deg)";
           return (
             <Link
-              key={ex.key}
-              href="/creators"
+              key={ex.photo}
+              href="/dashboard"
               className={`card-in${seen ? " in" : ""} relative block self-start rounded-[28px] p-3 text-ink no-underline shadow-[0_18px_40px_rgba(18,19,22,0.12)] ${PLACE[i]}`}
-              style={{ transform, transitionDelay: `${0.1 + i * 0.18}s`, background: ex.frame }}
+              style={{ transform, transitionDelay: `${0.1 + i * 0.18}s`, backgroundImage: `url(${ex.frame})`, backgroundSize: "cover" }}
             >
-              <span className="absolute left-5 top-5 z-10 rounded-full bg-white px-3 py-1.5 font-display text-[11px] font-bold">EXAMPLE</span>
+              <span className="absolute left-5 top-5 z-10 rounded-full bg-white px-3 py-1.5 font-display text-[11px] font-bold">EXAMPLE · AI-GENERATED</span>
               <div className="relative aspect-[4/5] overflow-hidden rounded-[20px]">
-                <ShapePortrait palette={ex.palette} variant={ex.variant} />
+                <Image src={ex.photo} alt="An AI-generated example face, not a real person" fill sizes="(min-width: 640px) 340px, 90vw" className="scale-[1.04] object-cover object-top" />
               </div>
               <div className="absolute bottom-6 left-6 right-6 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-white px-3 py-2.5">
                 <span className="flex min-w-0 flex-col">
                   <span className="font-display text-[14px] font-bold">YOUR FACE HERE</span>
-                  <span className="text-[12px] text-grey">Your terms, paid per render</span>
+                  <span className="text-[12px] text-grey">Licence once, paid per render</span>
                 </span>
-                <span className={pillClass("ink", "min-h-9 px-3 text-[12px]")}>See the creators</span>
+                <span className={pillClass("ink", "min-h-9 px-3 text-[12px]")}>Continue as Creator</span>
               </div>
             </Link>
           );
@@ -399,7 +409,7 @@ function Quotes() {
           </>
         )}
         <div className="px-4 sm:px-8">
-          <div className={`${c("rv")} relative mx-auto flex max-w-[1116px] flex-wrap items-center justify-between gap-5 overflow-hidden rounded-[24px] bg-lime px-[30px] py-[26px]`}>
+          <div className={`${c("rv")} relative mx-auto flex max-w-[1116px] flex-wrap items-center justify-between gap-5 overflow-hidden rounded-[24px] bg-lime bg-[url(/landing/card-lime.png)] bg-cover bg-center px-[30px] py-[26px]`}>
             <h2 className="m-0 font-display text-[clamp(18px,2.2vw,24px)] font-extrabold leading-[1.25]">
               LICENSE YOUR FACE TO AI.
               <br />
@@ -407,9 +417,9 @@ function Quotes() {
             </h2>
             <span className="flex items-center gap-4">
               <span aria-hidden="true" className="hidden sm:flex">
-                {(["AB", "CD", "EF"] as const).map((l, i) => (
-                  <span key={l} style={{ marginLeft: i ? -12 : 0 }}>
-                    <InitialDisc letters={l} size={44} palette={PALETTES[i]!} ring="#FFFFFF" />
+                {[6, 8, 5].map((n, i) => (
+                  <span key={n} className="relative h-11 w-11 overflow-hidden rounded-full border-[3px] border-white" style={{ marginLeft: i ? -12 : 0 }}>
+                    <Image src={`/landing/avatar-${n}.png`} alt="" fill sizes="44px" className="scale-[1.06] object-cover" />
                   </span>
                 ))}
               </span>
