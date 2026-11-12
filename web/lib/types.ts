@@ -92,3 +92,59 @@ export interface VerifyResult {
 export interface ApiError {
   error: string;
 }
+
+// ---------------------------------------------------------------- API responses the pages use
+
+/** GET /api/me: who our session says is signed in (a NEAR account proven with a signed message). */
+export interface MeResponse {
+  accountId: AccountId | null;
+  /** The creator's on-chain record, if registered. */
+  creator: CreatorView | null;
+  /** Their stored live capture (consented), if any. */
+  capture: { captureSha256: Sha256Hex; consentAt: number } | null;
+}
+
+/** POST /api/capture: three compressed JPEG frames (data URLs), the liveness result and explicit consent. */
+export interface CaptureRequest {
+  frames: string[];
+  liveness: { blinks: number; turnedLeft: boolean; turnedRight: boolean };
+  consent: true;
+}
+export interface CaptureResponse {
+  /** sha256 of the stored front frame (what register_creator records on-chain). */
+  captureSha256: Sha256Hex;
+  consentAt: number;
+}
+
+/** The advisory similarity check as the app shows it (the receipt keeps only likely_match / needs_creator_review). */
+export interface FaceCheckDetail {
+  verdict: FaceCheck;
+  /** The model's one-line reason, if it answered. */
+  reason: string | null;
+  samePerson?: "yes" | "no" | "unclear";
+  confidence?: number;
+}
+
+/** One ad as the creator and brand see it. */
+export interface RenderItem {
+  receipt: ReceiptView;
+  licence: LicenceView;
+  /** Same-origin URL of the exact bytes (GET /api/media/<sha256>). */
+  mediaUrl: string;
+  faceCheck: FaceCheckDetail;
+  /** The exact prompt sent to the image model. */
+  prompt: string;
+  /** Approve/reject transaction, once decided. */
+  decisionTx: string | null;
+}
+
+/** GET /api/creator/inbox: the signed-in creator's licence requests, licences and ads. */
+export interface CreatorInbox {
+  licences: LicenceView[];
+  /** Ads waiting for the creator's decision (receipt Reserved). */
+  pending: RenderItem[];
+  /** Ads already decided (Approved / Rejected / Released), newest first. */
+  decided: RenderItem[];
+  /** Sum of approved amounts paid to this creator. */
+  earned: Yocto;
+}

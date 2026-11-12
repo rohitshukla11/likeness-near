@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins, Unbounded } from "next/font/google";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { WalletProvider } from "@/lib/near/wallet";
 import "./globals.css";
 
 const display = Unbounded({ subsets: ["latin"], weight: ["700", "800", "900"], variable: "--font-display-face", display: "swap" });
@@ -24,8 +25,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <a href="#main" className="sr-only z-50 rounded-full bg-lime px-5 py-3 font-semibold text-ink focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
           Skip to content
         </a>
-        {children}
-        <SiteFooter />
+        <WalletProvider>
+          {children}
+          <SiteFooter />
+        </WalletProvider>
       </body>
     </html>
   );

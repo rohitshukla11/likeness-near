@@ -14,6 +14,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@hot-labs/near-connect": "0.12.0",
+    "@mediapipe/tasks-vision": "1.1.1",
     "next": "16.3.8",
     "react": "19.2.8",
     "react-dom": "19.2.8"
