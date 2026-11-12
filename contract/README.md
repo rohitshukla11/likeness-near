@@ -64,3 +64,23 @@ The agent's key can't attach deposits, so storage for its calls is charged to th
 
 Licence + mint storage is reserved at `request_licence`, released on decline/cancel (the request is removed) and spent
 on approval (the unused part of the mint reserve is released). Receipt storage is charged at `submit_render`.
+
+## Accounting notes
+
+- **`spent` includes storage costs**, not only render payments, so the budget check
+  (`spent + reserved + price <= total_budget`) is slightly conservative.
+- **Declined or cancelled requests leave ~60 bytes of index entries** (≈ 0.0006 NEAR each). The licence record itself is
+  removed and the brand's reservation released in full; those index bytes are paid by the contract account, and
+  `licences_for_creator` / `licences_for_brand` skip the gaps.
+- **Failed payouts go to `unclaimed`.** If the transfer to a creator fails, a callback credits it to
+  `unclaimed[creator]` (see `unclaimed_of`); the creator calls `claim_unclaimed()`. Money never leaves the accounting.
+- **The wasm build isn't reproducible.** It's built locally with `cargo near build non-reproducible-wasm` (no Docker),
+  so the deployed binary can be checked against a local build of the same commit (sha256 below), not rebuilt
+  bit-for-bit by a third party.
+
+## Deployed (testnet)
+
+- Account: `likeness-near-rohit.testnet`, deployed and initialised 12 Nov 2026 (tx
+  `t4MegCBQbNoWCNMaa3ESGqp8mgE2BdVA5rhJi7ExDWe`).
+- Code sha256: `e75a3b4ce3bdd214d9ee4ad0546d2c1f1112317a71309a3b3fcdbfb2a18adbce` (299,251 bytes), equal to
+  `scripts/build.sh` output for the commit that added this contract.
