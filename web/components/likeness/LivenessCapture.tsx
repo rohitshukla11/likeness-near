@@ -10,8 +10,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { pillClass } from "@/components/ds";
 import { grabFrame } from "@/lib/capture";
 
-const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/wasm";
-const MODEL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+/** Served by this app (scripts/mediapipe-assets.mjs copies the SIMD WASM; the model is committed and sha256-pinned). */
+const WASM = "/mediapipe/wasm";
+const MODEL = "/mediapipe/face_landmarker.task";
 
 export type Capture = { frames: string[]; liveness: { blinks: number; turnedLeft: boolean; turnedRight: boolean } };
 type Step = "loading" | "center" | "blink" | "turn1" | "turn2" | "done" | "error";
