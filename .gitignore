@@ -9,9 +9,8 @@ keystores/
 .near-credentials/
 near-credentials/
 
-# NEAR AI spike: output folder, and the script itself until step 10
+# NEAR AI spike output
 spike-out/
-scripts/near-ai-spike*.ts
 
 # captures and generated media
 /captures/

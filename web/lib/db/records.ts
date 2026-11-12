@@ -43,25 +43,45 @@ export interface RenderRow {
   provenance: Record<string, unknown>;
   submit_tx: string | null;
   decision_tx: string | null;
+  status: "generated" | "regenerate" | "blocked" | "mismatch" | "submitted";
+  attempt: number;
+  retry_of: string | null;
 }
 
-export async function addRender(r: Omit<RenderRow, "decision_tx"> & { campaign_id?: number | null }) {
+const RENDER_COLS = "sha256, licence_id, brand, creator, prompt, face_check, provenance, submit_tx, decision_tx, status, attempt, retry_of";
+
+export async function addRender(r: Omit<RenderRow, "decision_tx" | "face_check"> & { campaign_id?: number | null }) {
   await q(
-    `insert into renders (sha256, licence_id, brand, creator, campaign_id, prompt, face_check, provenance, submit_tx)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9) on conflict (sha256) do nothing`,
-    [r.sha256, r.licence_id, r.brand, r.creator, r.campaign_id ?? null, r.prompt, JSON.stringify(r.face_check), JSON.stringify(r.provenance), r.submit_tx],
+    `insert into renders (sha256, licence_id, brand, creator, campaign_id, prompt, face_check, provenance, submit_tx, status, attempt, retry_of)
+     values ($1, $2, $3, $4, $5, $6, '{}'::jsonb, $7, $8, $9, $10, $11) on conflict (sha256) do nothing`,
+    [r.sha256, r.licence_id, r.brand, r.creator, r.campaign_id ?? null, r.prompt, JSON.stringify(r.provenance), r.submit_tx, r.status, r.attempt, r.retry_of],
   );
 }
 
+export async function updateRender(sha: string, u: { status: RenderRow["status"]; face_check?: unknown; submit_tx?: string | null }) {
+  await q(`update renders set status = $2, face_check = coalesce($3::jsonb, face_check), submit_tx = coalesce($4, submit_tx) where sha256 = $1`, [
+    sha,
+    u.status,
+    u.face_check === undefined ? null : JSON.stringify(u.face_check),
+    u.submit_tx ?? null,
+  ]);
+}
+
+/** How many renders this licence has had (each used a distinct prompt). */
+export async function renderCount(licenceId: string): Promise<number> {
+  const r = await q<{ n: string }>(`select count(*) as n from renders where licence_id = $1`, [licenceId]);
+  return Number(r[0]?.n ?? 0);
+}
+
 export async function renderBySha(sha: string): Promise<RenderRow | null> {
-  const r = await q<RenderRow>(`select sha256, licence_id, brand, creator, prompt, face_check, provenance, submit_tx, decision_tx from renders where sha256 = $1`, [sha]);
+  const r = await q<RenderRow>(`select ${RENDER_COLS} from renders where sha256 = $1`, [sha]);
   return r[0] ?? null;
 }
 
 export async function rendersFor(who: { creator?: string; brand?: string }, limit = 50): Promise<RenderRow[]> {
   const col = who.creator ? "creator" : "brand";
   return q<RenderRow>(
-    `select sha256, licence_id, brand, creator, prompt, face_check, provenance, submit_tx, decision_tx from renders where ${col} = $1 order by created_at desc limit $2`,
+    `select ${RENDER_COLS} from renders where ${col} = $1 and status = 'submitted' order by created_at desc limit $2`,
     [who.creator ?? who.brand, Math.min(limit, 100)],
   );
 }

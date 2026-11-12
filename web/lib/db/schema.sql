@@ -60,6 +60,11 @@ create table if not exists renders (
 );
 create index if not exists renders_creator on renders (creator, created_at desc);
 create index if not exists renders_brand on renders (brand, created_at desc);
+-- generated → (regenerate | blocked | mismatch | submitted); retry_of = the render this one regenerates.
+alter table renders add column if not exists status text not null default 'submitted';
+alter table renders add column if not exists attempt integer not null default 0;
+alter table renders add column if not exists retry_of text;
+create index if not exists renders_licence on renders (licence_id);
 
 -- The agent's activity log, per brand (every pick and skip with its reason).
 create table if not exists activity (

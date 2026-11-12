@@ -11,6 +11,7 @@ import { Card, EmptyState, ErrorCard, StatusPill } from "@/components/ds";
 import { NotConnected } from "@/components/ds/NotConnected";
 import { ReceiptTile } from "@/components/likeness/ReceiptTile";
 import { SelfLicenceBadge } from "@/components/likeness/SelfLicence";
+import { MakeAd } from "./MakeAd";
 import { api, NotConnectedError } from "@/lib/api";
 import { txUrl } from "@/lib/near/config";
 import { formatNear, USE_LABELS } from "@/lib/rules";
@@ -19,6 +20,7 @@ import type { BrandOverview } from "@/lib/types";
 export function BrandAgentConsole({ reload }: { reload: number }) {
   const [data, setData] = useState<BrandOverview | null>(null);
   const [error, setError] = useState<unknown>(null);
+  const [bump, setBump] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,7 +38,7 @@ export function BrandAgentConsole({ reload }: { reload: number }) {
     return () => {
       cancelled = true;
     };
-  }, [reload]);
+  }, [reload, bump]);
 
   if (error instanceof NotConnectedError) return <NotConnected what="Your agent's activity, licences and ads (/api/brand/overview)" />;
   if (error) return <ErrorCard>{(error as Error).message}</ErrorCard>;
@@ -68,6 +70,7 @@ export function BrandAgentConsole({ reload }: { reload: number }) {
                   {USE_LABELS[l.use]} · {formatNear(l.price)} · {l.rendersUsed}/{l.renderCap}
                   {l.tokenId ? ` · token #${l.tokenId}` : ""}
                 </span>
+                {l.status === "Active" && l.rendersUsed + l.rendersReserved < l.renderCap && <MakeAd licenceId={l.id} onDone={() => setBump((n) => n + 1)} />}
               </li>
             ))}
           </ul>
