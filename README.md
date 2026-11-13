@@ -5,6 +5,9 @@ approve every licence and every ad, are paid per render from the brand's escrow 
 A brand's AI agent proposes the renders; every ad has a receipt anyone can verify as Licensed, Expired, Revoked or
 Unknown.
 
+**Live demo (NEAR testnet):** https://likenesss.onrender.com · Video is disabled on the hosted demo to cap costs; see the
+demo video.
+
 Built for NEAR HACKATHON 2026, from FaceVisa (GitHub: rohitshukla11/eth_mumbai @ b1976e4).
 
 > Work in progress. The full README (try it, run it, what's on-chain) lands with the docs commit.
