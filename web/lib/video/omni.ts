@@ -6,7 +6,7 @@
  */
 import "server-only";
 import { VIDEO_ASPECT, VIDEO_RESOLUTION, VIDEO_SECONDS, videoModel } from "./config";
-import type { InteractionLike } from "./jobstate";
+import { videoOf, type InteractionLike } from "./jobstate";
 
 const BASE = "https://generativelanguage.googleapis.com/v1beta";
 
@@ -72,7 +72,7 @@ export const cancelInteraction = (id: string) => call<unknown>(`/interactions/${
 
 /** The finished clip's bytes: inline base64, or a Files URI downloaded with the key (never sent to a browser). */
 export async function outputBytes(it: InteractionLike): Promise<Uint8Array> {
-  const v = it.output_video;
+  const v = videoOf(it);
   if (v?.data) return new Uint8Array(Buffer.from(v.data, "base64"));
   if (v?.uri) {
     const r = await fetch(v.uri, { headers: { "x-goog-api-key": key() }, signal: AbortSignal.timeout(60_000) });

@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { nextStep } from "../lib/video/jobstate.ts";
+import { nextStep, videoOf } from "../lib/video/jobstate.ts";
 import { videoRefusal, type VideoAsk } from "../lib/video/caps.ts";
 import { estimateUsd, videoEnabled, videoMaxPerDay, videoUsdCap } from "../lib/video/config.ts";
 import { blobStorage, localVideoStorage, videoStorage } from "../lib/video/storage.ts";
@@ -29,6 +29,13 @@ test("job states: wait while running, done with a clip, fail on refusal, empty a
   assert.deepEqual(nextStep({ status: "completed", output_video: { data: "AAAA" } }, 60_000), { kind: "done" });
   assert.deepEqual(nextStep({ status: "completed", output_video: { uri: "https://files/x" } }, 60_000), { kind: "done" });
   assert.equal(nextStep({ status: "completed" }, 60_000).kind, "failed");
+  // The REST shape: the clip is a "video" item in a model_output step (output_video is only the SDK's copy).
+  const rest = { status: "completed", steps: [{ type: "user_input", content: [{ type: "image", data: "IMG" }] }, { type: "thought" }, { type: "model_output", content: [{ type: "text" }, { type: "video", data: "VID", mime_type: "video/mp4" }] }] };
+  assert.deepEqual(nextStep(rest, 60_000), { kind: "done" });
+  assert.equal(videoOf(rest)?.data, "VID");
+  assert.equal(videoOf({ steps: [{ type: "user_input", content: [{ type: "video", data: "INPUT" }] }] }), null, "an input video is never the output");
+  assert.equal(videoOf({ outputs: [{ type: "video", uri: "https://files/y" }] })?.uri, "https://files/y");
+  assert.equal(nextStep({ status: "completed", steps: [{ type: "model_output", content: [{ type: "text" }] }] }, 60_000).kind, "failed");
   assert.equal(nextStep({ status: "failed" }, 60_000).kind, "failed");
   const late = nextStep({ status: "in_progress" }, 11 * 60_000, 10 * 60_000);
   assert.equal(late.kind, "failed");
