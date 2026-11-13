@@ -8,7 +8,7 @@ import { formatNear, USE_LABELS } from "@/lib/rules";
 import type { Verdict as V, VerifyResult } from "@/lib/types";
 import { isSelfLicence, SELF_LICENCE_NOTE } from "./SelfLicence";
 import { SyntheticNote } from "./Synthetic";
-import { creatorLabel } from "@/lib/synthetic";
+import { displayName } from "@/lib/profiles";
 
 const LOOK: Record<V, { pill: PillKind; title: string; body: string }> = {
   Licensed: { pill: "licensed", title: "Licensed", body: "The creator approved this exact file in their own wallet, was paid for it, and the licence is in force." },
@@ -39,7 +39,7 @@ export function Verdict({ r }: { r: VerifyResult }) {
           <dt className="text-grey">Creator</dt>
           <dd className="m-0">
             <a href={accountUrl(l.creator)} target="_blank" rel="noreferrer">
-              {creatorLabel(l.creator)}
+              {displayName(l.creator)}
             </a>
           </dd>
           <dt className="text-grey">Brand</dt>

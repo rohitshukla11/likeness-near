@@ -2,8 +2,8 @@
 
 /**
  * Every registered creator, read from the contract (list_creators): their price, the uses they allow, the longest
- * licence and the render cap. Real creators' captures are never public (initials only); synthetic demo creators show
- * their AI-generated face, labelled as such.
+ * licence and the render cap. The owner's photo (published with his consent) and the synthetic demo creators'
+ * AI-generated faces (labelled as such) are shown; any other account shows its initial.
  */
 import { useEffect, useState } from "react";
 import { AppPage, EmptyState, ErrorCard, Skeleton, StatusPill } from "@/components/ds";
@@ -13,7 +13,7 @@ import { CreatorAvatar, SyntheticBadge, SyntheticNote } from "@/components/liken
 import { accountUrl, contractConfigured } from "@/lib/near/config";
 import { views } from "@/lib/near/view";
 import { formatNear, USE_LABELS } from "@/lib/rules";
-import { syntheticOf } from "@/lib/synthetic";
+import { profileOf } from "@/lib/profiles";
 import type { CreatorView } from "@/lib/types";
 
 export default function CreatorsPage() {
@@ -49,7 +49,7 @@ export default function CreatorsPage() {
       ) : (
         <ul className="m-0 grid list-none grid-cols-1 gap-[14px] p-0 sm:grid-cols-2 lg:grid-cols-3">
           {creators.map((c) => {
-            const s = syntheticOf(c.accountId);
+            const s = profileOf(c.accountId);
             return (
               <li key={c.accountId} className="flex flex-col overflow-hidden rounded-[22px] bg-white text-[14px] ring-1 ring-black/[0.04]">
                 <div className="relative aspect-[4/3] w-full bg-paper">

@@ -1,13 +1,13 @@
 /**
  * The creators the brand's agent can ask, read from the contract, as cards: a
- * face where it may be public (synthetic demo creators) or an initial, the price, the uses, and Pick/Skip against the
+ * public face (the owner's photo or a synthetic face) or an initial, the price, the uses, and Pick/Skip against the
  * brand's own per-render limit. The agent's real shortlist (with the brief and use) is in the activity log.
  */
 import { CHIP, MUTED, SURFACE } from "@/components/likeness/Dash";
 import { LikenessChip } from "@/components/likeness/Proven";
 import { CreatorAvatar, SyntheticBadge } from "@/components/likeness/Synthetic";
 import { formatNear, USE_LABELS } from "@/lib/rules";
-import { syntheticOf } from "@/lib/synthetic";
+import { profileOf } from "@/lib/profiles";
 import type { BrandView, CreatorView } from "@/lib/types";
 
 export function CreatorsToAsk({ creators, brand, self }: { creators: CreatorView[] | null; brand: BrandView | null; self: string }) {
@@ -27,7 +27,7 @@ export function CreatorsToAsk({ creators, brand, self }: { creators: CreatorView
             const within = !!brand && brand.maxPerRender !== "0" && BigInt(c.terms.pricePerRender) <= BigInt(brand.maxPerRender);
             const pick = c.active && within;
             const reason = !c.active ? "not taking requests" : !brand || brand.maxPerRender === "0" ? "set your limits first" : within ? "within your per-render limit" : "above your per-render limit";
-            const s = syntheticOf(c.accountId);
+            const s = profileOf(c.accountId);
             return (
               <li key={c.accountId} className={`${SURFACE} flex flex-col overflow-hidden ${pick ? "" : "opacity-80"}`}>
                 <div className="relative aspect-[4/3] w-full bg-paper">

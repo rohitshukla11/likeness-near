@@ -14,7 +14,7 @@ import { LimitsCard } from "@/components/brand/LimitsCard";
 import { CreatorDashboardView } from "@/components/likeness/CreatorHome";
 import { AccountMenuView } from "@/components/site/AccountMenu";
 import { brandDemo, brandEmpty, creatorDemo, creatorEmpty, PREVIEW_BRAND } from "@/lib/preview-fixtures";
-import { syntheticOf } from "@/lib/synthetic";
+import { profileOf } from "@/lib/profiles";
 
 const noop = async () => undefined;
 
@@ -26,11 +26,11 @@ export function Preview() {
   return (
     <AppPage title={`Preview: ${side} dashboard (${demo ? "with test data" : "empty"})`}>
       <div role="note" className="rounded-[16px] border-2 border-dashed border-wait bg-wait-bg p-4 text-[14px] text-ink">
-        <b>Local preview with TEST DATA.</b> Not real records: nothing here is on-chain, and buttons do nothing. Images are the synthetic demo faces standing in
-        for ads. Only available in development.
+        <b>Local preview with TEST DATA.</b> Not real records: nothing here is on-chain, and buttons do nothing. Images are the creators&apos; reference photos standing
+        in for ads. Only available in development.
         <span className="mt-3 flex flex-wrap items-center justify-end gap-3 rounded-[14px] bg-ink px-4 py-3">
           <span className="mr-auto text-[12px] text-grey-dark">Header when signed in (test account):</span>
-          <AccountMenuView accountId={side === "brand" ? PREVIEW_BRAND : (demo ? creatorDemo : creatorEmpty).creator.accountId} role={side} onRole={() => undefined} onSignOut={() => undefined} />
+          <AccountMenuView accountId={side === "brand" ? PREVIEW_BRAND : (demo ? creatorDemo : creatorEmpty).creator.accountId} role={side} canSwitch={side === "creator"} onRole={() => undefined} onSignOut={() => undefined} />
         </span>
         <span className="mt-2 flex flex-wrap gap-3">
           {links.map((l) => (
@@ -44,7 +44,7 @@ export function Preview() {
         <CreatorDashboardView
           creator={(demo ? creatorDemo : creatorEmpty).creator}
           inbox={(demo ? creatorDemo : creatorEmpty).inbox}
-          faceSrc={syntheticOf((demo ? creatorDemo : creatorEmpty).creator.accountId)?.face ?? null}
+          faceSrc={profileOf((demo ? creatorDemo : creatorEmpty).creator.accountId)?.face ?? null}
           act={noop}
           onSwitchToBrand={() => undefined}
         />

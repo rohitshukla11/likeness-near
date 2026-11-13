@@ -9,6 +9,15 @@ ETHGlobal Mumbai, 5–7 Nov 2026, inside the NEAR HACKATHON 2026 window. The org
 fresh commits. This repo was built in layers, each already in its NEAR form; none of FaceVisa's removed integrations
 appear in any commit.
 
+## The demo's real creator
+
+The one real creator is the project's author, Rohit Shukla (`rohitshukla.testnet`). His photo
+(`web/public/creators/rohit.jpg`) is a photo of himself that he supplied for this demo on 13 Nov 2026, cropped to
+head and shoulders and converted to JPEG (no other edits, no embedded metadata), and published here with his consent.
+It is his reference: every ad of him is an edit of it, and its sha256
+(`89a4d9973341de96b3342ec2c678ea8e7975b219af30a2b676cfe18883c172af`) is the `capture_sha256` he registers with
+(`web/scripts/owner-creator.ts` stores it). There is no creator sign-up; every other account is a brand.
+
 ## Synthetic demo creators
 
 Three synthetic demo creators let anyone try the app without a real person's face. They are labelled

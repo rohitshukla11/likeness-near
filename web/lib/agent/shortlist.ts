@@ -5,6 +5,7 @@
  */
 import { checkAsk, formatNear, type LicenceAsk } from "../rules";
 import type { BrandView, CreatorView } from "../types";
+import { OWNER, isOwner } from "../profiles";
 import { syntheticOf } from "../synthetic";
 
 export interface ShortlistEntry {
@@ -23,7 +24,14 @@ export function shortlist(creators: CreatorView[], ask: LicenceAsk, brand: Brand
         return { creator: c, pick: false, reason: `${formatNear(c.terms.pricePerRender)} per render is above the brand's limit (${formatNear(brand.maxPerRender)})` };
       }
       const synth = syntheticOf(c.accountId);
-      const self = c.accountId === brand.accountId ? "same account as the brand: a self-licence for demo; " : synth ? `${synth.name} (${synth.niche}), a synthetic demo creator (AI-generated face, not a real person); ` : "";
+      const self =
+        c.accountId === brand.accountId
+          ? "same account as the brand: a self-licence for demo; "
+          : synth
+            ? `${synth.name} (${synth.niche}), a synthetic demo creator (AI-generated face, not a real person); `
+            : isOwner(c.accountId)
+              ? `${OWNER.name} (${OWNER.niche}), the demo's real creator; `
+              : "";
       const proof = c.captureSha256 ? "" : "; likeness not proven yet, so no ad can be made until they prove it";
       return { creator: c, pick: true, reason: `${self}fits: ${formatNear(c.terms.pricePerRender)} per render, up to ${c.terms.renderCap} renders, ${c.terms.maxDays} days max${proof}` };
     })

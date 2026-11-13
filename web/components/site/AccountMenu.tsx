@@ -2,14 +2,16 @@
 
 /**
  * Top right of every app page: connect a NEAR wallet (testnet), or, once connected, the account, which side of it you're
- * on (Creator profile / Brand workspace), a Creator | Brand switch, and Sign out. One account is both a creator and a
- * brand; the switch only changes which dashboard you see. The last side is remembered in this browser only.
+ * on (Creator profile / Brand workspace), and Sign out. Every account is a brand; only the owner (the demo's one real
+ * creator, lib/profiles.ts) also gets a Creator | Brand switch, which only changes which dashboard he sees. The last
+ * side is remembered in this browser only.
  */
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 import { pillClass } from "@/components/ds";
 import { signOutOfApi } from "@/lib/near/signin";
 import { useWallet } from "@/lib/near/wallet";
+import { isOwner } from "@/lib/profiles";
 
 export type Role = "creator" | "brand";
 const KEY = "likeness:role";
@@ -47,7 +49,7 @@ export function useRole(): Role {
 export function AccountMenu() {
   const w = useWallet();
   const router = useRouter();
-  const role = useRole();
+  const chosen = useRole();
   const [busy, setBusy] = useState(false);
 
   if (!w.ready) return <span className="text-[14px] text-grey-dark">Loading wallets…</span>;
@@ -84,7 +86,8 @@ export function AccountMenu() {
     <AccountMenuView
       accountId={w.accountId}
       walletName={w.walletName}
-      role={role}
+      role={isOwner(w.accountId) ? chosen : "brand"}
+      canSwitch={isOwner(w.accountId)}
       busy={busy}
       onRole={go}
       onSignOut={async () => {
@@ -99,7 +102,24 @@ export function AccountMenu() {
 }
 
 /** The signed-in header block on its own (the local preview renders it with a test account). */
-export function AccountMenuView({ accountId, walletName, role, busy = false, onRole, onSignOut }: { accountId: string; walletName?: string | null; role: Role; busy?: boolean; onRole: (r: Role) => void; onSignOut: () => void }) {
+export function AccountMenuView({
+  accountId,
+  walletName,
+  role,
+  canSwitch = true,
+  busy = false,
+  onRole,
+  onSignOut,
+}: {
+  accountId: string;
+  walletName?: string | null;
+  role: Role;
+  /** Only the owner (the demo's creator) has two sides; everyone else is a brand. */
+  canSwitch?: boolean;
+  busy?: boolean;
+  onRole: (r: Role) => void;
+  onSignOut: () => void;
+}) {
   const w = { accountId, walletName };
   const go = onRole;
   return (
@@ -115,6 +135,7 @@ export function AccountMenuView({ accountId, walletName, role, busy = false, onR
           <span className="text-[13px] text-grey-dark">{role === "brand" ? "Brand workspace" : "Creator profile"}</span>
         </span>
       </span>
+      {canSwitch && (
       <span role="tablist" aria-label="Which side of this account" className="inline-flex rounded-full bg-ink-raised p-1">
         {(["creator", "brand"] as const).map((r) => (
           <button
@@ -129,6 +150,7 @@ export function AccountMenuView({ accountId, walletName, role, busy = false, onR
           </button>
         ))}
       </span>
+      )}
       <button
         type="button"
         disabled={busy}

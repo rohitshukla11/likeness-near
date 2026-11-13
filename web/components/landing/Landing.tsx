@@ -177,7 +177,7 @@ function Stats() {
 const STEPS = [
   {
     title: "SET YOUR TERMS",
-    body: "Connect your NEAR wallet, take a live capture, then set your price per render, the uses you allow, a render cap and the longest licence. Political, adult, minors, impersonation and deception are refused for everyone.",
+    body: "A creator sets a price per render, the uses they allow, a render cap and the longest licence, on NEAR, with the sha256 of their reference photo. Political, adult, minors, impersonation and deception are refused for everyone.",
   },
   {
     title: "AGENTS PROPOSE",

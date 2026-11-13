@@ -3,6 +3,7 @@
  * names are fictional ("demo-*.testnet") or the synthetic demo creators; images are the synthetic faces standing in for
  * ads. Nothing here exists on-chain.
  */
+import { OWNER } from "./profiles";
 import { SYNTHETIC } from "./synthetic";
 import type { ActivityEvent, BrandOverview, BrandView, CreatorInbox, CreatorView, LicenceView, RenderItem } from "./types";
 
@@ -14,7 +15,7 @@ const DAY = 86_400_000;
 export const PREVIEW_BRAND = "demo-brand.testnet";
 const [asha, maya, theo] = SYNTHETIC;
 
-export const creatorOf = (s: (typeof SYNTHETIC)[number]): CreatorView => ({
+export const creatorOf = (s: Pick<(typeof SYNTHETIC)[number], "accountId" | "terms" | "faceSha256">): CreatorView => ({
   accountId: s.accountId,
   terms: { pricePerRender: near(Number(s.terms.pricePerRenderNear)), allowedUses: s.terms.allowedUses, maxDays: s.terms.maxDays, renderCap: s.terms.renderCap },
   captureSha256: s.faceSha256,
@@ -50,18 +51,18 @@ const render = (n: number, l: LicenceView, status: RenderItem["receipt"]["status
   decisionTx: status === "Approved" ? "9xPreviewTxHashNotOnChain" : null,
 });
 
-// ---------------------------------------------------------------- creator side (Asha, a synthetic demo creator)
+// ---------------------------------------------------------------- creator side (the owner, the demo's one real creator)
 
-const cL1 = licence("1", asha!.accountId, "demo-running.testnet", { rendersUsed: 1, rendersReserved: 1 });
-const cL2 = licence("2", asha!.accountId, "demo-travel.testnet", { use: "Travel", state: "Revoked", status: "Revoked", rendersUsed: 1 });
-const cL3 = licence("3", asha!.accountId, "demo-studio.testnet", { use: "Fashion", state: "Pending", status: "Pending" });
+const cL1 = licence("1", OWNER.accountId, "demo-running.testnet", { rendersUsed: 1, rendersReserved: 1 });
+const cL2 = licence("2", OWNER.accountId, "demo-travel.testnet", { use: "Travel", state: "Revoked", status: "Revoked", rendersUsed: 1 });
+const cL3 = licence("3", OWNER.accountId, "demo-studio.testnet", { use: "Fashion", state: "Pending", status: "Pending" });
 
 export const creatorDemo: { creator: CreatorView; inbox: CreatorInbox } = {
-  creator: creatorOf(asha!),
+  creator: creatorOf(OWNER),
   inbox: {
     licences: [cL3, cL1, cL2],
-    pending: [render(1, cL1, "Reserved", asha!.face, "needs_creator_review")],
-    decided: [render(2, cL1, "Approved", asha!.face), render(3, cL2, "Approved", asha!.face)],
+    pending: [render(1, cL1, "Reserved", OWNER.face, "needs_creator_review")],
+    decided: [render(2, cL1, "Approved", OWNER.face), render(3, cL2, "Approved", OWNER.face)],
     earned: near(0.08),
   },
 };
@@ -71,11 +72,11 @@ export const creatorEmpty: { creator: CreatorView; inbox: CreatorInbox } = {
   inbox: { licences: [], pending: [], decided: [], earned: "0" },
 };
 
-// ---------------------------------------------------------------- brand side (demo-brand, which is also a creator)
+// ---------------------------------------------------------------- brand side (demo-brand, a brand only)
 
 const bL1 = licence("4", asha!.accountId, PREVIEW_BRAND, { rendersUsed: 1, rendersReserved: 1 });
 const bL2 = licence("5", theo!.accountId, PREVIEW_BRAND, { use: "Tech", price: near(0.07), state: "Pending", status: "Pending" });
-const bL3 = licence("6", PREVIEW_BRAND, PREVIEW_BRAND, { use: "Fitness", price: near(0.05), renderCap: 1, rendersUsed: 1, status: "Exhausted" });
+const bL3 = licence("6", OWNER.accountId, PREVIEW_BRAND, { use: "FoodDrink", price: near(0.04), renderCap: 1, rendersUsed: 1, status: "Exhausted" });
 
 const events: ActivityEvent[] = [
   { at: T - 10 * 60_000, kind: "submit", summary: "submitted the ad for the creator's approval; AI similarity check (advisory): needs the creator's review; the price is reserved, not paid", licenceId: "4", sha256: "1".repeat(64), tx: "9xPreviewTxHashNotOnChain" },
@@ -89,16 +90,16 @@ const events: ActivityEvent[] = [
 
 export const brandDemo: { brand: BrandView; creators: CreatorView[]; overview: BrandOverview } = {
   brand: { accountId: PREVIEW_BRAND, escrow: near(1.82), reserved: near(0.093), maxPerRender: near(0.1), totalBudget: near(1), spent: near(0.157) },
-  creators: [creatorOf(asha!), creatorOf(maya!), creatorOf(theo!), { ...creatorEmpty.creator, accountId: PREVIEW_BRAND, terms: { ...creatorEmpty.creator.terms, pricePerRender: near(0.05) } }],
+  creators: [creatorOf(OWNER), creatorOf(asha!), creatorOf(maya!), creatorOf(theo!)],
   overview: {
     licences: [bL1, bL2, bL3],
-    renders: [render(1, bL1, "Reserved", asha!.face, "needs_creator_review"), render(4, bL1, "Approved", asha!.face), render(5, bL3, "Approved", maya!.face)],
+    renders: [render(1, bL1, "Reserved", asha!.face, "needs_creator_review"), render(4, bL1, "Approved", asha!.face), render(5, bL3, "Approved", OWNER.face)],
     activity: events,
   },
 };
 
 export const brandEmpty: { brand: BrandView | null; creators: CreatorView[]; overview: BrandOverview } = {
   brand: null,
-  creators: [creatorOf(asha!), creatorOf(maya!), creatorOf(theo!)],
+  creators: [creatorOf(OWNER), creatorOf(asha!), creatorOf(maya!), creatorOf(theo!)],
   overview: { licences: [], renders: [], activity: [] },
 };

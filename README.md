@@ -9,10 +9,15 @@ Built for NEAR HACKATHON 2026, from FaceVisa (GitHub: rohitshukla11/eth_mumbai @
 
 > Work in progress. The full README (try it, run it, what's on-chain) lands with the docs commit.
 
-## One account, both roles (demos)
+## Who is who
 
-One NEAR account can be both a creator and a brand: sign in once, then switch between **Creator** and **Brand** on
-the dashboard. A licence the account grants itself is labelled **"Self-licence (demo)"** in the app, the agent's
+There is no creator sign-up. The creators are the project's author (`rohitshukla.testnet`, with his own photo,
+published with his consent) and three synthetic demo creators with AI-generated faces (`likeness-synth-*.testnet`,
+labelled as such everywhere). Anyone else who signs in with a NEAR wallet is a **brand**: fund an escrow, set limits,
+add the agent's key and brief the agent, which asks the creators for a licence.
+
+The author's account is both a creator and a brand: it alone gets a **Creator | Brand** switch. A licence it grants
+itself is labelled **"Self-licence (demo)"** in the app, the agent's
 activity log, Verify and the standalone verifier, and its payment moves from the account's escrow back to itself.
 The consent rules don't change: the creator still approves every licence and every ad from their own wallet, and the
 agent's function-call key can only call `request_licence` and `submit_render`, never an approval.

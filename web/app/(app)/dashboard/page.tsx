@@ -1,22 +1,23 @@
 "use client";
 
 /**
- * The dashboard: connect a NEAR wallet, sign in to Likeness with it (a signed message, no transaction), then switch
- * between the two sides of the same account: Creator (capture, terms, licence requests, ads to approve) and Brand
- * (escrow, limits, the agent's key, campaigns). One account can play both roles for demos; licences it grants itself
- * are labelled "Self-licence (demo)" everywhere.
+ * The dashboard: connect a NEAR wallet and sign in to Likeness with it (a signed message, no transaction). Every
+ * account is a brand (escrow, limits, the agent's key, campaigns). There is no creator sign-up: only the demo's one
+ * real creator, the owner (lib/profiles.ts), also has a Creator side (terms, licence requests, ads to approve) and the
+ * Creator | Brand switch; licences he grants himself are labelled "Self-licence (demo)" everywhere.
  */
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { btnClass, Card, ErrorCard, Page, Skeleton } from "@/components/ds";
 import { NotConnected } from "@/components/ds/NotConnected";
 import { BrandWorkspace } from "@/components/brand/BrandWorkspace";
-import { Onboarding } from "@/components/dashboard/Onboarding";
+import { OwnerRegister } from "@/components/dashboard/OwnerRegister";
 import { CreatorHome } from "@/components/likeness/CreatorHome";
 import { api, NotConnectedError } from "@/lib/api";
 import { signInToApi } from "@/lib/near/signin";
 import { useWallet } from "@/lib/near/wallet";
 import { rememberRole, useRole } from "@/components/site/AccountMenu";
+import { isOwner } from "@/lib/profiles";
 import type { MeResponse } from "@/lib/types";
 
 type Load = { kind: "loading" } | { kind: "ok"; me: MeResponse } | { kind: "error"; error: unknown };
@@ -25,7 +26,8 @@ function Dashboard() {
   const w = useWallet();
   const router = useRouter();
   const path = usePathname();
-  const role = useRole();
+  const chosen = useRole();
+  const role = isOwner(w.accountId) ? chosen : "brand";
   const [load, setLoad] = useState<Load>({ kind: "loading" });
   const [signing, setSigning] = useState<unknown>(null);
   const [reload, setReload] = useState(0);
@@ -52,8 +54,8 @@ function Dashboard() {
     return (
       <Card tone="lime" title="Connect your NEAR wallet">
         <p className="m-0 text-[15px]">
-          Testnet only. Your wallet signs every licence, every ad decision and every payment; Likeness never holds your keys. One account can be
-          both a creator and a brand.
+          Testnet only. Your wallet signs every licence request, deposit and payment; Likeness never holds your keys. You sign in as a brand:
+          brief your agent, and it asks the demo&apos;s creators for a licence.
         </p>
         <button type="button" className={btnClass("ink", "self-start")} onClick={() => void w.connect().catch(() => undefined)}>
           Connect NEAR wallet
@@ -96,14 +98,13 @@ function Dashboard() {
               <CreatorHome
                 creator={me.creator}
                 captureSha={me.capture?.captureSha256 ?? null}
-                onProven={refresh}
                 onSwitchToBrand={() => {
                   rememberRole("brand");
                   router.replace(`${path}?role=brand`);
                 }}
               />
             ) : (
-              <Onboarding me={me} onDone={refresh} />
+              <OwnerRegister onDone={refresh} />
             )
           ) : (
             <BrandWorkspace accountId={w.accountId} />

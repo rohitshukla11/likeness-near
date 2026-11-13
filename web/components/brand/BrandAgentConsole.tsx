@@ -14,7 +14,7 @@ import { LikenessChip, NOT_PROVEN_NOTE } from "@/components/likeness/Proven";
 import { CreatorAvatar, SyntheticBadge } from "@/components/likeness/Synthetic";
 import { txUrl } from "@/lib/near/config";
 import { formatNear, USE_LABELS } from "@/lib/rules";
-import { creatorLabel } from "@/lib/synthetic";
+import { displayName } from "@/lib/profiles";
 import type { ActivityEvent, CreatorView, LicenceStatus, LicenceView, RenderItem } from "@/lib/types";
 import { LicenceActions } from "./LicenceActions";
 import { MakeAd } from "./MakeAd";
@@ -36,7 +36,7 @@ export function BrandLicences({ licences, creators, onChanged, preview = false }
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <b className="text-[15px]">
-                    {creatorLabel(l.creator)} · {USE_LABELS[l.use]} at {formatNear(l.price)}
+                    {displayName(l.creator)} · {USE_LABELS[l.use]} at {formatNear(l.price)}
                   </b>
                   <StatusPill kind={LICENCE_PILL[l.status]}>{l.status === "Pending" ? "Waiting for the creator" : l.status}</StatusPill>
                 </div>

@@ -13,8 +13,7 @@ import { NotConnected } from "@/components/ds/NotConnected";
 import { BigAvatar, CHIP, Fact, MUTED, OUTLINE, ProfileHeader, Rule, shortDay, Stat, SURFACE } from "./Dash";
 import { RulesForm } from "./RulesForm";
 import { SelfLicenceBadge } from "./SelfLicence";
-import { LikenessChip, ProveCard } from "./Proven";
-import { ProveLikeness } from "./ProveLikeness";
+import { LikenessChip } from "./Proven";
 import { SyntheticBadge, SyntheticNote } from "./Synthetic";
 import { runTx, TxLine, type TxState } from "./TxLine";
 import { api, NotConnectedError } from "@/lib/api";
@@ -22,7 +21,7 @@ import { accountUrl, CONTRACT_ID, txUrl } from "@/lib/near/config";
 import { calls, type ContractCall } from "@/lib/near/methods";
 import { useWallet } from "@/lib/near/wallet";
 import { formatNear, USE_LABELS } from "@/lib/rules";
-import { creatorLabel, syntheticOf } from "@/lib/synthetic";
+import { displayName, profileOf } from "@/lib/profiles";
 import type { CreatorInbox, CreatorView, LicenceStatus, LicenceView, RenderItem, ReceiptStatus } from "@/lib/types";
 
 const LICENCE_PILL: Record<LicenceStatus, PillKind> = { Pending: "waiting", Declined: "neutral", Active: "licensed", Exhausted: "expired", Expired: "expired", Revoked: "revoked" };
@@ -32,7 +31,7 @@ const AD_LABEL: Record<ReceiptStatus, string> = { Reserved: "Waiting for you", A
 export type Act = (what: string, call: ContractCall) => Promise<void>;
 
 /** Loads the creator's inbox and runs their wallet decisions. */
-export function CreatorHome({ creator, captureSha, onSwitchToBrand, onProven }: { creator: CreatorView; captureSha: string | null; onSwitchToBrand: () => void; onProven: () => void }) {
+export function CreatorHome({ creator, captureSha, onSwitchToBrand }: { creator: CreatorView; captureSha: string | null; onSwitchToBrand: () => void }) {
   const w = useWallet();
   const [inbox, setInbox] = useState<CreatorInbox | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
@@ -63,12 +62,11 @@ export function CreatorHome({ creator, captureSha, onSwitchToBrand, onProven }: 
     <CreatorDashboardView
       creator={creator}
       inbox={inbox}
-      faceSrc={syntheticOf(creator.accountId)?.face ?? (captureSha ? `/api/media/${captureSha}` : null)}
+      faceSrc={profileOf(creator.accountId)?.face ?? (captureSha ? `/api/media/${captureSha}` : null)}
       notice={loadError instanceof NotConnectedError ? <NotConnected what="Your requests and ads (/api/creator/inbox)" /> : loadError ? <ErrorCard>{(loadError as Error).message}</ErrorCard> : null}
       tx={<TxLine s={tx} />}
       act={act}
       onSwitchToBrand={onSwitchToBrand}
-      onProven={onProven}
     />
   );
 }
@@ -81,7 +79,6 @@ export function CreatorDashboardView({
   tx,
   act,
   onSwitchToBrand,
-  onProven = () => undefined,
 }: {
   creator: CreatorView;
   inbox: CreatorInbox | null;
@@ -90,11 +87,8 @@ export function CreatorDashboardView({
   tx?: React.ReactNode;
   act: Act;
   onSwitchToBrand: () => void;
-  /** After "Prove your likeness" records the capture on NEAR: reload the creator. */
-  onProven?: () => void;
 }) {
   const [editTerms, setEditTerms] = useState(false);
-  const [recapture, setRecapture] = useState(false);
   const licences = inbox?.licences ?? [];
   const requests = licences.filter((l) => l.status === "Pending");
   const pendingAds = inbox?.pending ?? [];
@@ -103,25 +97,16 @@ export function CreatorDashboardView({
   const active = licences.filter((l) => l.status === "Active").length;
   const revoked = licences.filter((l) => l.status === "Revoked").length;
   const brands = new Set(licences.filter((l) => l.status !== "Pending").map((l) => l.brand)).size;
-  const s = syntheticOf(creator.accountId);
+  const s = profileOf(creator.accountId);
 
   return (
     <div className="flex flex-col gap-[18px]">
       {notice}
       <ProfileHeader
         label="Your creator profile"
-        avatar={
-          <div className="flex flex-col items-center gap-2 sm:items-start">
-            <BigAvatar src={faceSrc} alt={s ? `${s.name}: AI-generated face, not a real person` : "Your live capture"} letter={creator.accountId[0] ?? "C"} />
-            {creator.captureSha256 && !s && (
-              <button type="button" onClick={() => setRecapture((v) => !v)} className={`${OUTLINE} min-h-8 px-3 text-[13px]`}>
-                {recapture ? "Close" : "Re-capture"}
-              </button>
-            )}
-          </div>
-        }
+        avatar={<BigAvatar src={faceSrc} alt={s ? (s.synthetic ? `${s.name}: AI-generated face, not a real person` : s.name) : "Your reference photo"} letter={creator.accountId[0] ?? "C"} />}
         eyebrow="Creator profile"
-        title={creatorLabel(creator.accountId)}
+        title={displayName(creator.accountId)}
         subtitle={`${s ? `${s.bio} ` : ""}Brands' agents ask for a licence and make the ad; nothing is paid or released until you approve that exact ad in your wallet.`}
         chips={
           <>
@@ -138,19 +123,6 @@ export function CreatorDashboardView({
         }
       />
       <SyntheticNote accountId={creator.accountId} />
-      {!creator.captureSha256 && <ProveCard onProven={onProven} />}
-      {recapture && (
-        <section className={`${SURFACE} flex flex-col gap-3 p-5`} aria-label="Re-capture">
-          <h2 className="m-0 text-[18px] font-bold">Re-capture your face</h2>
-          <ProveLikeness
-            registered
-            onProven={() => {
-              setRecapture(false);
-              onProven();
-            }}
-          />
-        </section>
-      )}
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-5" aria-label="Your numbers">
         <Stat label="Earned" value={inbox ? formatNear(inbox.earned) : "—"} note={inbox && inbox.earned !== "0" ? "paid on approval, testnet NEAR" : "nothing yet"} accent />
