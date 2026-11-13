@@ -19,6 +19,7 @@ import { LimitsCard } from "./LimitsCard";
 import { api, NotConnectedError } from "@/lib/api";
 import { accountUrl, CONTRACT_ID, contractConfigured } from "@/lib/near/config";
 import { views } from "@/lib/near/view";
+import { listedCreators } from "@/lib/agent/shortlist";
 import { formatNear } from "@/lib/rules";
 import type { BrandOverview, BrandView, CreatorView } from "@/lib/types";
 
@@ -41,7 +42,7 @@ export function BrandWorkspace({ accountId }: { accountId: string }) {
         setBrand(b.value);
         setLoaded(true);
       }
-      if (c.status === "fulfilled") setCreators(c.value);
+      if (c.status === "fulfilled") setCreators(listedCreators(c.value));
       if (o.status === "fulfilled") setOverview(o.value);
       setError(b.status === "rejected" ? b.reason : o.status === "rejected" ? o.reason : null);
     })();

@@ -12,6 +12,7 @@ import { CreatorCard } from "@/components/likeness/CreatorCard";
 import { SyntheticNote } from "@/components/likeness/Synthetic";
 import { accountUrl, contractConfigured } from "@/lib/near/config";
 import { views } from "@/lib/near/view";
+import { listedCreators } from "@/lib/agent/shortlist";
 import type { CreatorView } from "@/lib/types";
 
 export default function CreatorsPage() {
@@ -24,7 +25,7 @@ export default function CreatorsPage() {
     (async () => {
       try {
         const c = await views.listCreators(0, 50);
-        if (!cancelled) setCreators(c);
+        if (!cancelled) setCreators(listedCreators(c));
       } catch (e) {
         if (!cancelled) setError((e as Error).message);
       }
@@ -42,13 +43,11 @@ export default function CreatorsPage() {
         <ErrorCard>{error}</ErrorCard>
       ) : !creators ? (
         <Skeleton className="h-40" />
-      ) : creators.filter((c) => c.active).length === 0 ? (
+      ) : creators.length === 0 ? (
         <EmptyState title="No creators yet">No creator is taking requests right now.</EmptyState>
       ) : (
         <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
-          {creators
-            .filter((c) => c.active)
-            .map((c) => (
+          {creators.map((c) => (
               <CreatorCard
                 key={c.accountId}
                 c={c}

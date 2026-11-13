@@ -21,6 +21,13 @@ export interface Ineligible {
   reason: string;
 }
 
+/**
+ * The creators the app shows anywhere (the Creators page, the agent's shortlist, its "Not eligible" list): only those
+ * taking requests. A paused creator stays registered on-chain (the contract has no unregister) and the contract refuses
+ * requests to it; the app never lists it.
+ */
+export const listedCreators = (creators: CreatorView[]) => creators.filter((c) => c.active);
+
 /** What the brand can still commit: the total budget minus spent and reserved, and never more than the free escrow. */
 export function budgetLeft(b: BrandView): bigint {
   const byBudget = BigInt(b.totalBudget) - BigInt(b.spent) - BigInt(b.reserved);
@@ -33,8 +40,7 @@ export function filterCreators(creators: CreatorView[], ask: LicenceAsk, brand: 
   const left = budgetLeft(brand);
   const eligible: Candidate[] = [];
   const ineligible: Ineligible[] = [];
-  for (const c of creators) {
-    if (!c.active) continue;
+  for (const c of listedCreators(creators)) {
     const problems = checkAsk(c.terms, ask);
     if (problems.length) {
       ineligible.push({ creator: c, reason: problems.join("; ") });
