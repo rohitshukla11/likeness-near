@@ -60,11 +60,11 @@ function VerifyInner() {
       {!contractConfigured() && <NotConnected what="The Likeness contract" />}
       <Card title="Check a file">
         <label className="flex cursor-pointer flex-col items-center gap-2 rounded-[16px] border-2 border-dashed border-field p-6 text-center text-[15px]">
-          <span className="font-semibold">Choose or drop an image</span>
+          <span className="font-semibold">Choose or drop an image or video</span>
           <span className="text-[13px] text-grey">It&apos;s hashed here in your browser and never uploaded.</span>
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,video/mp4"
             className="sr-only"
             onChange={async (e) => {
               const f = e.target.files?.[0];

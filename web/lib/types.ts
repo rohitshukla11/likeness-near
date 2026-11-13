@@ -205,3 +205,26 @@ export interface BrandOverview {
   renders: RenderItem[];
   activity: ActivityEvent[];
 }
+
+/** GET /api/agent/video: whether video is on, its caps and estimate, and the brand's recent jobs. */
+export interface VideoStatus {
+  enabled: boolean;
+  seconds: number;
+  estUsd: number;
+  capUsd: number;
+  maxPerDay: number;
+  usedToday: number;
+  jobs: VideoJobView[];
+}
+
+export interface VideoJobView {
+  id: number;
+  status: "starting" | "running" | "storing" | "submitted" | "failed" | "refused";
+  licenceId: string;
+  fromSha256: string;
+  sha256: string | null;
+  submitTx: string | null;
+  error: string | null;
+  estUsd: number;
+  ageMs: number;
+}

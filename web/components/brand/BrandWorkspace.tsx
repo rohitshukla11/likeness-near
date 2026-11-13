@@ -22,13 +22,14 @@ import { accountUrl, CONTRACT_ID, contractConfigured } from "@/lib/near/config";
 import { views } from "@/lib/near/view";
 import { listedCreators } from "@/lib/agent/shortlist";
 import { formatNear } from "@/lib/rules";
-import type { BrandOverview, BrandView, CreatorView } from "@/lib/types";
+import type { BrandOverview, BrandView, CreatorView, VideoStatus } from "@/lib/types";
 
 export function BrandWorkspace({ accountId }: { accountId: string }) {
   const [brand, setBrand] = useState<BrandView | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [creators, setCreators] = useState<CreatorView[] | null>(null);
   const [overview, setOverview] = useState<BrandOverview | null>(null);
+  const [video, setVideo] = useState<VideoStatus | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [reload, setReload] = useState(0);
   const [keyOn, setKeyOn] = useState(false);
@@ -38,7 +39,7 @@ export function BrandWorkspace({ accountId }: { accountId: string }) {
     if (!contractConfigured()) return;
     let cancelled = false;
     (async () => {
-      const [b, c, o] = await Promise.allSettled([views.getBrand(accountId), views.listCreators(0, 50), api<BrandOverview>("/api/brand/overview")]);
+      const [b, c, o, v] = await Promise.allSettled([views.getBrand(accountId), views.listCreators(0, 50), api<BrandOverview>("/api/brand/overview"), api<VideoStatus>("/api/agent/video")]);
       if (cancelled) return;
       if (b.status === "fulfilled") {
         setBrand(b.value);
@@ -46,6 +47,7 @@ export function BrandWorkspace({ accountId }: { accountId: string }) {
       }
       if (c.status === "fulfilled") setCreators(listedCreators(c.value));
       if (o.status === "fulfilled") setOverview(o.value);
+      setVideo(v.status === "fulfilled" ? v.value : null);
       setError(b.status === "rejected" ? b.reason : o.status === "rejected" ? o.reason : null);
     })();
     return () => {
@@ -68,7 +70,8 @@ export function BrandWorkspace({ accountId }: { accountId: string }) {
           <ErrorCard>{(error as Error).message}</ErrorCard>
         ) : null
       }
-      campaign={<AgentFlow onChanged={refresh} />}
+      campaign={<AgentFlow onChanged={refresh} video={video} />}
+      video={video}
       money={
         <>
           <DepositCard brand={brand} onChanged={refresh} />
@@ -92,6 +95,7 @@ export function BrandDashboardView({
   money,
   agentKey,
   keyOn = false,
+  video = null,
   onChanged,
   preview = false,
 }: {
@@ -105,6 +109,8 @@ export function BrandDashboardView({
   agentKey: ReactNode;
   /** The agent's key is on the brand's account (from the key card). */
   keyOn?: boolean;
+  /** Video status (null or disabled: video is hidden and the image flow is unchanged). */
+  video?: VideoStatus | null;
   onChanged: () => void;
   preview?: boolean;
 }) {
@@ -162,7 +168,7 @@ export function BrandDashboardView({
       <div className="grid grid-cols-1 items-start gap-[18px] desk:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-[18px]">
           <BrandLicences licences={licences} creators={creators} onChanged={onChanged} preview={preview} />
-          <BrandAds renders={renders} />
+          <BrandAds renders={renders} video={video} onChanged={onChanged} />
         </div>
         <AgentActivity events={overview?.activity ?? []} />
       </div>

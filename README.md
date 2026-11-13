@@ -33,6 +33,24 @@ activity log, Verify and the standalone verifier, and its payment moves from the
 The consent rules don't change: the creator still approves every licence and every ad from their own wallet, and the
 agent's function-call key can only call `request_licence` and `submit_render`, never an approval.
 
+## What runs where (and what's private)
+
+- **Images:** every ad image is an edit of the creator's reference photo made on **NEAR AI Cloud** (FLUX.2-klein-4B),
+  and checked against it by Qwen on NEAR AI Cloud. The brief, the creator ranking and the banned-use screen also run
+  there. These calls run in NEAR AI's private (TEE) inference; the privacy claim of this project covers **images only**.
+- **Video (optional, off unless `VIDEO_ENABLED=true`):** a short clip (4 s, 720p, 16:9, no audio) made by
+  **Google Gemini Omni Flash** on its public API, **outside NEAR AI's TEE**. It starts from an ad image the creator has
+  already approved (that image is the first frame) and only for creators who turned on "Allow video" in their profile
+  (off by default). The clip is stored as uploaded (sha256 over the stored bytes), submitted with `submit_render`
+  (`needs_creator_review`: no frames are compared), counts toward the licence's render cap, and is paid only when the
+  creator approves it, like any ad. It carries the label "AI-generated video · licensed likeness" over the player and in
+  its record; the pixels aren't re-encoded. Caps: about $0.41 estimated per clip, refused over $0.50; 3 clips a day
+  site-wide. `pnpm -C web video:dry <licenceId> <approved sha256>` prints the exact request and the caps without
+  calling anything. Storage is local (Neon) for now; the video key goes in `web/.env.local` under the variable named in
+  `web/lib/video/config.ts`.
+- **On-chain (NEAR testnet):** terms, licences (non-transferable tokens), escrow, receipts by sha256, payments.
+- **Verify** hashes an image or video file in your browser (it's never uploaded) and asks the contract.
+
 ## Layout
 
 - `web/`: the Next.js app (pages and API routes), deployed on Vercel.

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AiTag, StatusPill, type PillKind } from "@/components/ds";
 import { formatNear } from "@/lib/rules";
 import type { RenderItem, ReceiptStatus } from "@/lib/types";
+import { AdMedia } from "./LabelledVideo";
 import { SelfLicenceBadge } from "./SelfLicence";
 import { SyntheticBadge } from "./Synthetic";
 
@@ -17,8 +18,7 @@ export function ReceiptTile({ item, href }: { item: RenderItem; href?: string })
   return (
     <article className="flex min-w-0 flex-col gap-2 rounded-[20px] bg-white p-3 text-[14px]">
       <div className="relative aspect-square overflow-hidden rounded-[14px] bg-paper">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={item.mediaUrl} alt={`Ad for ${item.licence.brand}`} loading="lazy" className="h-full w-full object-cover" />
+        <AdMedia src={item.mediaUrl} mime={item.mime} alt={`Ad for ${item.licence.brand}`} />
         <AiTag className="absolute left-2 top-2" />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2">

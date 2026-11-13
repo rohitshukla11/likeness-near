@@ -13,7 +13,9 @@ import { NotConnected } from "@/components/ds/NotConnected";
 import { BigAvatar, CHIP, Fact, MUTED, OUTLINE, ProfileHeader, Rule, shortDay, Stat, SURFACE } from "./Dash";
 import { RulesForm } from "./RulesForm";
 import { SelfLicenceBadge } from "./SelfLicence";
+import { AdMedia, isVideo } from "./LabelledVideo";
 import { LikenessChip } from "./Proven";
+import { VideoConsent } from "./VideoConsent";
 import { SyntheticBadge, SyntheticNote } from "./Synthetic";
 import { runTx, TxLine, type TxState } from "./TxLine";
 import { api, NotConnectedError } from "@/lib/api";
@@ -186,10 +188,13 @@ export function CreatorDashboardView({
             {pendingAds.map((it) => (
               <li key={`a-${it.receipt.sha256}`} className="flex flex-wrap items-center justify-between gap-3 rounded-[16px] bg-white px-4 py-3">
                 <span className="flex min-w-0 items-center gap-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={it.mediaUrl} alt="" className="h-14 w-14 shrink-0 rounded-[12px] bg-paper object-cover" />
+                  <span className="h-14 w-14 shrink-0 overflow-hidden rounded-[12px] bg-paper">
+                    <AdMedia src={it.mediaUrl} mime={it.mime} alt="" />
+                  </span>
                   <span className="flex min-w-0 flex-col">
-                    <b className="text-[15px]">{it.licence.brand === creator.accountId ? "You (your brand side)" : it.licence.brand} made an ad with your face</b>
+                    <b className="text-[15px]">
+                      {it.licence.brand === creator.accountId ? "You (your brand side)" : it.licence.brand} made {isVideo(it.mime) ? "a video" : "an ad"} with your face
+                    </b>
                     <span className="text-[13px] text-grey">
                       {formatNear(it.receipt.amount)} to you on approval · AI similarity check: {it.faceCheck.verdict === "likely_match" ? "likely you" : "needs your review"}
                     </span>
@@ -237,6 +242,8 @@ export function CreatorDashboardView({
           </div>
         )}
       </section>
+
+      <VideoConsent />
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <section className={`${SURFACE} flex flex-col gap-4 p-5 sm:p-6`} aria-label="Your terms">
@@ -338,8 +345,7 @@ function AdCard({ it, self, act }: { it: RenderItem; self: boolean; act: Act }) 
   return (
     <article className={`${SURFACE} flex min-w-0 flex-col overflow-hidden`}>
       <div className="relative aspect-square bg-paper">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={it.mediaUrl} alt={`Ad for ${it.licence.brand}`} loading="lazy" className="h-full w-full object-cover" />
+        <AdMedia src={it.mediaUrl} mime={it.mime} alt={`Ad for ${it.licence.brand}`} />
         <span className={`absolute left-3 top-3 ${CHIP} bg-ink text-lime`} title="AI-edited from the creator's consented photo">
           AI-edited
         </span>

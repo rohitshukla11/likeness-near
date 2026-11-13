@@ -15,9 +15,11 @@ import { CreatorAvatar, SyntheticBadge } from "@/components/likeness/Synthetic";
 import { txUrl } from "@/lib/near/config";
 import { formatNear, USE_LABELS } from "@/lib/rules";
 import { displayName } from "@/lib/profiles";
-import type { ActivityEvent, CreatorView, LicenceStatus, LicenceView, RenderItem } from "@/lib/types";
+import type { ActivityEvent, CreatorView, LicenceStatus, LicenceView, RenderItem, VideoStatus } from "@/lib/types";
 import { LicenceActions } from "./LicenceActions";
 import { MakeAd } from "./MakeAd";
+import { MakeVideo } from "./MakeVideo";
+import { isVideo } from "@/components/likeness/LabelledVideo";
 
 const LICENCE_PILL: Record<LicenceStatus, PillKind> = { Pending: "waiting", Declined: "neutral", Active: "licensed", Exhausted: "expired", Expired: "expired", Revoked: "revoked" };
 const EVENT_PILL: Record<ActivityEvent["kind"], PillKind> = { shortlist: "lime", skip: "neutral", request: "waiting", plan: "waiting", render: "waiting", check: "waiting", submit: "licensed", blocked: "revoked", error: "revoked" };
@@ -66,7 +68,16 @@ export function BrandLicences({ licences, creators, onChanged, preview = false }
   );
 }
 
-export function BrandAds({ renders }: { renders: RenderItem[] }) {
+/** A video can be made from an approved image ad while its licence is Active with a render left (and none is underway). */
+const canVideo = (it: RenderItem, v: VideoStatus | null | undefined) =>
+  !!v?.enabled &&
+  !isVideo(it.mime) &&
+  it.receipt.status === "Approved" &&
+  it.licence.status === "Active" &&
+  it.licence.rendersUsed + it.licence.rendersReserved < it.licence.renderCap &&
+  !v.jobs.some((j) => j.fromSha256 === it.receipt.sha256 && j.status !== "failed" && j.status !== "refused");
+
+export function BrandAds({ renders, video, onChanged = () => undefined }: { renders: RenderItem[]; video?: VideoStatus | null; onChanged?: () => void }) {
   return (
     <section className="flex flex-col gap-3" aria-label="Ads">
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -76,7 +87,10 @@ export function BrandAds({ renders }: { renders: RenderItem[] }) {
       {renders.length ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {renders.map((it) => (
-            <ReceiptTile key={it.receipt.sha256} item={it} />
+            <div key={it.receipt.sha256} className="flex min-w-0 flex-col gap-2">
+              <ReceiptTile item={it} />
+              {canVideo(it, video) && <MakeVideo licenceId={it.licence.id} fromSha={it.receipt.sha256} seconds={video!.seconds} estUsd={video!.estUsd} onDone={onChanged} />}
+            </div>
           ))}
         </div>
       ) : (

@@ -24,7 +24,7 @@ import { accountUrl, txUrl } from "@/lib/near/config";
 import { views } from "@/lib/near/view";
 import { profileOf } from "@/lib/profiles";
 import { BRIEF_MAX, FIELD_MAX, formatNear, MAX_DAYS_LIMIT, textProblems, USE_LABELS, USES, type Use } from "@/lib/rules";
-import type { CampaignRequest, FindResponse, LicenceStatus, RequestResponse, ShortlistCard } from "@/lib/types";
+import type { CampaignRequest, FindResponse, LicenceStatus, RequestResponse, ShortlistCard, VideoStatus } from "@/lib/types";
 import { makeOneAd, type Step } from "./runAd";
 
 /** The brief form loads with this café example, editable (1 render, so a first live run costs one image edit). */
@@ -37,13 +37,14 @@ const EXAMPLE = {
   product: "a white ceramic coffee cup with no logo",
 };
 
-export function AgentFlow({ onChanged, preview }: { onChanged: () => void; preview?: { find: FindResponse | null; renders: number } }) {
+export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void; preview?: { find: FindResponse | null; renders: number }; video?: VideoStatus | null }) {
   const [brief, setBrief] = useState(EXAMPLE.brief);
   const [use, setUse] = useState<Use>(EXAMPLE.use);
   const [durationDays, setDays] = useState(EXAMPLE.durationDays);
   const [renderCap, setCap] = useState(preview?.renders ?? EXAMPLE.renderCap);
   const [scene, setScene] = useState(EXAMPLE.scene);
   const [product, setProduct] = useState(EXAMPLE.product);
+  const [media, setMedia] = useState<"image" | "video">("image");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [find, setFind] = useState<FindResponse | null>(preview?.find ?? null);
@@ -53,7 +54,13 @@ export function AgentFlow({ onChanged, preview }: { onChanged: () => void; previ
   const started = useRef(false);
   const add = (s: Step) => setSteps((x) => [...x, s]);
 
-  const problems = [...textProblems(brief), ...(scene ? textProblems(scene, "the scene", FIELD_MAX) : []), ...(product ? textProblems(product, "the product", FIELD_MAX) : [])];
+  const wantsVideo = media === "video" && !!video?.enabled;
+  const problems = [
+    ...textProblems(brief),
+    ...(scene ? textProblems(scene, "the scene", FIELD_MAX) : []),
+    ...(product ? textProblems(product, "the product", FIELD_MAX) : []),
+    ...(wantsVideo && renderCap < 2 ? ["a video campaign needs at least 2 renders: the image, then the video made from it"] : []),
+  ];
 
   // 4 → 5: watch the requested licence; once the creator approves, the agent makes the renders.
   useEffect(() => {
@@ -103,7 +110,7 @@ export function AgentFlow({ onChanged, preview }: { onChanged: () => void; previ
     setSteps([]);
     started.current = false;
     try {
-      const body: CampaignRequest = { brief, use, durationDays, renderCap, scene, product };
+      const body: CampaignRequest = { brief, use, durationDays, renderCap, scene, product, media: wantsVideo ? "video" : "image" };
       setFind(await api<FindResponse>("/api/agent/find", body));
       onChanged();
     } catch (e) {
@@ -152,7 +159,7 @@ export function AgentFlow({ onChanged, preview }: { onChanged: () => void; previ
           <Lbl text="What the ad shows">
             <textarea className={`${inputClass} min-h-24 resize-y`} value={brief} maxLength={BRIEF_MAX} onChange={(e) => setBrief(e.target.value)} placeholder="e.g. Morning coffee campaign for a neighbourhood café" />
           </Lbl>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-7">
+          <div className={`grid grid-cols-2 gap-3 ${video?.enabled ? "md:grid-cols-8" : "md:grid-cols-7"}`}>
             <Lbl text="Category" className="col-span-2 md:col-span-1">
               <select className={inputClass} value={use} onChange={(e) => setUse(e.target.value as Use)}>
                 {USES.map((u) => (
@@ -168,6 +175,14 @@ export function AgentFlow({ onChanged, preview }: { onChanged: () => void; previ
             <Lbl text="Renders">
               <input className={inputClass} type="number" min={1} max={20} value={renderCap} onChange={(e) => setCap(Number(e.target.value))} />
             </Lbl>
+            {video?.enabled && (
+              <Lbl text="Media">
+                <select className={inputClass} value={media} onChange={(e) => setMedia(e.target.value as "image" | "video")}>
+                  <option value="image">Image</option>
+                  <option value="video">Image, then video</option>
+                </select>
+              </Lbl>
+            )}
             <Lbl text="Scene (optional)" className="col-span-2">
               <input className={inputClass} value={scene} maxLength={FIELD_MAX} onChange={(e) => setScene(e.target.value)} placeholder="the agent writes it if empty" />
             </Lbl>

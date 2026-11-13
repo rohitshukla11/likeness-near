@@ -15,6 +15,8 @@ import { isSelfLicence, SELF_LICENCE_NOTE } from "./SelfLicence";
 import { SyntheticNote } from "./Synthetic";
 import { api, NotConnectedError } from "@/lib/api";
 import { sha256OfBytes } from "@/lib/capture";
+import { VIDEO_LABEL } from "@/lib/video/config";
+import { isVideo, LabelledVideo } from "./LabelledVideo";
 import { calls } from "@/lib/near/methods";
 import { useWallet } from "@/lib/near/wallet";
 import { formatNear, USE_LABELS } from "@/lib/rules";
@@ -69,14 +71,24 @@ export function RequestPage({ sha256 }: { sha256: string }) {
           <Card>
             <div className="relative overflow-hidden rounded-[14px] bg-paper">
               {shown ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={shown.url} alt={`The ad ${item.licence.brand} made with your face`} className="w-full" />
+                isVideo(item.mime) ? (
+                  <div className="aspect-video w-full">
+                    <LabelledVideo src={shown.url} fit="contain" />
+                  </div>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={shown.url} alt={`The ad ${item.licence.brand} made with your face`} className="w-full" />
+                )
               ) : (
                 <div className="aspect-square" />
               )}
               <AiTag className="absolute left-3 top-3" />
             </div>
-            <p className="m-0 text-[13px] text-grey">AI-edited from the creator&apos;s consented photo.</p>
+            <p className="m-0 text-[13px] text-grey">
+              {isVideo(item.mime)
+                ? `${VIDEO_LABEL}: a video made from an ad image you approved, outside NEAR AI's TEE. No AI similarity check runs on video; watch it and decide.`
+                : "AI-edited from the creator's consented photo."}
+            </p>
             <p className="m-0 break-all text-[13px]">
               sha256 <code>{sha256}</code>{" "}
               {shown && (matches ? <span className="text-ok">matches the file shown</span> : <span className="text-bad">does NOT match the file shown</span>)}
