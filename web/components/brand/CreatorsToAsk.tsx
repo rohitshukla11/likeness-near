@@ -39,6 +39,7 @@ export function CreatorsToAsk({ creators, brand, self }: { creators: CreatorView
                     <span className="tnum shrink-0 text-[15px] font-bold">{formatNear(c.terms.pricePerRender)}</span>
                   </div>
                   <span className={`text-[12px] ${MUTED}`}>per render · up to {c.terms.renderCap} · {c.terms.maxDays} days max</span>
+                  {s && <span className="text-[13px]">{s.bio}</span>}
                   <span className="flex flex-wrap gap-1.5">
                     <SyntheticBadge accountId={c.accountId} />
                     {c.accountId === self && <span className={`${CHIP} bg-black/5 text-ink`}>You (a self-licence for demo)</span>}

@@ -14,6 +14,10 @@ export const SYNTHETIC_DECIDER = "Decisions for synthetic demo creators are made
 export interface SyntheticCreator {
   accountId: string;
   name: string;
+  /** What they'd be known for (the brand's shortlist and the Creators page show it). */
+  niche: string;
+  /** One line about the (fictional) creator. */
+  bio: string;
   /** Public path of the face (also the capture frame stored for edits and the similarity check). */
   face: string;
   /** sha256 of that file = the capture_sha256 registered on-chain. */
@@ -21,27 +25,37 @@ export interface SyntheticCreator {
   terms: { pricePerRenderNear: string; allowedUses: Use[]; maxDays: number; renderCap: number };
 }
 
+/**
+ * The same three demo creators as the PayPal demo (names, niches, terms scaled to NEAR, render caps, licence days),
+ * except that its third, a real person, is replaced by Asha, a synthetic creator.
+ */
 export const SYNTHETIC: SyntheticCreator[] = [
   {
     accountId: "likeness-synth-asha.testnet",
     name: "Asha",
+    niche: "Lifestyle & food",
+    bio: "Lifestyle and food creator: cafés, home cooking and weekend trips.",
     face: "/synthetic/asha.jpg",
     faceSha256: "e5b69388fda5ca383cc7f3a7d3208e6cbd9cdd8b0cff72903a566a2b5210c642",
-    terms: { pricePerRenderNear: "0.08", allowedUses: ["Fashion", "Beauty", "FoodDrink", "Travel", "Fitness"], maxDays: 30, renderCap: 5 },
+    terms: { pricePerRenderNear: "0.04", allowedUses: ["FoodDrink", "Travel", "Fashion", "Beauty"], maxDays: 30, renderCap: 10 },
   },
   {
-    accountId: "likeness-synth-daniel.testnet",
-    name: "Daniel",
-    face: "/synthetic/daniel.jpg",
-    faceSha256: "0f502f31220d5fa08d9278a4e4fdcff0b34b95c7ed02cf99f418763b7e3cf9b4",
-    terms: { pricePerRenderNear: "0.06", allowedUses: ["Tech", "Finance", "FoodDrink", "Travel", "Other"], maxDays: 30, renderCap: 5 },
+    accountId: "likeness-synth-maya.testnet",
+    name: "Maya Lindqvist",
+    niche: "Fitness",
+    bio: "Fitness coach: training, activewear and healthy routines.",
+    face: "/synthetic/maya.jpg",
+    faceSha256: "2be7556bab0363203b32328ec9c6a9d397a430c7cacde06b02fdb8efbdf4b7f0",
+    terms: { pricePerRenderNear: "0.05", allowedUses: ["Fitness", "Fashion", "Beauty"], maxDays: 21, renderCap: 8 },
   },
   {
-    accountId: "likeness-synth-ana.testnet",
-    name: "Ana Reyes",
-    face: "/synthetic/ana-reyes.jpg",
-    faceSha256: "b3eaef63eeaa01e3174f01aa43d2807d7d3de57967a83653aeacc8f122d8c41a",
-    terms: { pricePerRenderNear: "0.05", allowedUses: ["Fashion", "Beauty", "FoodDrink", "Fitness", "Tech"], maxDays: 14, renderCap: 3 },
+    accountId: "likeness-synth-theo.testnet",
+    name: "Theo Marlowe",
+    niche: "Tech & gadgets",
+    bio: "Tech reviewer: laptops, phones and product launches.",
+    face: "/synthetic/theo.jpg",
+    faceSha256: "d8af71451a62a7bb160b3bbe82eae45c0ea5d310cfab983ac2ca78d2dfc598c3",
+    terms: { pricePerRenderNear: "0.07", allowedUses: ["Tech", "Other"], maxDays: 14, renderCap: 5 },
   },
 ];
 

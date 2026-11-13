@@ -24,6 +24,11 @@ test("accounts are distinct .testnet ids and terms pass the same validation as r
   }
 });
 
+test("the three demo creators each have a niche and a bio", () => {
+  assert.deepEqual(SYNTHETIC.map((s) => s.name), ["Asha", "Maya Lindqvist", "Theo Marlowe"]);
+  for (const s of SYNTHETIC) assert.ok(s.niche && s.bio.endsWith("."), s.name);
+});
+
 test("labels say synthetic, and only for listed accounts", () => {
   assert.equal(SYNTHETIC_NOTE, "Synthetic demo creator: AI-generated face, not a real person");
   assert.equal(creatorLabel("likeness-synth-asha.testnet"), "Asha (synthetic demo creator)");

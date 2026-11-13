@@ -71,6 +71,11 @@ export default function CreatorsPage() {
                   <span className="text-grey">
                     per render · up to {c.terms.renderCap} renders · {c.terms.maxDays} days max
                   </span>
+                  {s && (
+                    <span className="text-[13px]">
+                      <b>{s.niche}.</b> {s.bio}
+                    </span>
+                  )}
                   <span className="text-[13px]">{c.terms.allowedUses.map((u) => USE_LABELS[u]).join(", ")}</span>
                   <SyntheticNote accountId={c.accountId} />
                 </div>

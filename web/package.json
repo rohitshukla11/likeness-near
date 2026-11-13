@@ -17,6 +17,7 @@
     "db:migrate": "node --env-file-if-exists=.env.local scripts/db-migrate.ts",
     "secrets:init": "node scripts/secrets-init.ts",
     "test": "node --test \"test/**/*.test.ts\"",
+    "faces:synthetic": "node --env-file-if-exists=.env.local scripts/synthetic-faces.ts",
     "seed:synthetic": "node --env-file-if-exists=.env.local scripts/seed-synthetic.ts"
   },
   "dependencies": {

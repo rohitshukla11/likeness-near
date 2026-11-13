@@ -6,8 +6,10 @@ origin, no real person. Each file's sha256 is the `capture_sha256` its testnet a
 | File | Name in the app | Made | How | Prompt (summary) | sha256 |
 |---|---|---|---|---|---|
 | `asha.jpg` | Asha | 4 Nov 2026 | Rohit's earlier hackathon project (the "synthetic demo creator" asset, request `wfjqaoqTF_LTi9sPptbJ-Q8`), copied unchanged | a fictional adult woman in her late twenties, neutral expression, plain grey background | `e5b69388fda5ca383cc7f3a7d3208e6cbd9cdd8b0cff72903a566a2b5210c642` |
-| `daniel.jpg` | Daniel | 4 Nov 2026 | same project (its "second synthetic person" asset, request `IwDratCSIravoLAPyP6TwAk`), copied unchanged | a fictional adult man in his late forties, short grey hair and a beard, plain grey background | `0f502f31220d5fa08d9278a4e4fdcff0b34b95c7ed02cf99f418763b7e3cf9b4` |
-| `ana-reyes.jpg` | Ana Reyes | 12 Nov 2026 | NEAR AI Cloud, FLUX.2-klein-4B `/images/generations` (our spike, request `63637e24-ffa4-4459-888e-0a42cfe01ad3`) | a fictional adult woman in her late twenties, plain grey background | `b3eaef63eeaa01e3174f01aa43d2807d7d3de57967a83653aeacc8f122d8c41a` |
+| `maya.jpg` | Maya Lindqvist | 13 Nov 2026 | NEAR AI Cloud, FLUX.2-klein-4B `/images/generations` (`web/scripts/synthetic-faces.ts`, request `77fc617d-2884-47c0-9f04-9b32040a538c`), unchanged | a fictional adult woman in her late twenties, a fitness coach, ponytail, teal sports top | `2be7556bab0363203b32328ec9c6a9d397a430c7cacde06b02fdb8efbdf4b7f0` |
+| `theo.jpg` | Theo Marlowe | 13 Nov 2026 | same (request `28839a18-727b-4ebd-acde-810fe2c11abc`), unchanged | a fictional adult man in his mid thirties, a tech reviewer, round glasses, charcoal t-shirt | `d8af71451a62a7bb160b3bbe82eae45c0ea5d310cfab983ac2ca78d2dfc598c3` |
 
-Every prompt began "A photorealistic head-and-shoulders portrait photograph of a fictional adult who does not exist
-(not a real or famous person)". The full origin is in `docs/HACKATHON.md`.
+Asha's prompt began "A photorealistic head-and-shoulders portrait photograph of a fictional adult who does not exist
+(not a real or famous person)"; Maya's and Theo's full prompts are in `web/scripts/synthetic-faces.ts` and end "This is
+a fictional person who does not exist. The face must be entirely invented and must not resemble any real person,
+celebrity, public figure or famous person." The full origin is in `docs/HACKATHON.md`.

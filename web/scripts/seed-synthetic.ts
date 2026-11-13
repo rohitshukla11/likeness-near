@@ -2,7 +2,7 @@
 //   Sets up the synthetic demo creators (lib/synthetic.ts). DRY RUN by default: reads the chain and the database, then
 //   prints exactly what it would do. With --confirm, for each creator that isn't fully set up:
 //     1. create its testnet account, faucet-sponsored (key saved by near-cli to ~/.near-credentials, never printed);
-//     2. store its capture in Neon (the public synthetic face as the consented frame; liveness marked synthetic);
+//     2. store its capture in Neon (the public synthetic face as its reference frame; liveness marked synthetic);
 //     3. register_creator on the contract, signed by that account, attaching 0.01 NEAR for storage (excess refunded).
 //
 // pnpm seed:synthetic approve-licence <account> <licence_id> [--confirm]
@@ -11,7 +11,7 @@
 // pnpm seed:synthetic reject-render   <account> <sha256>     [--confirm]
 //   The operator's decision for a synthetic creator (there is no person to consent), signed by its account. Dry run
 //   unless --confirm. Only accounts listed in lib/synthetic.ts are accepted.
-import { execFileSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -45,7 +45,10 @@ async function registered(id: string): Promise<boolean> {
 
 /** near-cli, output filtered to status lines only (never keys). */
 function near(argv: string[]) {
-  const out = execFileSync(NEAR_BIN, argv, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  // near-cli writes its status to stderr: read both streams, print only the status lines.
+  const r = spawnSync(NEAR_BIN, argv, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  const out = `${r.stdout}\n${r.stderr}`;
+  if (r.status !== 0) throw new Error(`near-cli exited ${r.status}: ${out.split("\n").filter((l) => /Error|error/.test(l) && !/ed25519:/.test(l)).slice(0, 3).join(" | ")}`);
   for (const l of out.replace(/\x1b\[[0-9;]*m/g, "").split("\n")) if (/Transaction ID|successfully|created|succeeded|Error|error/.test(l) && !/ed25519:[1-9A-HJ-NP-Za-km-z]{60,}/.test(l)) console.log(`    ${l.trim()}`);
 }
 const show = (argv: string[]) => `near ${argv.map((x) => (/[\s{}"',]/.test(x) ? `'${x}'` : x)).join(" ")}`;
@@ -68,9 +71,9 @@ async function seed() {
     const isReg = exists && (await registered(s.accountId));
     const hasCap = sql ? (await sql.query(`select 1 from captures where creator = $1 and front_sha256 = $2`, [s.accountId, sha])).length > 0 : false;
     const terms = { price_per_render: yocto(s.terms.pricePerRenderNear), allowed_uses: s.terms.allowedUses, max_days: s.terms.maxDays, render_cap: s.terms.renderCap };
-    console.log(`${s.name} (synthetic demo creator) → ${s.accountId}`);
+    console.log(`${s.name} (synthetic demo creator, ${s.niche}) → ${s.accountId}\n  "${s.bio}"`);
     console.log(`  1. account:  ${exists ? "exists ✓" : `create (faucet-sponsored, free): ${show(createArgs(s))}`}`);
-    console.log(`  2. capture:  ${hasCap ? "stored ✓" : sql ? `store ${s.face} (${bytes.length} B, sha256 ${sha.slice(0, 12)}…) in Neon as the consented frame (liveness: synthetic)` : "DATABASE_URL not set: can't check or store"}`);
+    console.log(`  2. capture:  ${hasCap ? "stored ✓" : sql ? `store ${s.face} (${bytes.length} B, sha256 ${sha.slice(0, 12)}…) in Neon as its reference frame (liveness: synthetic)` : "DATABASE_URL not set: can't check or store"}`);
     const reg = callArgs(s.accountId, "register_creator", { terms, capture_sha256: sha }, "0.01");
     console.log(`  3. register: ${isReg ? "registered ✓" : `${show(reg)}`}`);
     console.log(`     terms: ${s.terms.pricePerRenderNear} NEAR per render, ${s.terms.allowedUses.join("/")}, ≤ ${s.terms.maxDays} days, cap ${s.terms.renderCap}`);

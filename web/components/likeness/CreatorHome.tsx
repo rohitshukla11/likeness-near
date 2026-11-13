@@ -106,7 +106,7 @@ export function CreatorDashboardView({
         avatar={<BigAvatar src={faceSrc} alt={s ? `${s.name}: AI-generated face, not a real person` : "Your live capture"} letter={creator.accountId[0] ?? "C"} />}
         eyebrow="Creator profile"
         title={creatorLabel(creator.accountId)}
-        subtitle="Brands' agents ask for a licence and make the ad; nothing is paid or released until you approve that exact ad in your wallet."
+        subtitle={`${s ? `${s.bio} ` : ""}Brands' agents ask for a licence and make the ad; nothing is paid or released until you approve that exact ad in your wallet.`}
         chips={
           <>
             {creator.active ? <span className={`${CHIP} bg-lime text-ink`}>● Registered on NEAR</span> : <span className={`${CHIP} bg-black/5 text-ink`}>Paused: no new requests</span>}
