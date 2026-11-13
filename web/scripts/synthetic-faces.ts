@@ -1,7 +1,7 @@
 // pnpm faces:synthetic [--confirm]
-//   Generates the synthetic demo creators' faces (Maya Lindqvist and Theo Marlowe, lib/synthetic.ts) with NEAR AI Cloud,
+//   Generates a synthetic demo creator's face (Maya Lindqvist, lib/synthetic.ts; Theo Marlowe's too, before he was removed) with NEAR AI Cloud,
 //   FLUX.2-klein-4B /images/generations, from a text prompt only (no source photo): fictional adults who don't exist.
-//   The prompts are the ones the PayPal demo used for the same two personas. BILLED: 2 images × $0.012 ≈ $0.024, hard
+//   The prompt is the one the PayPal demo used for the same persona. BILLED: 1 image × $0.012, hard
 //   cap $0.06. DRY RUN by default (no network call). Output: spike-out/synthetic-faces/ (gitignored) with each image and
 //   its provenance (model, request id, prompt, time); copying a face into public/synthetic/ is a separate, reviewed step.
 //   The API key is never printed or written.
@@ -21,10 +21,6 @@ const FACES = [
   {
     key: "maya",
     prompt: `A photorealistic head-and-shoulders portrait photo of a fictional adult woman in her late twenties, a fitness coach: athletic, friendly smile, light brown hair in a ponytail, a plain teal sports top, soft daylight, neutral light background, looking at the camera, sharp focus on the face. ${NOT_REAL}`,
-  },
-  {
-    key: "theo",
-    prompt: `A photorealistic head-and-shoulders portrait photo of a fictional adult man in his mid thirties, a tech reviewer: short dark hair, a trimmed beard, round glasses, a plain charcoal t-shirt, soft studio light, neutral warm background, looking at the camera, sharp focus on the face. ${NOT_REAL}`,
   },
 ];
 

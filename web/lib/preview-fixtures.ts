@@ -13,7 +13,7 @@ const T = Date.UTC(2026, 10, 13, 9, 30);
 const DAY = 86_400_000;
 
 export const PREVIEW_BRAND = "demo-brand.testnet";
-const [asha, maya, theo] = SYNTHETIC;
+const [asha, maya] = SYNTHETIC;
 
 export const creatorOf = (s: Pick<(typeof SYNTHETIC)[number], "accountId" | "terms" | "faceSha256">): CreatorView => ({
   accountId: s.accountId,
@@ -75,22 +75,22 @@ export const creatorEmpty: { creator: CreatorView; inbox: CreatorInbox } = {
 // ---------------------------------------------------------------- brand side (demo-brand, a brand only)
 
 const bL1 = licence("4", asha!.accountId, PREVIEW_BRAND, { rendersUsed: 1, rendersReserved: 1 });
-const bL2 = licence("5", theo!.accountId, PREVIEW_BRAND, { use: "Tech", price: near(0.07), state: "Pending", status: "Pending" });
+const bL2 = licence("5", maya!.accountId, PREVIEW_BRAND, { use: "Fitness", price: near(0.05), state: "Pending", status: "Pending" });
 const bL3 = licence("6", OWNER.accountId, PREVIEW_BRAND, { use: "FoodDrink", price: near(0.04), renderCap: 1, rendersUsed: 1, status: "Exhausted" });
 
 const events: ActivityEvent[] = [
   { at: T - 10 * 60_000, kind: "submit", summary: "submitted the ad for the creator's approval; AI similarity check (advisory): needs the creator's review; the price is reserved, not paid", licenceId: "4", sha256: "1".repeat(64), tx: "9xPreviewTxHashNotOnChain" },
   { at: T - 11 * 60_000, kind: "render", summary: "made ad 2 for licence 4 in 4.2 s; not submitted until the similarity check", licenceId: "4", sha256: "1".repeat(64) },
-  { at: T - 40 * 60_000, kind: "request", summary: `asked ${theo!.accountId} for a Tech licence (14 days, 3 renders); waiting for the creator`, licenceId: "5", tx: "9xPreviewTxHashNotOnChain" },
-  { at: T - 41 * 60_000, kind: "shortlist", summary: `chose ${theo!.accountId} (model): the brief is about a laptop; Theo reviews tech and allows Tech` },
-  { at: T - 42 * 60_000, kind: "skip", summary: `${maya!.accountId}: the creator doesn't allow Tech` },
-  { at: T - 42 * 60_000, kind: "shortlist", summary: `${theo!.accountId}: Theo Marlowe (Tech & gadgets), a synthetic demo creator (AI-generated face, not a real person); fits: 0.07 NEAR per render, up to 5 renders, 14 days max` },
+  { at: T - 40 * 60_000, kind: "request", summary: `asked ${maya!.accountId} for a Fitness licence (14 days, 3 renders); waiting for the creator`, licenceId: "5", tx: "9xPreviewTxHashNotOnChain" },
+  { at: T - 41 * 60_000, kind: "shortlist", summary: `chose ${maya!.accountId} (model): the brief is about running shoes; Maya is a fitness coach and allows Fitness` },
+  { at: T - 42 * 60_000, kind: "skip", summary: `${asha!.accountId}: the creator doesn't allow Fitness` },
+  { at: T - 42 * 60_000, kind: "shortlist", summary: `${maya!.accountId}: Maya Lindqvist (Fitness), a synthetic demo creator (AI-generated face, not a real person); fits: 0.05 NEAR per render, up to 8 renders, 21 days max` },
   { at: T - 60 * 60_000, kind: "blocked", summary: "campaign refused before anything was asked (keywords): banned use in the brief: Political: \"election\"" },
 ];
 
 export const brandDemo: { brand: BrandView; creators: CreatorView[]; overview: BrandOverview } = {
   brand: { accountId: PREVIEW_BRAND, escrow: near(1.82), reserved: near(0.093), maxPerRender: near(0.1), totalBudget: near(1), spent: near(0.157) },
-  creators: [creatorOf(OWNER), creatorOf(asha!), creatorOf(maya!), creatorOf(theo!)],
+  creators: [creatorOf(OWNER), creatorOf(asha!), creatorOf(maya!)],
   overview: {
     licences: [bL1, bL2, bL3],
     renders: [render(1, bL1, "Reserved", asha!.face, "needs_creator_review"), render(4, bL1, "Approved", asha!.face), render(5, bL3, "Approved", OWNER.face)],
@@ -100,6 +100,6 @@ export const brandDemo: { brand: BrandView; creators: CreatorView[]; overview: B
 
 export const brandEmpty: { brand: BrandView | null; creators: CreatorView[]; overview: BrandOverview } = {
   brand: null,
-  creators: [creatorOf(OWNER), creatorOf(asha!), creatorOf(maya!), creatorOf(theo!)],
+  creators: [creatorOf(OWNER), creatorOf(asha!), creatorOf(maya!)],
   overview: { licences: [], renders: [], activity: [] },
 };

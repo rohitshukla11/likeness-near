@@ -15,9 +15,10 @@ export interface ShortlistEntry {
 }
 
 export function shortlist(creators: CreatorView[], ask: LicenceAsk, brand: BrandView): ShortlistEntry[] {
+  // Paused creators take no requests (the contract refuses them): left out entirely.
   return creators
+    .filter((c) => c.active)
     .map((c) => {
-      if (!c.active) return { creator: c, pick: false, reason: "not taking requests" };
       const problems = checkAsk(c.terms, ask);
       if (problems.length) return { creator: c, pick: false, reason: problems.join("; ") };
       if (BigInt(c.terms.pricePerRender) > BigInt(brand.maxPerRender)) {

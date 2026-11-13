@@ -2,18 +2,16 @@
 
 /**
  * Every registered creator, read from the contract (list_creators): their price, the uses they allow, the longest
- * licence and the render cap. The owner's photo (published with his consent) and the synthetic demo creators'
- * AI-generated faces (labelled as such) are shown; any other account shows its initial.
+ * licence and the render cap, as cards (components/likeness/CreatorCard). Paused creators aren't listed. The owner's
+ * photo (published with his consent) and the synthetic demo creators' AI-generated faces (labelled as such) are shown.
  */
 import { useEffect, useState } from "react";
 import { AppPage, EmptyState, ErrorCard, Skeleton, StatusPill } from "@/components/ds";
 import { NotConnected } from "@/components/ds/NotConnected";
-import { LikenessChip } from "@/components/likeness/Proven";
-import { CreatorAvatar, SyntheticBadge, SyntheticNote } from "@/components/likeness/Synthetic";
+import { CreatorCard } from "@/components/likeness/CreatorCard";
+import { SyntheticNote } from "@/components/likeness/Synthetic";
 import { accountUrl, contractConfigured } from "@/lib/near/config";
 import { views } from "@/lib/near/view";
-import { formatNear, USE_LABELS } from "@/lib/rules";
-import { profileOf } from "@/lib/profiles";
 import type { CreatorView } from "@/lib/types";
 
 export default function CreatorsPage() {
@@ -44,48 +42,27 @@ export default function CreatorsPage() {
         <ErrorCard>{error}</ErrorCard>
       ) : !creators ? (
         <Skeleton className="h-40" />
-      ) : creators.length === 0 ? (
-        <EmptyState title="No creators yet">Creators register from the dashboard with their NEAR wallet.</EmptyState>
+      ) : creators.filter((c) => c.active).length === 0 ? (
+        <EmptyState title="No creators yet">No creator is taking requests right now.</EmptyState>
       ) : (
-        <ul className="m-0 grid list-none grid-cols-1 gap-[14px] p-0 sm:grid-cols-2 lg:grid-cols-3">
-          {creators.map((c) => {
-            const s = profileOf(c.accountId);
-            return (
-              <li key={c.accountId} className="flex flex-col overflow-hidden rounded-[22px] bg-white text-[14px] ring-1 ring-black/[0.04]">
-                <div className="relative aspect-[4/3] w-full bg-paper">
-                  <CreatorAvatar accountId={c.accountId} size="fill" className="absolute inset-0" />
-                  <span className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-                    <StatusPill kind={c.active ? "licensed" : "neutral"}>{c.active ? "Open to requests" : "Paused"}</StatusPill>
-                    <SyntheticBadge accountId={c.accountId} />
+        <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
+          {creators
+            .filter((c) => c.active)
+            .map((c) => (
+              <CreatorCard
+                key={c.accountId}
+                c={c}
+                status={<StatusPill kind="licensed">Open to requests</StatusPill>}
+                action={
+                  <span className="flex flex-col gap-1">
+                    <SyntheticNote accountId={c.accountId} />
+                    <a href={accountUrl(c.accountId)} target="_blank" rel="noreferrer" className="truncate text-[12px] text-grey">
+                      {c.accountId} ↗
+                    </a>
                   </span>
-                </div>
-                <div className="flex flex-1 flex-col gap-2 p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="min-w-0">
-                      <b className="block truncate text-[16px]">{s ? s.name : c.accountId}</b>
-                      <a href={accountUrl(c.accountId)} target="_blank" rel="noreferrer" className="block truncate text-[12px] text-grey">
-                        {c.accountId} ↗
-                      </a>
-                    </span>
-                    <span className="tnum shrink-0 text-[15px] font-bold">{formatNear(c.terms.pricePerRender)}</span>
-                  </div>
-                  <span className="text-grey">
-                    per render · up to {c.terms.renderCap} renders · {c.terms.maxDays} days max
-                  </span>
-                  {s && (
-                    <span className="text-[13px]">
-                      <b>{s.niche}.</b> {s.bio}
-                    </span>
-                  )}
-                  <span className="text-[13px]">{c.terms.allowedUses.map((u) => USE_LABELS[u]).join(", ")}</span>
-                  <span className="flex flex-wrap gap-1.5">
-                    <LikenessChip proven={!!c.captureSha256} captureSha={c.captureSha256} />
-                  </span>
-                  <SyntheticNote accountId={c.accountId} />
-                </div>
-              </li>
-            );
-          })}
+                }
+              />
+            ))}
         </ul>
       )}
     </AppPage>

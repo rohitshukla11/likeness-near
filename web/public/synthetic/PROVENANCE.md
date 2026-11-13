@@ -7,9 +7,8 @@ origin, no real person. Each file's sha256 is the `capture_sha256` its testnet a
 |---|---|---|---|---|---|
 | `asha.jpg` | Asha | 4 Nov 2026 | Rohit's earlier hackathon project (the "synthetic demo creator" asset, request `wfjqaoqTF_LTi9sPptbJ-Q8`), copied unchanged | a fictional adult woman in her late twenties, neutral expression, plain grey background | `e5b69388fda5ca383cc7f3a7d3208e6cbd9cdd8b0cff72903a566a2b5210c642` |
 | `maya.jpg` | Maya Lindqvist | 13 Nov 2026 | NEAR AI Cloud, FLUX.2-klein-4B `/images/generations` (`web/scripts/synthetic-faces.ts`, request `77fc617d-2884-47c0-9f04-9b32040a538c`), unchanged | a fictional adult woman in her late twenties, a fitness coach, ponytail, teal sports top | `2be7556bab0363203b32328ec9c6a9d397a430c7cacde06b02fdb8efbdf4b7f0` |
-| `theo.jpg` | Theo Marlowe | 13 Nov 2026 | same (request `28839a18-727b-4ebd-acde-810fe2c11abc`), unchanged | a fictional adult man in his mid thirties, a tech reviewer, round glasses, charcoal t-shirt | `d8af71451a62a7bb160b3bbe82eae45c0ea5d310cfab983ac2ca78d2dfc598c3` |
 
 Asha's prompt began "A photorealistic head-and-shoulders portrait photograph of a fictional adult who does not exist
-(not a real or famous person)"; Maya's and Theo's full prompts are in `web/scripts/synthetic-faces.ts` and end "This is
+(not a real or famous person)"; Maya's full prompt is in `web/scripts/synthetic-faces.ts` and ends "This is
 a fictional person who does not exist. The face must be entirely invented and must not resemble any real person,
 celebrity, public figure or famous person." The full origin is in `docs/HACKATHON.md`.

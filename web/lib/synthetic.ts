@@ -26,8 +26,8 @@ export interface SyntheticCreator {
 }
 
 /**
- * The same three demo creators as the PayPal demo (names, niches, terms scaled to NEAR, render caps, licence days),
- * except that its third, a real person, is replaced by Asha, a synthetic creator.
+ * The synthetic demo creators beside the one real creator (lib/profiles.ts): Maya from the PayPal demo (name, niche,
+ * terms scaled to NEAR) and Asha. Theo Marlowe was removed from the demo; his account stays registered but paused.
  */
 export const SYNTHETIC: SyntheticCreator[] = [
   {
@@ -47,15 +47,6 @@ export const SYNTHETIC: SyntheticCreator[] = [
     face: "/synthetic/maya.jpg",
     faceSha256: "2be7556bab0363203b32328ec9c6a9d397a430c7cacde06b02fdb8efbdf4b7f0",
     terms: { pricePerRenderNear: "0.05", allowedUses: ["Fitness", "Fashion", "Beauty"], maxDays: 21, renderCap: 8 },
-  },
-  {
-    accountId: "likeness-synth-theo.testnet",
-    name: "Theo Marlowe",
-    niche: "Tech & gadgets",
-    bio: "Tech reviewer: laptops, phones and product launches.",
-    face: "/synthetic/theo.jpg",
-    faceSha256: "d8af71451a62a7bb160b3bbe82eae45c0ea5d310cfab983ac2ca78d2dfc598c3",
-    terms: { pricePerRenderNear: "0.07", allowedUses: ["Tech", "Other"], maxDays: 14, renderCap: 5 },
   },
 ];
 

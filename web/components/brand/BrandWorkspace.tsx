@@ -14,7 +14,7 @@ import { BigAvatar, CHIP, MUTED, ProfileHeader, Stat } from "@/components/likene
 import { AgentKeyCard } from "./AgentKeyCard";
 import { AgentActivity, BrandAds, BrandLicences } from "./BrandAgentConsole";
 import { CampaignForm } from "./CampaignForm";
-import { CreatorsToAsk } from "./CreatorsToAsk";
+import { CreatorBrowse } from "./CreatorBrowse";
 import { DepositCard } from "./DepositCard";
 import { LimitsCard } from "./LimitsCard";
 import { api, NotConnectedError } from "@/lib/api";
@@ -144,7 +144,7 @@ export function BrandDashboardView({
         <Stat label="Ads approved" value={overview ? renders.filter((r) => r.receipt.status === "Approved").length : "—"} />
       </section>
 
-      <section className="flex flex-col gap-4 rounded-[22px] bg-lime p-5 text-ink sm:p-6" aria-label="Brief your agent">
+      <section id="brief" className="flex scroll-mt-4 flex-col gap-4 rounded-[22px] bg-lime p-5 text-ink sm:p-6" aria-label="Brief your agent">
         <div className="flex flex-col gap-1">
           <h2 className="m-0 text-[20px] font-bold">Brief your agent</h2>
           <p className="m-0 text-[14px]">Banned uses are refused before anything is asked. The agent may only ask; every creator decides for themselves.</p>
@@ -152,7 +152,7 @@ export function BrandDashboardView({
         <div className="rounded-[18px] bg-white p-4">{campaign}</div>
       </section>
 
-      <CreatorsToAsk creators={creators} brand={brand} self={accountId} />
+      <CreatorBrowse creators={creators} licences={licences} brand={brand} self={accountId} onChanged={onChanged} preview={preview} />
 
       <div className="grid grid-cols-1 items-start gap-[18px] desk:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-[18px]">

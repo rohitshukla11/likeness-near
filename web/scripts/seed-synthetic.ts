@@ -10,7 +10,11 @@
 // pnpm seed:synthetic approve-render  <account> <sha256>     [--confirm]
 // pnpm seed:synthetic reject-render   <account> <sha256>     [--confirm]
 //   The operator's decision for a synthetic creator (there is no person to consent), signed by its account. Dry run
-//   unless --confirm. Only accounts listed in lib/synthetic.ts are accepted.
+//   unless --confirm. Only accounts listed in lib/synthetic.ts (or RETIRED below) are accepted.
+//
+// pnpm seed:synthetic pause|resume <account> [--confirm]
+//   set_active(false|true) for a synthetic creator: a paused creator takes no new licence requests (the contract
+//   refuses them) and the app lists only active creators.
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -95,8 +99,18 @@ async function seed() {
   if (!confirm) console.log("Re-run with --confirm to send these transactions and write the captures.");
 }
 
+/** Synthetic creators removed from the demo but still registered on-chain (paused, so they take no requests). */
+const RETIRED: Pick<SyntheticCreator, "accountId" | "name">[] = [{ accountId: "likeness-synth-theo.testnet", name: "Theo Marlowe" }];
+
 async function decide() {
-  const s = SYNTHETIC.find((x) => x.accountId === a1);
+  const s = [...SYNTHETIC, ...RETIRED].find((x) => x.accountId === a1);
+  if (s && (cmd === "pause" || cmd === "resume")) {
+    const argv = callArgs(s.accountId, "set_active", { active: cmd === "resume" });
+    console.log(`The operator ${cmd === "pause" ? "pauses" : "resumes"} ${s.name} (synthetic demo creator): set_active(${cmd === "resume"})`);
+    console.log(`  ${show(argv)}`);
+    if (!confirm) return console.log("DRY RUN: nothing sent. Re-run with --confirm.");
+    return near(argv);
+  }
   if (!s || !a2) throw new Error("usage: seed:synthetic approve-licence|decline-licence|approve-render|reject-render <synthetic account> <licence_id|sha256> [--confirm]");
   const method = { "approve-licence": "approve_licence", "decline-licence": "decline_licence", "approve-render": "approve_render", "reject-render": "reject_render" }[cmd!]!;
   const json = method.endsWith("licence") ? { licence_id: a2 } : { sha256: a2 };
