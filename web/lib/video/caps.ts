@@ -6,7 +6,7 @@
 export interface VideoAsk {
   enabled: boolean;
   creatorAllows: boolean;
-  /** The start frame is an ad image the creator approved on-chain. */
+  /** Direct video (its own opening still), or a start frame that is an ad image the creator approved on-chain. */
   startApproved: boolean;
   /** Renders left on the licence (cap − used − reserved). */
   licenceRoom: number;
@@ -19,7 +19,7 @@ export interface VideoAsk {
 export function videoRefusal(a: VideoAsk): string | null {
   if (!a.enabled) return "video is off on this server";
   if (!a.creatorAllows) return "the creator hasn't allowed video";
-  if (!a.startApproved) return "a video starts only from an ad image the creator has approved";
+  if (!a.startApproved) return "a video from an ad image needs an ad the creator has approved";
   if (a.licenceRoom < 1) return "this licence has no render left for a video";
   if (a.estUsd > a.capUsd) return `the estimated $${a.estUsd.toFixed(2)} is over the per-video cap ($${a.capUsd.toFixed(2)})`;
   if (a.usedToday >= a.maxPerDay) return `today's video cap is reached (${a.maxPerDay} per day)`;

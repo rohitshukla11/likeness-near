@@ -2,7 +2,7 @@
 
 /**
  * The brand dashboard's lower half: the licences the agent holds (each an on-chain licence
- * token, with "Make the next ad" while it has room), the ads it made, and the agent's activity log with a reason for
+ * token, with "Make the next ad" and "Make a video" while it has room), the ads it made, and the agent's activity log with a reason for
  * every step. Pure views: BrandWorkspace loads the data. "Agents propose. Only the human consents."
  */
 import Link from "next/link";
@@ -24,7 +24,19 @@ import { isVideo } from "@/components/likeness/LabelledVideo";
 const LICENCE_PILL: Record<LicenceStatus, PillKind> = { Pending: "waiting", Declined: "neutral", Active: "licensed", Exhausted: "expired", Expired: "expired", Revoked: "revoked" };
 const EVENT_PILL: Record<ActivityEvent["kind"], PillKind> = { shortlist: "lime", skip: "neutral", request: "waiting", plan: "waiting", render: "waiting", check: "waiting", submit: "licensed", blocked: "revoked", error: "revoked" };
 
-export function BrandLicences({ licences, creators, onChanged, preview = false }: { licences: LicenceView[]; creators?: CreatorView[] | null; onChanged: () => void; preview?: boolean }) {
+export function BrandLicences({
+  licences,
+  creators,
+  video,
+  onChanged,
+  preview = false,
+}: {
+  licences: LicenceView[];
+  creators?: CreatorView[] | null;
+  video?: VideoStatus | null;
+  onChanged: () => void;
+  preview?: boolean;
+}) {
   /** Creators known not to have proven their likeness (unknown creators get no label). */
   const unproven = new Set((creators ?? []).filter((c) => !c.captureSha256).map((c) => c.accountId));
   return (
@@ -52,7 +64,16 @@ export function BrandLicences({ licences, creators, onChanged, preview = false }
                   {l.tokenId ? ` · licence token #${l.tokenId}` : " · no token until the creator approves"}
                 </span>
                 {l.status === "Active" && l.rendersUsed + l.rendersReserved < l.renderCap &&
-                  (unproven.has(l.creator) ? <span className={`text-[13px] ${MUTED}`}>{NOT_PROVEN_NOTE}</span> : !preview && <MakeAd licenceId={l.id} onDone={onChanged} />)}
+                  (unproven.has(l.creator) ? (
+                    <span className={`text-[13px] ${MUTED}`}>{NOT_PROVEN_NOTE}</span>
+                  ) : (
+                    !preview && (
+                      <div className="flex flex-col gap-2">
+                        <MakeAd licenceId={l.id} onDone={onChanged} />
+                        {video?.enabled && <MakeVideo licenceId={l.id} seconds={video.seconds} estUsd={video.estUsd} onDone={onChanged} />}
+                      </div>
+                    )
+                  ))}
                 {!preview && <LicenceActions l={l} onDone={onChanged} />}
               </div>
             </li>

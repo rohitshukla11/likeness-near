@@ -27,6 +27,7 @@ import { BRIEF_MAX, FIELD_MAX, formatNear, MAX_DAYS_LIMIT, textProblems, USE_LAB
 import type { CampaignRequest, FindResponse, LicenceStatus, RequestResponse, ShortlistCard, VideoStatus } from "@/lib/types";
 import { DEMO_BANNER } from "@/lib/agent/mode";
 import { makeOneAd, type Step } from "./runAd";
+import { makeOneVideo } from "./runVideo";
 
 /** The brief form loads with this café example, editable (1 render, so a first live run costs one image edit). */
 const EXAMPLE = {
@@ -53,6 +54,8 @@ export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void
   const [status, setStatus] = useState<LicenceStatus | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
   const started = useRef(false);
+  /** Set when the licence is requested for a video campaign: after approval the agent makes videos, not images. */
+  const videoRun = useRef<{ seconds: number; estUsd: number } | null>(null);
   const add = (s: Step) => setSteps((x) => [...x, s]);
 
   const wantsVideo = media === "video" && !!video?.enabled;
@@ -60,7 +63,6 @@ export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void
     ...textProblems(brief),
     ...(scene ? textProblems(scene, "the scene", FIELD_MAX) : []),
     ...(product ? textProblems(product, "the product", FIELD_MAX) : []),
-    ...(wantsVideo && renderCap < 2 ? ["a video campaign needs at least 2 renders: the image, then the video made from it"] : []),
   ];
 
   // 4 → 5: watch the requested licence; once the creator approves, the agent makes the renders.
@@ -75,11 +77,13 @@ export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void
         if (l.status === "Active" && !started.current) {
           started.current = true;
           const room = l.renderCap - l.rendersUsed - l.rendersReserved;
-          add({ text: `${asked.name} approved the licence (token #${l.tokenId}). The agent makes ${room} ${room === 1 ? "ad" : "ads"}, one at a time.`, tone: "ok" });
+          const v = videoRun.current;
+          const what = v ? (room === 1 ? "video" : "videos") : room === 1 ? "ad" : "ads";
+          add({ text: `${asked.name} approved the licence (token #${l.tokenId}). The agent makes ${room} ${what}, one at a time.`, tone: "ok" });
           for (let i = 0; i < room; i++) {
-            add({ text: `Ad ${i + 1} of ${room}`, tone: "wait" });
+            add({ text: `${v ? "Video" : "Ad"} ${i + 1} of ${room}`, tone: "wait" });
             try {
-              if ((await makeOneAd(asked.licenceId, add)) !== "submitted") break;
+              if ((v ? await makeOneVideo(asked.licenceId, add, v) : await makeOneAd(asked.licenceId, add)) !== "submitted") break;
             } catch (e) {
               add({ text: (e as Error).message, tone: "bad" });
               break;
@@ -127,6 +131,7 @@ export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void
     setError(null);
     try {
       const r = await api<RequestResponse>("/api/agent/request", { campaignId: find.campaignId, ...(creatorId ? { creatorId } : {}) });
+      videoRun.current = wantsVideo && video ? { seconds: video.seconds, estUsd: video.estUsd } : null;
       setAsked(r);
       setStatus("Pending");
       onChanged();
@@ -181,7 +186,7 @@ export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void
               <Lbl text="Media">
                 <select className={inputClass} value={media} onChange={(e) => setMedia(e.target.value as "image" | "video")}>
                   <option value="image">Image</option>
-                  <option value="video">Image, then video</option>
+                  <option value="video">Video</option>
                 </select>
               </Lbl>
             )}

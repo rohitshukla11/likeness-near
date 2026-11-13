@@ -1,9 +1,11 @@
 /**
  * Video jobs (Google Gemini Omni Flash, outside NEAR AI's TEE), as background work the brand's page drives:
- *   startVideo  checks everything first (flag, the creator not opted out, the start image is an ad the creator APPROVED on
- *               this licence, room left on the licence, the per-video cost cap, today's cap) and refuses with the
- *               reason, calling nothing; then reserves today's slot atomically, starts the interaction (the approved
- *               image as the first frame; the fixed template + the campaign's screened scene and product) and returns.
+ *   startVideo  checks everything first (flag, the creator not opted out, room left on the licence, the per-video cost
+ *               cap, today's cap; with a start image, that it's an ad the creator APPROVED on this licence) and refuses
+ *               with the reason, calling nothing; then reserves today's slot atomically. DIRECT video (no start image,
+ *               the default): makes its own opening still from the creator's reference photo and safety-screens it
+ *               (lib/agent/pipeline openingStill; the still is never submitted on its own). Then starts the interaction
+ *               (the still as the first frame; the fixed template + the campaign's screened scene and product).
  *   pollVideo   one short check of the interaction; when the clip is done, ONE poll (the one that moves the job from
  *               running to storing) stores the exact bytes (sha256 over them), records the render and submits it with
  *               submit_render (face_check needs_creator_review: no frames are extracted), signed by the agent's key.
@@ -18,6 +20,7 @@ import { HttpError } from "../http";
 import { agentCall } from "../near/agent";
 import { views } from "../near/view";
 import { ensureScene } from "../agent/scene";
+import { openingStill } from "../agent/pipeline";
 import { estimateUsd, JOB_DEADLINE_MS, VIDEO_ASPECT, VIDEO_LABEL, VIDEO_PROVIDER, VIDEO_RESOLUTION, VIDEO_SECONDS, videoEnabled, videoMaxPerDay, videoModel, videoUsdCap } from "./config";
 import { videoRefusal } from "./caps";
 import { nextStep, type InteractionLike } from "./jobstate";
@@ -74,21 +77,26 @@ export async function videosToday(): Promise<number> {
   return Number(r[0]?.n ?? 0);
 }
 
-async function setJob(id: number | string, u: Partial<Pick<JobRow, "status" | "interaction_id" | "sha256" | "submit_tx" | "error">>) {
+async function setJob(id: number | string, u: Partial<Pick<JobRow, "status" | "interaction_id" | "sha256" | "submit_tx" | "error" | "from_sha256">>) {
   await q(
     `update video_jobs set status = coalesce($2, status), interaction_id = coalesce($3, interaction_id), sha256 = coalesce($4, sha256),
-       submit_tx = coalesce($5, submit_tx), error = coalesce($6, error), updated_at = now() where id = $1`,
-    [id, u.status ?? null, u.interaction_id ?? null, u.sha256 ?? null, u.submit_tx ?? null, u.error ?? null],
+       submit_tx = coalesce($5, submit_tx), error = coalesce($6, error), from_sha256 = coalesce($7, from_sha256), updated_at = now() where id = $1`,
+    [id, u.status ?? null, u.interaction_id ?? null, u.sha256 ?? null, u.submit_tx ?? null, u.error ?? null, u.from_sha256 ?? null],
   );
 }
 
-export async function startVideo(brand: string, licenceId: string, fromSha: string): Promise<VideoJob> {
+/** Starts a video: direct (its own opening still) when `fromSha` is absent, else from that approved ad image. */
+export async function startVideo(brand: string, licenceId: string, fromSha?: string): Promise<VideoJob> {
   // Everything is checked before anything is called or reserved.
-  const [l, from, receipt] = await Promise.all([views.getLicence(licenceId), renderBySha(fromSha), views.getReceipt(fromSha)]);
+  const [l, from, receipt, fromMeta] = await Promise.all([
+    views.getLicence(licenceId),
+    fromSha ? renderBySha(fromSha) : null,
+    fromSha ? views.getReceipt(fromSha) : null,
+    fromSha ? mediaMeta(fromSha) : null,
+  ]);
   if (!l || l.brand !== brand) throw new HttpError(404, "no such licence for this brand");
   if (l.status !== "Active") throw new HttpError(409, `the licence is ${l.status}, not Active`);
-  const fromMeta = await mediaMeta(fromSha);
-  const startApproved = !!from && from.licence_id === licenceId && from.brand === brand && receipt?.status === "Approved" && !!fromMeta && fromMeta.mime !== "video/mp4";
+  const startApproved = !fromSha || (!!from && from.licence_id === licenceId && from.brand === brand && receipt?.status === "Approved" && !!fromMeta && fromMeta.mime !== "video/mp4");
   const est = estimateUsd(VIDEO_SECONDS);
   const refusal = videoRefusal({
     enabled: videoEnabled(),
@@ -101,7 +109,7 @@ export async function startVideo(brand: string, licenceId: string, fromSha: stri
     maxPerDay: videoMaxPerDay(),
   });
   if (refusal) {
-    await log(brand, { kind: "blocked", summary: `video refused before any call: ${refusal}`, licenceId, sha256: fromSha });
+    await log(brand, { kind: "blocked", summary: `video refused before any call: ${refusal}`, licenceId, ...(fromSha ? { sha256: fromSha } : {}) });
     throw new HttpError(409, refusal);
   }
 
@@ -117,30 +125,48 @@ export async function startVideo(brand: string, licenceId: string, fromSha: stri
        select $1, $2, $3, $4, 'starting', $5, $6, $7
        where (select count(*) from video_jobs where ${COUNTED} and created_at >= date_trunc('day', now() at time zone 'utc') at time zone 'utc') < $8
      returning *`,
-    [brand, licenceId, l.creator, fromSha, prompt, videoModel(), est.toFixed(4), max],
+    [brand, licenceId, l.creator, fromSha ?? "", prompt, videoModel(), est.toFixed(4), max],
   );
   if (!ins[0]) throw new HttpError(429, `today's video cap is reached (${max} per day)`);
   const job = ins[0];
 
+  let startSha = fromSha ?? "";
   try {
-    const image = await mediaBytes(fromSha);
-    if (!image || !fromMeta) throw new VideoApiError("the approved ad's image is missing");
-    const it = await startInteraction({ image, mime: fromMeta.mime, prompt });
+    let image: Uint8Array | null;
+    let mime: string;
+    if (fromSha) {
+      image = await mediaBytes(fromSha);
+      if (!image || !fromMeta) throw new VideoApiError("the approved ad's image is missing");
+      mime = fromMeta.mime;
+    } else {
+      const still = await openingStill(brand, l.creator, plan.scene, plan.product, licenceId);
+      if (!still.ok) {
+        await setJob(job.id, { status: "refused", error: still.reason });
+        await log(brand, { kind: "blocked", summary: `no video: ${still.reason}; nothing submitted, nothing reserved`, licenceId });
+        throw new HttpError(409, `no video: ${still.reason}`);
+      }
+      startSha = still.sha256;
+      image = still.bytes;
+      mime = still.mime;
+      await setJob(job.id, { from_sha256: startSha });
+    }
+    const it = await startInteraction({ image, mime, prompt });
     await setJob(job.id, { status: "running", interaction_id: it.id });
     await log(brand, {
       kind: "render",
-      summary: `started a ${VIDEO_SECONDS} s ${VIDEO_RESOLUTION} video (${VIDEO_PROVIDER}, outside NEAR AI's TEE) from approved ad ${fromSha.slice(0, 12)}…; estimated $${est.toFixed(2)}; not submitted until it's stored`,
+      summary: `started a ${VIDEO_SECONDS} s ${VIDEO_RESOLUTION} video (${VIDEO_PROVIDER}, outside NEAR AI's TEE) from ${fromSha ? "approved ad" : "its own opening still"} ${startSha.slice(0, 12)}…; estimated $${est.toFixed(2)}; not submitted until it's stored`,
       licenceId,
-      sha256: fromSha,
+      sha256: startSha,
     });
   } catch (e) {
+    if (e instanceof HttpError) throw e;
     const msg = (e as Error).message.slice(0, 300);
-    // Not started: the slot isn't counted, nothing was billed.
+    // Not started: the slot isn't counted, and Omni wasn't billed.
     await setJob(job.id, { status: "refused", error: msg });
-    await log(brand, { kind: "error", summary: `video not started: ${msg}`, licenceId, sha256: fromSha });
+    await log(brand, { kind: "error", summary: `video not started: ${msg}`, licenceId, ...(startSha ? { sha256: startSha } : {}) });
     throw new HttpError(502, `video not started: ${msg}`);
   }
-  return toJob({ ...job, status: "running" });
+  return toJob({ ...job, from_sha256: startSha, status: "running" });
 }
 
 export async function pollVideo(brand: string, id: number): Promise<VideoJob> {
