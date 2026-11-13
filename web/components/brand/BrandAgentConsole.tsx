@@ -20,7 +20,7 @@ import { LicenceActions } from "./LicenceActions";
 import { MakeAd } from "./MakeAd";
 
 const LICENCE_PILL: Record<LicenceStatus, PillKind> = { Pending: "waiting", Declined: "neutral", Active: "licensed", Exhausted: "expired", Expired: "expired", Revoked: "revoked" };
-const EVENT_PILL: Record<ActivityEvent["kind"], PillKind> = { shortlist: "lime", skip: "neutral", request: "waiting", render: "waiting", check: "waiting", submit: "licensed", blocked: "revoked", error: "revoked" };
+const EVENT_PILL: Record<ActivityEvent["kind"], PillKind> = { shortlist: "lime", skip: "neutral", request: "waiting", plan: "waiting", render: "waiting", check: "waiting", submit: "licensed", blocked: "revoked", error: "revoked" };
 
 export function BrandLicences({ licences, creators, onChanged, preview = false }: { licences: LicenceView[]; creators?: CreatorView[] | null; onChanged: () => void; preview?: boolean }) {
   /** Creators known not to have proven their likeness (unknown creators get no label). */

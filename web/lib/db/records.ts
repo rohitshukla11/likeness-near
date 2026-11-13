@@ -3,12 +3,19 @@ import "server-only";
 import { q } from "./index";
 import type { ActivityEvent, CampaignRequest, FaceCheckDetail } from "../types";
 
-export async function addCampaign(brand: string, c: CampaignRequest): Promise<number> {
+/** A campaign as the brand briefed it (scene and product may be empty: the agent writes them after approval), with the
+ * agent's shortlist (top 3 and who wasn't eligible) that the request step reads back. */
+export async function addCampaign(brand: string, c: CampaignRequest, shortlist: unknown): Promise<number> {
   const r = await q<{ id: string }>(
-    `insert into campaigns (brand, brief, usage, duration_days, render_cap, scene, product) values ($1, $2, $3, $4, $5, $6, $7) returning id`,
-    [brand, c.brief, c.use, c.durationDays, c.renderCap, c.scene, c.product],
+    `insert into campaigns (brand, brief, usage, duration_days, render_cap, scene, product, shortlist) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`,
+    [brand, c.brief, c.use, c.durationDays, c.renderCap, c.scene ?? "", c.product ?? "", JSON.stringify(shortlist)],
   );
   return Number(r[0]!.id);
+}
+
+/** The scene and product the agent wrote for a campaign whose brand left them empty. */
+export async function setCampaignScene(id: string | number, scene: string, product: string) {
+  await q(`update campaigns set scene = $2, product = $3 where id = $1`, [id, scene, product]);
 }
 
 /** The creator chosen and the licence requested for a campaign. */
@@ -21,15 +28,25 @@ export interface CampaignRow {
   brand: string;
   brief: string;
   usage: string;
+  duration_days: number;
+  render_cap: number;
   scene: string;
   product: string;
   creator: string | null;
   licence_id: string | null;
+  shortlist: { top?: unknown[]; notEligible?: unknown[]; left?: string } | null;
 }
+
+const CAMPAIGN_COLS = "id, brand, brief, usage, duration_days, render_cap, scene, product, creator, licence_id, shortlist";
 
 /** The campaign behind a licence (its scene and product feed the image prompt). */
 export async function campaignByLicence(licenceId: string): Promise<CampaignRow | null> {
-  const r = await q<CampaignRow>(`select id, brand, brief, usage, scene, product, creator, licence_id from campaigns where licence_id = $1 order by id desc limit 1`, [licenceId]);
+  const r = await q<CampaignRow>(`select ${CAMPAIGN_COLS} from campaigns where licence_id = $1 order by id desc limit 1`, [licenceId]);
+  return r[0] ?? null;
+}
+
+export async function campaignById(id: number): Promise<CampaignRow | null> {
+  const r = await q<CampaignRow>(`select ${CAMPAIGN_COLS} from campaigns where id = $1`, [id]);
   return r[0] ?? null;
 }
 

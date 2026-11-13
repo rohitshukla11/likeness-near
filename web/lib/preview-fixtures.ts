@@ -5,7 +5,7 @@
  */
 import { OWNER } from "./profiles";
 import { SYNTHETIC } from "./synthetic";
-import type { ActivityEvent, BrandOverview, BrandView, CreatorInbox, CreatorView, LicenceView, RenderItem } from "./types";
+import type { ActivityEvent, BrandOverview, BrandView, CreatorInbox, CreatorView, FindResponse, LicenceView, RenderItem } from "./types";
 
 const NEAR = 10n ** 24n;
 const near = (n: number) => ((NEAR * BigInt(Math.round(n * 1000))) / 1000n).toString();
@@ -102,4 +102,17 @@ export const brandEmpty: { brand: BrandView | null; creators: CreatorView[]; ove
   brand: null,
   creators: [creatorOf(OWNER), creatorOf(asha!), creatorOf(maya!)],
   overview: { licences: [], renders: [], activity: [] },
+};
+
+/** The agent's shortlist for a café brief (3 renders), as the brand sees it after "Find creators". */
+export const findDemo: FindResponse = {
+  status: "ok",
+  campaignId: 1,
+  budgetLeft: near(0.5),
+  top: [
+    { creatorId: OWNER.accountId, name: OWNER.name, price: near(0.04), total: near(0.12), fitsBudget: true, reason: "Lifestyle and food creator: a natural fit for a warm café portrait.", by: "model" },
+    { creatorId: asha!.accountId, name: asha!.name, price: near(0.04), total: near(0.12), fitsBudget: true, reason: "Cafés and home cooking: fits the brief at the same price.", by: "model" },
+    { creatorId: "demo-pricey-creator.testnet", name: "demo-pricey-creator.testnet", price: near(0.2), total: near(0.6), fitsBudget: false, reason: "Allows Food & drink, but the total is over what's left of your budget.", by: "model" },
+  ],
+  notEligible: [{ creatorId: maya!.accountId, reason: "the creator doesn't allow Food & drink" }],
 };

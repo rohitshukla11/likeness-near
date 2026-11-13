@@ -8,12 +8,12 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AppPage, Card } from "@/components/ds";
 import { BrandDashboardView } from "@/components/brand/BrandWorkspace";
-import { CampaignForm } from "@/components/brand/CampaignForm";
+import { AgentFlow } from "@/components/brand/AgentFlow";
 import { DepositCard } from "@/components/brand/DepositCard";
 import { LimitsCard } from "@/components/brand/LimitsCard";
 import { CreatorDashboardView } from "@/components/likeness/CreatorHome";
 import { AccountMenuView } from "@/components/site/AccountMenu";
-import { brandDemo, brandEmpty, creatorDemo, creatorEmpty, PREVIEW_BRAND } from "@/lib/preview-fixtures";
+import { brandDemo, brandEmpty, creatorDemo, creatorEmpty, findDemo, PREVIEW_BRAND } from "@/lib/preview-fixtures";
 import { profileOf } from "@/lib/profiles";
 
 const noop = async () => undefined;
@@ -54,7 +54,7 @@ export function Preview() {
           brand={demo ? brandDemo.brand : brandEmpty.brand}
           creators={demo ? brandDemo.creators : brandEmpty.creators}
           overview={demo ? brandDemo.overview : brandEmpty.overview}
-          campaign={<CampaignForm bare onStarted={() => undefined} />}
+          campaign={<AgentFlow onChanged={() => undefined} preview={{ find: demo ? findDemo : null, renders: 3 }} />}
           money={
             <>
               <DepositCard brand={demo ? brandDemo.brand : null} onChanged={() => undefined} />

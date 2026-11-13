@@ -1,121 +1,98 @@
 /**
- * The brand's agent: brief → banned-use screen → shortlist → creator choice (and the scene/product it may refine) →
- * screen again → request_licence on-chain, signed by the brand's function-call key. Every step goes to the brand's
- * activity log with its reason. "Agents propose. Only the human consents to their face being used": nothing is
- * rendered until the creator approves the licence, and every ad still waits for the creator's own approval.
+ * The brand's agent, in two calls the brand drives:
+ *   findCreators   brief → banned-use screen (keywords, then the model; fail closed: a refusal stops here with its
+ *                  reason) → deterministic filter (lib/agent/shortlist) → the model ranks the eligible creators from
+ *                  their public profile and terms only (lib/agent/rank: never an image) → top 3 + "Not eligible".
+ *   requestCreator the brand's pick, or "Let the agent choose" (#1) → re-checked against the chain (terms, limits,
+ *                  budget: an over-budget creator is never requested) → request_licence, signed by the brand's
+ *                  function-call key.
+ * Every step goes to the brand's activity log with its reason. "Agents propose. Only the human consents to their face
+ * being used": nothing is rendered until the creator approves the licence, and every ad still waits for their approval.
  */
 import "server-only";
-import { addCampaign, linkCampaign, log } from "../db/records";
+import { addCampaign, campaignById, linkCampaign, log } from "../db/records";
+import { HttpError } from "../http";
 import { agentCall } from "../near/agent";
 import { views } from "../near/view";
-import { FIELD_MAX, textProblems, USE_LABELS, formatNear } from "../rules";
-import type { CampaignRequest } from "../types";
+import { FIELD_MAX, formatNear, textProblems, USE_LABELS } from "../rules";
+import type { CampaignRequest, FindResponse, RequestResponse } from "../types";
 import { screen } from "../ai/filter";
 import { aiEnabled, chatJson } from "../ai/nearai";
-import { clean } from "../ai/prompt";
-import { shortlist, type ShortlistEntry } from "./shortlist";
+import { agentChoice, rankCreators, RANK_SCHEMA, requestable, type RankedCard } from "./rank";
+import { filterCreators } from "./shortlist";
 
-export interface CampaignResult {
-  campaignId: number | null;
-  status: "requested" | "blocked" | "no_creator";
-  reasons: string[];
-  creator?: string;
-  licenceId?: string;
-  tx?: string;
-  /** "model" or "rule (AI_MODE=test)": how the creator was chosen. */
-  chosenBy?: string;
-}
+const self = (creator: string, brand: string) => (creator === brand ? " (self-licence for demo: creator and brand are the same account; the creator still approves in their own wallet)" : "");
 
-const CHOOSE_SYSTEM = `You are a brand's advertising agent. Choose ONE creator from the candidates for the brief, and write the
-scene and the product for a fixed photo template (head-and-shoulders or waist-up, front-facing, the creator's face
-unchanged). Scene and product: plain descriptions, each at most 200 characters, no people other than the creator, no
-text or logos, nothing political, sexual, involving minors, impersonating anyone, or deceptive. Keep the brand's own
-scene and product unless they need tightening. Answer only with JSON matching the schema; reason under 25 words.`;
-
-const CHOOSE_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["creator_id", "scene", "product", "reason"],
-  properties: {
-    creator_id: { type: "string" },
-    scene: { type: "string", maxLength: FIELD_MAX },
-    product: { type: "string", maxLength: FIELD_MAX },
-    reason: { type: "string", maxLength: 200 },
-  },
-};
-
-async function choose(brand: string, req: CampaignRequest, picks: ShortlistEntry[]) {
-  const rule = { creator: picks[0]!.creator.accountId, scene: req.scene, product: req.product, reason: "the lowest price among the creators who fit", by: "rule (AI_MODE=test)" };
-  if (!aiEnabled() || picks.length === 0) return rule;
-  const candidates = picks.slice(0, 10).map((p) => ({
-    creator_id: p.creator.accountId,
-    price_per_render: formatNear(p.creator.terms.pricePerRender),
-    allowed_uses: p.creator.terms.allowedUses,
-    render_cap: p.creator.terms.renderCap,
-  }));
-  const { json } = await chatJson({
-    brand,
-    what: "chat",
-    schemaName: "creator_choice",
-    schema: CHOOSE_SCHEMA,
-    messages: [
-      { role: "system", content: CHOOSE_SYSTEM },
-      { role: "user", content: JSON.stringify({ brief: req.brief, use: USE_LABELS[req.use], scene: req.scene, product: req.product, candidates }) },
-    ],
-  });
-  const o = json as { creator_id?: unknown; scene?: unknown; product?: unknown; reason?: unknown };
-  const ok = typeof o.creator_id === "string" && candidates.some((c) => c.creator_id === o.creator_id) && typeof o.scene === "string" && typeof o.product === "string";
-  if (!ok) return { ...rule, reason: "the model's choice wasn't one of the candidates, so the rule picked", by: "rule (model answer invalid)" };
-  return { creator: o.creator_id as string, scene: clean(o.scene as string) || req.scene, product: clean(o.product as string) || req.product, reason: String(o.reason ?? ""), by: "model" };
-}
-
-export async function runCampaign(brand: string, req: CampaignRequest): Promise<CampaignResult> {
-  // 1. The brand's own words, screened first (keywords, then the model; fail closed).
-  const regex = [...textProblems(req.brief), ...textProblems(req.scene, "the scene", FIELD_MAX), ...textProblems(req.product, "the product", FIELD_MAX)];
-  const first = regex.length ? { allowed: false, reasons: regex, by: "keywords" } : await screen(brand, req.use, { brief: req.brief, scene: req.scene, product: req.product });
+export async function findCreators(brand: string, req: CampaignRequest): Promise<FindResponse> {
+  // 1. The brand's own words, screened first (keywords, then the model; fail closed). A refusal stops everything.
+  const fields: Record<string, string> = { brief: req.brief };
+  if (req.scene) fields.scene = req.scene;
+  if (req.product) fields.product = req.product;
+  const regex = [...textProblems(req.brief), ...(req.scene ? textProblems(req.scene, "the scene", FIELD_MAX) : []), ...(req.product ? textProblems(req.product, "the product", FIELD_MAX) : [])];
+  const first = regex.length ? { allowed: false, reasons: regex, by: "keywords" } : await screen(brand, req.use, fields);
   if (!first.allowed) {
     await log(brand, { kind: "blocked", summary: `campaign refused before anything was asked (${first.by}): ${first.reasons.join("; ")}` });
-    return { campaignId: null, status: "blocked", reasons: first.reasons };
+    return { status: "blocked", reasons: first.reasons };
   }
 
-  // 2. The brand's limits and the creators, from the chain.
+  // 2. The brand's limits and the creators, from the chain; the deterministic filter.
   const b = await views.getBrand(brand);
   if (!b || b.maxPerRender === "0") {
-    const r = "deposit escrow and set spending limits first";
+    const r = "deposit escrow and set your spending limits first (Money and keys, below)";
     await log(brand, { kind: "blocked", summary: r });
-    return { campaignId: null, status: "blocked", reasons: [r] };
+    return { status: "blocked", reasons: [r] };
   }
-  const list = shortlist(await views.listCreators(0, 50), { brief: req.brief, use: req.use, durationDays: req.durationDays, renderCap: req.renderCap }, b);
-  for (const e of list) await log(brand, { kind: e.pick ? "shortlist" : "skip", summary: `${e.creator.accountId}: ${e.reason}` });
-  const picks = list.filter((e) => e.pick);
-  if (!picks.length) {
+  const { eligible, ineligible, left } = filterCreators(await views.listCreators(0, 50), { brief: req.brief, use: req.use, durationDays: req.durationDays, renderCap: req.renderCap }, b);
+  for (const e of ineligible) await log(brand, { kind: "skip", summary: `${e.creator.accountId}: not eligible: ${e.reason}` });
+  const notEligible = ineligible.map((e) => ({ creatorId: e.creator.accountId, reason: e.reason }));
+  if (!eligible.length) {
     await log(brand, { kind: "blocked", summary: "no registered creator fits this campaign; nothing was requested" });
-    return { campaignId: null, status: "no_creator", reasons: ["no creator fits"] };
+    return { status: "no_creator", reasons: ["no creator fits this brief's use, length and renders within your limits"], notEligible };
   }
 
-  // 3. The choice, and any refined scene/product screened again.
-  const c = await choose(brand, req, picks);
-  if (c.scene !== req.scene || c.product !== req.product) {
-    const again = await screen(brand, req.use, { scene: c.scene, product: c.product });
-    if (!again.allowed) {
-      await log(brand, { kind: "blocked", summary: `the agent's refined scene/product was refused (${again.by}): ${again.reasons.join("; ")}` });
-      return { campaignId: null, status: "blocked", reasons: again.reasons };
-    }
-  }
-  await log(brand, { kind: "shortlist", summary: `chose ${c.creator} (${c.by}): ${c.reason}` });
+  // 3. The model ranks the eligible creators (text only); the brand sees the top 3.
+  const chat = aiEnabled()
+    ? async (messages: { role: "system" | "user"; content: string }[]) => (await chatJson({ brand, what: "chat", schemaName: "creator_ranking", schema: RANK_SCHEMA, messages, maxTokens: 600 })).json
+    : undefined;
+  const ranked = await rankCreators(req.brief, req.use, eligible, chat);
+  const top = ranked.slice(0, 3);
+  top.forEach((c, i) =>
+    void log(brand, {
+      kind: "shortlist",
+      summary: `#${i + 1} ${c.creatorId} (${c.by === "model" ? "model" : "rule"}): ${c.reason}; ${formatNear(c.price)} × ${req.renderCap} = ${formatNear(c.total)}${c.fitsBudget ? "" : ", over your budget"}`,
+    }),
+  );
+  const campaignId = await addCampaign(brand, req, { top, notEligible, left: left.toString() });
+  return { status: "ok", campaignId, top, notEligible, budgetLeft: left.toString() };
+}
 
-  // 4. The licence request, on-chain, signed by the agent's function-call key.
-  const campaignId = await addCampaign(brand, { ...req, scene: c.scene, product: c.product });
+export async function requestCreator(brand: string, campaignId: number, creatorId?: string): Promise<RequestResponse> {
+  const c = await campaignById(campaignId);
+  if (!c || c.brand !== brand) throw new HttpError(404, "no such campaign for this brand");
+  if (c.licence_id) throw new HttpError(409, `this campaign already asked ${c.creator} (licence ${c.licence_id})`);
+  const top = (c.shortlist?.top ?? []) as RankedCard[];
+  const pick = creatorId ? top.find((t) => t.creatorId === creatorId) : agentChoice(top);
+  if (!pick) throw new HttpError(409, creatorId ? "that creator isn't one of the agent's top 3 for this campaign" : "none of the top 3 fits your budget");
+  if (!requestable(pick)) throw new HttpError(409, `${pick.name} is over your budget for this campaign (${formatNear(pick.total)})`);
+
+  // Re-check against the chain now: terms, limits and budget may have changed since the shortlist.
+  const [b, creator] = await Promise.all([views.getBrand(brand), views.getCreator(pick.creatorId)]);
+  if (!b || !creator) throw new HttpError(409, "the brand or the creator is no longer registered");
+  const ask = { brief: c.brief, use: c.usage as CampaignRequest["use"], durationDays: c.duration_days, renderCap: c.render_cap };
+  const now = filterCreators([creator], ask, b);
+  if (!now.eligible.length) throw new HttpError(409, `no longer eligible: ${now.ineligible[0]?.reason ?? "the creator is paused"}`);
+  if (!now.eligible[0]!.fitsBudget) throw new HttpError(409, `over your budget now: ${formatNear(now.eligible[0]!.total)} is more than the ${formatNear(now.left)} left`);
+
+  const by = creatorId ? "picked by the brand" : "the agent's #1";
   try {
-    const r = await agentCall("request_licence", { creator_id: c.creator, usage: req.use, days: req.durationDays, render_cap: req.renderCap });
+    const r = await agentCall("request_licence", { creator_id: pick.creatorId, usage: ask.use, days: ask.durationDays, render_cap: ask.renderCap });
     const licenceId = typeof r.value === "string" ? r.value : String(r.value ?? "");
-    const self = c.creator === brand ? " (self-licence for demo: creator and brand are the same account; the creator still approves in their own wallet)" : "";
-    await log(brand, { kind: "request", summary: `asked ${c.creator} for a ${USE_LABELS[req.use]} licence (${req.durationDays} days, ${req.renderCap} renders); waiting for the creator${self}`, licenceId, tx: r.hash });
-    await linkCampaign(campaignId, c.creator, licenceId);
-    return { campaignId, status: "requested", reasons: [], creator: c.creator, licenceId, tx: r.hash, chosenBy: c.by };
+    await log(brand, { kind: "request", summary: `asked ${pick.creatorId} (${by}) for a ${USE_LABELS[ask.use]} licence (${ask.durationDays} days, ${ask.renderCap} renders); waiting for the creator${self(pick.creatorId, brand)}`, licenceId, tx: r.hash });
+    await linkCampaign(campaignId, pick.creatorId, licenceId);
+    return { creatorId: pick.creatorId, name: pick.name, licenceId, tx: r.hash, by };
   } catch (e) {
     const msg = (e as Error).message.slice(0, 300);
     await log(brand, { kind: "error", summary: `request_licence failed: ${msg}` });
-    return { campaignId, status: "blocked", reasons: [msg], creator: c.creator };
+    throw new HttpError(502, `request_licence failed: ${msg}`);
   }
 }

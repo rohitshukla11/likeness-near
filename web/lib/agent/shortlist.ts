@@ -1,41 +1,53 @@
 /**
- * The agent's shortlist: every registered creator on the contract, each with one plain reason it's a pick or a skip.
- * Only creators whose on-chain terms fit the ask, who are taking requests, and whose price is within the brand's
- * per-render limit are picks. Pure apart from its inputs (the caller reads the chain).
+ * The agent's deterministic filter, before any model: every registered creator who is taking requests is either
+ * eligible for this ask (their on-chain terms allow the use, the licence length and the render count, and their
+ * price is within the brand's per-render limit) or not eligible with one plain reason. Eligible creators carry the
+ * campaign's total (price × renders) and whether it fits what's left of the brand's budget; an over-budget creator
+ * can be shown but never requested. Paused creators take no requests (the contract refuses them) and are left out.
+ * Pure: the caller reads the chain.
  */
-import { checkAsk, formatNear, type LicenceAsk } from "../rules";
+import { checkAsk, formatNear, type LicenceAsk } from "../rules.ts";
 import type { BrandView, CreatorView } from "../types";
-import { OWNER, isOwner } from "../profiles";
-import { syntheticOf } from "../synthetic";
 
-export interface ShortlistEntry {
+export interface Candidate {
   creator: CreatorView;
-  pick: boolean;
+  /** price × renders, in yoctoNEAR. */
+  total: string;
+  fitsBudget: boolean;
+}
+
+export interface Ineligible {
+  creator: CreatorView;
   reason: string;
 }
 
-export function shortlist(creators: CreatorView[], ask: LicenceAsk, brand: BrandView): ShortlistEntry[] {
-  // Paused creators take no requests (the contract refuses them): left out entirely.
-  return creators
-    .filter((c) => c.active)
-    .map((c) => {
-      const problems = checkAsk(c.terms, ask);
-      if (problems.length) return { creator: c, pick: false, reason: problems.join("; ") };
-      if (BigInt(c.terms.pricePerRender) > BigInt(brand.maxPerRender)) {
-        return { creator: c, pick: false, reason: `${formatNear(c.terms.pricePerRender)} per render is above the brand's limit (${formatNear(brand.maxPerRender)})` };
-      }
-      const synth = syntheticOf(c.accountId);
-      const self =
-        c.accountId === brand.accountId
-          ? "same account as the brand: a self-licence for demo; "
-          : synth
-            ? `${synth.name} (${synth.niche}), a synthetic demo creator (AI-generated face, not a real person); `
-            : isOwner(c.accountId)
-              ? `${OWNER.name} (${OWNER.niche}), the demo's real creator; `
-              : "";
-      const proof = c.captureSha256 ? "" : "; likeness not proven yet, so no ad can be made until they prove it";
-      return { creator: c, pick: true, reason: `${self}fits: ${formatNear(c.terms.pricePerRender)} per render, up to ${c.terms.renderCap} renders, ${c.terms.maxDays} days max${proof}` };
-    })
-    // Picks first; among them, proven creators first (an ad can be made right away); then the cheaper.
-    .sort((a, b) => Number(b.pick) - Number(a.pick) || Number(!!b.creator.captureSha256) - Number(!!a.creator.captureSha256) || (BigInt(a.creator.terms.pricePerRender) < BigInt(b.creator.terms.pricePerRender) ? -1 : 1));
+/** What the brand can still commit: the total budget minus spent and reserved, and never more than the free escrow. */
+export function budgetLeft(b: BrandView): bigint {
+  const byBudget = BigInt(b.totalBudget) - BigInt(b.spent) - BigInt(b.reserved);
+  const byEscrow = BigInt(b.escrow) - BigInt(b.reserved);
+  const left = byBudget < byEscrow ? byBudget : byEscrow;
+  return left > 0n ? left : 0n;
+}
+
+export function filterCreators(creators: CreatorView[], ask: LicenceAsk, brand: BrandView): { eligible: Candidate[]; ineligible: Ineligible[]; left: bigint } {
+  const left = budgetLeft(brand);
+  const eligible: Candidate[] = [];
+  const ineligible: Ineligible[] = [];
+  for (const c of creators) {
+    if (!c.active) continue;
+    const problems = checkAsk(c.terms, ask);
+    if (problems.length) {
+      ineligible.push({ creator: c, reason: problems.join("; ") });
+      continue;
+    }
+    if (BigInt(c.terms.pricePerRender) > BigInt(brand.maxPerRender)) {
+      ineligible.push({ creator: c, reason: `${formatNear(c.terms.pricePerRender)} per render is above your limit (${formatNear(brand.maxPerRender)})` });
+      continue;
+    }
+    const total = BigInt(c.terms.pricePerRender) * BigInt(ask.renderCap);
+    eligible.push({ creator: c, total: total.toString(), fitsBudget: total <= left });
+  }
+  // The deterministic order (and the fallback ranking): cheapest first.
+  eligible.sort((a, b) => (BigInt(a.creator.terms.pricePerRender) < BigInt(b.creator.terms.pricePerRender) ? -1 : BigInt(a.creator.terms.pricePerRender) > BigInt(b.creator.terms.pricePerRender) ? 1 : 0));
+  return { eligible, ineligible, left };
 }

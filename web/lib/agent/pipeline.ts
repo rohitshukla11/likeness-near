@@ -1,6 +1,7 @@
 /**
  * Making an ad under an approved licence, in two separate steps (each its own API call, decision 12 Nov):
- *   makeAd   the fixed prompt (attempt n = renders so far for this licence: never an identical prompt twice) → FLUX.2-klein
+ *   makeAd   the campaign's scene and product (written by the agent first if the brand left them empty, lib/agent/scene)
+ *            → the fixed prompt (attempt n = renders so far for this licence: never an identical prompt twice) → FLUX.2-klein
  *            edit of the creator's consented front frame → final bytes + sha256 → stored privately. Same sha256 as an
  *            earlier render = already submitted, not a new render.
  *   checkAd  the advisory face check, then: blocked / mismatch (never submitted, nothing reserved), regenerate (once),
@@ -17,6 +18,7 @@ import { buildPrompt, VARIATIONS } from "../ai/prompt";
 import { editImage } from "../ai/image";
 import { faceCheck } from "../ai/faceCheck";
 import { finalize } from "../ai/finalize";
+import { ensureScene } from "./scene";
 import type { FaceCheckDetail } from "../types";
 
 const self = (creator: string, brand: string) => (creator === brand ? " (self-licence for demo)" : "");
@@ -43,13 +45,14 @@ export async function makeAd(brand: string, licenceId: string, retryOf?: string)
   const n = await renderCount(licenceId);
   if (n > VARIATIONS.length) throw new HttpError(409, "every distinct prompt for this campaign is used: start a new campaign with another scene");
 
-  const prompt = buildPrompt(campaign.scene, campaign.product, n);
+  const plan = await ensureScene(brand, campaign);
+  const prompt = buildPrompt(plan.scene, plan.product, n);
   const edited = await editImage(brand, await referenceOf(l.creator), prompt);
   const f = await finalize(edited.bytes);
   const existing = await renderBySha(f.sha256);
   if (existing) {
     await log(brand, { kind: "render", summary: `the model returned an image already made for licence ${existing.licence_id}: treated as already submitted, nothing new`, licenceId, sha256: f.sha256 });
-    return { sha256: f.sha256, prompt, attempt: n, status: "already_submitted" as const };
+    return { sha256: f.sha256, prompt, attempt: n, status: "already_submitted" as const, wrote: plan.wrote ? { scene: plan.scene, product: plan.product } : null };
   }
   await putMedia(f.bytes, { kind: "ad", creator: l.creator, brand });
   await addRender({
@@ -66,7 +69,7 @@ export async function makeAd(brand: string, licenceId: string, retryOf?: string)
     retry_of: retryOf ?? null,
   });
   await log(brand, { kind: "render", summary: `made ad ${n + 1} for licence ${licenceId}${self(l.creator, brand)} in ${(edited.ms / 1000).toFixed(1)} s; not submitted until the similarity check`, licenceId, sha256: f.sha256 });
-  return { sha256: f.sha256, prompt, attempt: n, status: "generated" as const };
+  return { sha256: f.sha256, prompt, attempt: n, status: "generated" as const, wrote: plan.wrote ? { scene: plan.scene, product: plan.product } : null };
 }
 
 export async function checkAd(brand: string, sha256: string) {

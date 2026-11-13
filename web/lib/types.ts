@@ -148,20 +148,47 @@ export interface AgentKeyInfo {
   allowance: Yocto;
 }
 
-/** POST /api/agent/campaign: what the brand asks its agent for. Scene and product are screened for banned uses. */
+/** POST /api/agent/find: what the brand asks its agent for. Scene and product are optional (the agent writes them after
+ * the creator approves); whatever is given is screened for banned uses first. */
 export interface CampaignRequest {
   brief: string;
   use: Use;
   durationDays: number;
   renderCap: number;
-  scene: string;
-  product: string;
+  scene?: string;
+  product?: string;
+}
+
+/** One of the agent's top 3: public profile and terms only. */
+export interface ShortlistCard {
+  creatorId: string;
+  name: string;
+  price: Yocto;
+  /** price × renders. */
+  total: Yocto;
+  fitsBudget: boolean;
+  reason: string;
+  by: "model" | "rule";
+}
+
+export type FindResponse =
+  | { status: "blocked"; reasons: string[] }
+  | { status: "no_creator"; reasons: string[]; notEligible: { creatorId: string; reason: string }[] }
+  | { status: "ok"; campaignId: number; top: ShortlistCard[]; notEligible: { creatorId: string; reason: string }[]; budgetLeft: Yocto };
+
+/** POST /api/agent/request {campaignId, creatorId?}: no creatorId = "Let the agent choose" (#1). */
+export interface RequestResponse {
+  creatorId: string;
+  name: string;
+  licenceId: string;
+  tx: string;
+  by: string;
 }
 
 /** One line of the agent's activity log. */
 export interface ActivityEvent {
   at: number;
-  kind: "shortlist" | "skip" | "request" | "render" | "check" | "submit" | "blocked" | "error";
+  kind: "shortlist" | "skip" | "request" | "plan" | "render" | "check" | "submit" | "blocked" | "error";
   summary: string;
   licenceId?: string | null;
   sha256?: Sha256Hex | null;
