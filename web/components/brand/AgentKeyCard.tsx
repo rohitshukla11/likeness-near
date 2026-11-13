@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * The agent's key on the brand's own account: a function-call key that can call only request_licence and
+ * 3. Agent key: the agent's key on the brand's own account: a function-call key that can call only request_licence and
  * submit_render on the Likeness contract, can't attach deposits, and has a 0.25 NEAR gas allowance. The brand adds it
  * with one AddKey and can delete it at any time (the kill switch). Every key on the account is listed, read from the
  * chain. If the wallet won't sign AddKey/DeleteKey, the near-cli-rs commands do the same.
  */
 import { useCallback, useEffect, useState } from "react";
-import { btnClass, Card, Details, ErrorCard, StatusPill } from "@/components/ds";
+import { btnClass, Details, ErrorCard, StatusPill } from "@/components/ds";
 import { NotConnected } from "@/components/ds/NotConnected";
 import { runTx, TxLine, type TxState } from "@/components/likeness/TxLine";
 import { api, NotConnectedError } from "@/lib/api";
@@ -17,8 +17,9 @@ import { accessKeys, type AccessKey } from "@/lib/near/view";
 import { useWallet } from "@/lib/near/wallet";
 import { formatNear } from "@/lib/rules";
 import type { AgentKeyInfo } from "@/lib/types";
+import { SetUpStep } from "./SetUp";
 
-export function AgentKeyCard({ accountId }: { accountId: string }) {
+export function AgentKeyCard({ accountId, onStatus }: { accountId: string; onStatus?: (onChain: boolean) => void }) {
   const w = useWallet();
   const [keys, setKeys] = useState<AccessKey[] | null>(null);
   const [keysError, setKeysError] = useState<string | null>(null);
@@ -50,12 +51,20 @@ export function AgentKeyCard({ accountId }: { accountId: string }) {
   }, [accountId, reload]);
 
   const agentOnChain = !!agent && !!keys?.some((k) => k.publicKey === agent.publicKey);
+  useEffect(() => {
+    if (keys && agent) onStatus?.(agentOnChain);
+  }, [keys, agent, agentOnChain, onStatus]);
   const contractKeys = keys?.filter((k) => !k.fullAccess && k.receiverId === CONTRACT_ID) ?? [];
   const pk = agent?.publicKey ?? "ed25519:<AGENT_PUBLIC_KEY>";
 
   return (
-    <Card title="Your agent's key">
-      <p className="m-0 text-[14px] text-grey">
+    <SetUpStep
+      n={3}
+      title="Agent key"
+      wide
+      pill={agentOnChain ? <StatusPill kind="licensed">On your account</StatusPill> : <StatusPill kind="lime">{keys && agent ? "Not added" : "Checking…"}</StatusPill>}
+    >
+      <p className="m-0 text-[14px]">
         A function-call key on <b>{accountId}</b>: it may call only {AGENT_METHODS.join(" and ")} on the Likeness contract, can&apos;t move your
         NEAR, and has a {formatNear(AGENT_ALLOWANCE)} gas allowance. Delete it and your agent stops at once.
       </p>
@@ -67,7 +76,6 @@ export function AgentKeyCard({ accountId }: { accountId: string }) {
       {agent && (
         <div className="flex flex-wrap items-center gap-3">
           <code className="break-all text-[13px]">{agent.publicKey}</code>
-          {agentOnChain ? <StatusPill kind="licensed">On your account</StatusPill> : <StatusPill kind="waiting">Not added yet</StatusPill>}
           {!agentOnChain && (
             <button
               type="button"
@@ -87,7 +95,7 @@ export function AgentKeyCard({ accountId }: { accountId: string }) {
       )}
       <TxLine s={tx} />
 
-      <h3 className="m-0 mt-2 text-[15px] font-semibold">Keys on {accountId} for this contract</h3>
+      <h4 className="m-0 text-[14px] font-semibold">Keys on {accountId} for this contract</h4>
       {keysError && <ErrorCard>{keysError}</ErrorCard>}
       {!contractConfigured() ? (
         <NotConnected what="The Likeness contract" />
@@ -131,6 +139,6 @@ near account list-keys ${accountId} network-config testnet now
 near account delete-keys ${accountId} public-keys ${pk} network-config testnet sign-with-keychain send`}
         </pre>
       </Details>
-    </Card>
+    </SetUpStep>
   );
 }

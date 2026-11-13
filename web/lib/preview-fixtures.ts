@@ -115,4 +115,5 @@ export const findDemo: FindResponse = {
     { creatorId: "demo-pricey-creator.testnet", name: "demo-pricey-creator.testnet", price: near(0.2), total: near(0.6), fitsBudget: false, reason: "Allows Food & drink, but the total is over what's left of your budget.", by: "model" },
   ],
   notEligible: [{ creatorId: maya!.accountId, reason: "the creator doesn't allow Food & drink" }],
+  ready: true,
 };

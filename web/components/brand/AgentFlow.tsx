@@ -130,7 +130,7 @@ export function AgentFlow({ onChanged, preview }: { onChanged: () => void; previ
   }
 
   const ok = find?.status === "ok" ? find : null;
-  const canChoose = !!ok && ok.top.some((c) => c.fitsBudget) && !asked;
+  const canChoose = !!ok && ok.ready && ok.top.some((c) => c.fitsBudget) && !asked;
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -210,7 +210,7 @@ export function AgentFlow({ onChanged, preview }: { onChanged: () => void; previ
               <h2 className="m-0 font-display text-[clamp(22px,3.4vw,30px)] font-extrabold leading-[1.05]">{ok ? "Top 3 for this brief" : "No creator fits"}</h2>
               <p className={`m-0 text-[14px] ${MUTED}`}>
                 {ok
-                  ? `Filtered on the creators' on-chain terms and your limits, then ranked by the agent from public profiles and terms only (no images). Budget left: ${formatNear(ok.budgetLeft)}.`
+                  ? `Filtered on the creators' on-chain terms and your limits, then ranked by the agent from public profiles and terms only (no images). ${ok.ready ? `Budget left: ${formatNear(ok.budgetLeft)}.` : "Deposit escrow and set your spending limits (Set up once, above) to request a licence."}`
                   : find.status === "no_creator" ? find.reasons.join("; ") : ""}
               </p>
             </div>
@@ -224,7 +224,7 @@ export function AgentFlow({ onChanged, preview }: { onChanged: () => void; previ
           {ok && (
             <ol className="m-0 grid list-none grid-cols-1 gap-3 p-0 md:grid-cols-3">
               {ok.top.map((c, i) => (
-                <ShortCard key={c.creatorId} c={c} rank={i + 1} renders={renderCap} disabled={!!busy || !!asked || !!preview} onRequest={() => void request(c.creatorId)} chosen={asked?.creatorId === c.creatorId} />
+                <ShortCard key={c.creatorId} c={c} rank={i + 1} ready={ok.ready} renders={renderCap} disabled={!!busy || !!asked || !!preview} onRequest={() => void request(c.creatorId)} chosen={asked?.creatorId === c.creatorId} />
               ))}
             </ol>
           )}
@@ -276,7 +276,7 @@ export function AgentFlow({ onChanged, preview }: { onChanged: () => void; previ
   );
 }
 
-function ShortCard({ c, rank, renders, disabled, onRequest, chosen }: { c: ShortlistCard; rank: number; renders: number; disabled: boolean; onRequest: () => void; chosen: boolean }) {
+function ShortCard({ c, rank, ready, renders, disabled, onRequest, chosen }: { c: ShortlistCard; rank: number; ready: boolean; renders: number; disabled: boolean; onRequest: () => void; chosen: boolean }) {
   const p = profileOf(c.creatorId);
   return (
     <li className={`${SURFACE} flex min-w-0 flex-col overflow-hidden ${c.fitsBudget ? "" : "opacity-70"}`}>
@@ -296,7 +296,11 @@ function ShortCard({ c, rank, renders, disabled, onRequest, chosen }: { c: Short
           <a href={accountUrl(c.creatorId)} target="_blank" rel="noreferrer" className="min-w-0 truncate text-[17px] font-bold text-ink no-underline hover:underline" title={c.creatorId}>
             {c.name}
           </a>
-          <StatusPill kind={c.fitsBudget ? "licensed" : "revoked"}>{c.fitsBudget ? "Fits budget: yes" : "Fits budget: no"}</StatusPill>
+          {ready ? (
+            <StatusPill kind={c.fitsBudget ? "licensed" : "revoked"}>{c.fitsBudget ? "Fits budget: yes" : "Fits budget: no"}</StatusPill>
+          ) : (
+            <StatusPill kind="neutral">Budget: not set</StatusPill>
+          )}
         </div>
         <SyntheticBadge accountId={c.creatorId} />
         <span className="tnum text-[14px]">
@@ -308,6 +312,10 @@ function ShortCard({ c, rank, renders, disabled, onRequest, chosen }: { c: Short
         <div className="mt-auto pt-1">
           {chosen ? (
             <span className={`text-[13px] font-semibold text-ok`}>Requested</span>
+          ) : !ready ? (
+            <a href="#setup" className={btnClass("outline", "min-h-11")}>
+              Set up first ↑
+            </a>
           ) : (
             <button type="button" disabled={disabled || !c.fitsBudget} onClick={onRequest} className={btnClass(c.fitsBudget ? "ink" : "outline", "min-h-11")} title={c.fitsBudget ? undefined : "Over your budget: can't be requested"}>
               {c.fitsBudget ? "Request licence" : "Over your budget"}

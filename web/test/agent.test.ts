@@ -54,6 +54,24 @@ test("the filter gives one plain reason per creator who isn't eligible, and leav
   assert.equal(six.eligible[0]!.fitsBudget, false);
 });
 
+test("finding works before the brand has set anything up: every fit is shown, none can be requested", () => {
+  const none = filterCreators([creator("ok.testnet"), creator("pricey.testnet", { price: 0.5 }), creator("nouse.testnet", { uses: ["Tech"] })], ask, null);
+  assert.equal(none.left, 0n);
+  assert.deepEqual(
+    none.eligible.map((e) => [e.creator.accountId, e.fitsBudget]),
+    [
+      ["ok.testnet", false],
+      ["pricey.testnet", false],
+    ],
+  );
+  assert.deepEqual(
+    none.ineligible.map((i) => i.creator.accountId),
+    ["nouse.testnet"],
+  );
+  const noLimits = filterCreators([creator("ok.testnet")], ask, { ...brand, maxPerRender: "0", totalBudget: "0" });
+  assert.equal(noLimits.eligible[0]!.fitsBudget, false);
+});
+
 test("the ranking model receives text only: public profile and terms, never an image, face file or hash", async () => {
   const { eligible } = filterCreators([creator(OWNER.accountId), creator("likeness-synth-asha.testnet"), creator("someone.testnet")], ask, brand);
   let seen: Parameters<ChatFn>[0] = [];

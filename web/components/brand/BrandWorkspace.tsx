@@ -10,10 +10,11 @@ import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { ErrorCard } from "@/components/ds";
 import { NotConnected } from "@/components/ds/NotConnected";
-import { BigAvatar, CHIP, MUTED, ProfileHeader, Stat } from "@/components/likeness/Dash";
+import { BigAvatar, CHIP, ProfileHeader, Stat } from "@/components/likeness/Dash";
 import { AgentKeyCard } from "./AgentKeyCard";
 import { AgentActivity, BrandAds, BrandLicences } from "./BrandAgentConsole";
 import { AgentFlow } from "./AgentFlow";
+import { SetUpPanel } from "./SetUp";
 import { DepositCard } from "./DepositCard";
 import { LimitsCard } from "./LimitsCard";
 import { api, NotConnectedError } from "@/lib/api";
@@ -30,6 +31,7 @@ export function BrandWorkspace({ accountId }: { accountId: string }) {
   const [overview, setOverview] = useState<BrandOverview | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [reload, setReload] = useState(0);
+  const [keyOn, setKeyOn] = useState(false);
   const refresh = useCallback(() => setReload((n) => n + 1), []);
 
   useEffect(() => {
@@ -73,7 +75,8 @@ export function BrandWorkspace({ accountId }: { accountId: string }) {
           <LimitsCard key={loaded ? `${brand?.maxPerRender}-${brand?.totalBudget}` : "new"} brand={brand} onChanged={refresh} />
         </>
       }
-      agentKey={<AgentKeyCard accountId={accountId} />}
+      agentKey={<AgentKeyCard accountId={accountId} onStatus={setKeyOn} />}
+      keyOn={keyOn}
       onChanged={refresh}
     />
   );
@@ -88,6 +91,7 @@ export function BrandDashboardView({
   campaign,
   money,
   agentKey,
+  keyOn = false,
   onChanged,
   preview = false,
 }: {
@@ -99,6 +103,8 @@ export function BrandDashboardView({
   campaign: ReactNode;
   money: ReactNode;
   agentKey: ReactNode;
+  /** The agent's key is on the brand's account (from the key card). */
+  keyOn?: boolean;
   onChanged: () => void;
   preview?: boolean;
 }) {
@@ -144,6 +150,13 @@ export function BrandDashboardView({
         <Stat label="Ads approved" value={overview ? renders.filter((r) => r.receipt.status === "Approved").length : "—"} />
       </section>
 
+      <SetUpPanel ready={!!brand && BigInt(brand.escrow) > BigInt(brand.reserved) && brand.maxPerRender !== "0" && keyOn}>
+        <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
+          {money}
+          {agentKey}
+        </div>
+      </SetUpPanel>
+
       {campaign}
 
       <div className="grid grid-cols-1 items-start gap-[18px] desk:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
@@ -154,12 +167,6 @@ export function BrandDashboardView({
         <AgentActivity events={overview?.activity ?? []} />
       </div>
 
-      <section className="flex flex-col gap-3" aria-label="Money and keys">
-        <h2 className="m-0 text-[20px] font-bold">Money and keys</h2>
-        <p className={`m-0 text-[14px] ${MUTED}`}>Signed in your own wallet. The agent never holds your money or a full-access key.</p>
-        <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-2">{money}</div>
-        {agentKey}
-      </section>
     </div>
   );
 }

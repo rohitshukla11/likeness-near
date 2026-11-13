@@ -4,6 +4,8 @@
  * price is within the brand's per-render limit) or not eligible with one plain reason. Eligible creators carry the
  * campaign's total (price × renders) and whether it fits what's left of the brand's budget; an over-budget creator
  * can be shown but never requested. Paused creators take no requests (the contract refuses them) and are left out.
+ * Works before the brand has set anything up (no record, or no limits yet): no per-render check, nothing left in the
+ * budget, so every eligible creator is shown and none can be requested until escrow and limits are set.
  * Pure: the caller reads the chain.
  */
 import { checkAsk, formatNear, type LicenceAsk } from "../rules.ts";
@@ -28,15 +30,19 @@ export interface Ineligible {
  */
 export const listedCreators = (creators: CreatorView[]) => creators.filter((c) => c.active);
 
+/** Has the brand set its spending limits on-chain? */
+export const limitsSet = (b: BrandView | null): b is BrandView => !!b && b.maxPerRender !== "0";
+
 /** What the brand can still commit: the total budget minus spent and reserved, and never more than the free escrow. */
-export function budgetLeft(b: BrandView): bigint {
+export function budgetLeft(b: BrandView | null): bigint {
+  if (!limitsSet(b)) return 0n;
   const byBudget = BigInt(b.totalBudget) - BigInt(b.spent) - BigInt(b.reserved);
   const byEscrow = BigInt(b.escrow) - BigInt(b.reserved);
   const left = byBudget < byEscrow ? byBudget : byEscrow;
   return left > 0n ? left : 0n;
 }
 
-export function filterCreators(creators: CreatorView[], ask: LicenceAsk, brand: BrandView): { eligible: Candidate[]; ineligible: Ineligible[]; left: bigint } {
+export function filterCreators(creators: CreatorView[], ask: LicenceAsk, brand: BrandView | null): { eligible: Candidate[]; ineligible: Ineligible[]; left: bigint } {
   const left = budgetLeft(brand);
   const eligible: Candidate[] = [];
   const ineligible: Ineligible[] = [];
@@ -46,7 +52,7 @@ export function filterCreators(creators: CreatorView[], ask: LicenceAsk, brand: 
       ineligible.push({ creator: c, reason: problems.join("; ") });
       continue;
     }
-    if (BigInt(c.terms.pricePerRender) > BigInt(brand.maxPerRender)) {
+    if (limitsSet(brand) && BigInt(c.terms.pricePerRender) > BigInt(brand.maxPerRender)) {
       ineligible.push({ creator: c, reason: `${formatNear(c.terms.pricePerRender)} per render is above your limit (${formatNear(brand.maxPerRender)})` });
       continue;
     }

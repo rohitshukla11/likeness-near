@@ -19,7 +19,7 @@ import type { CampaignRequest, FindResponse, RequestResponse } from "../types";
 import { screen } from "../ai/filter";
 import { aiEnabled, chatJson } from "../ai/nearai";
 import { agentChoice, rankCreators, RANK_SCHEMA, requestable, type RankedCard } from "./rank";
-import { filterCreators } from "./shortlist";
+import { filterCreators, limitsSet } from "./shortlist";
 
 const self = (creator: string, brand: string) => (creator === brand ? " (self-licence for demo: creator and brand are the same account; the creator still approves in their own wallet)" : "");
 
@@ -35,13 +35,11 @@ export async function findCreators(brand: string, req: CampaignRequest): Promise
     return { status: "blocked", reasons: first.reasons };
   }
 
-  // 2. The brand's limits and the creators, from the chain; the deterministic filter.
+  // 2. The brand's limits and the creators, from the chain; the deterministic filter. Finding works before the brand
+  //    has deposited or set limits: the cards then show, but none can be requested until it has.
   const b = await views.getBrand(brand);
-  if (!b || b.maxPerRender === "0") {
-    const r = "deposit escrow and set your spending limits first (Money and keys, below)";
-    await log(brand, { kind: "blocked", summary: r });
-    return { status: "blocked", reasons: [r] };
-  }
+  const ready = limitsSet(b) && BigInt(b.escrow) > BigInt(b.reserved);
+  if (!ready) await log(brand, { kind: "shortlist", summary: "no escrow or spending limits yet: showing the shortlist; requesting a licence needs both (Set up once)" });
   const { eligible, ineligible, left } = filterCreators(await views.listCreators(0, 50), { brief: req.brief, use: req.use, durationDays: req.durationDays, renderCap: req.renderCap }, b);
   for (const e of ineligible) await log(brand, { kind: "skip", summary: `${e.creator.accountId}: not eligible: ${e.reason}` });
   const notEligible = ineligible.map((e) => ({ creatorId: e.creator.accountId, reason: e.reason }));
@@ -63,7 +61,7 @@ export async function findCreators(brand: string, req: CampaignRequest): Promise
     }),
   );
   const campaignId = await addCampaign(brand, req, { top, notEligible, left: left.toString() });
-  return { status: "ok", campaignId, top, notEligible, budgetLeft: left.toString() };
+  return { status: "ok", campaignId, top, notEligible, budgetLeft: left.toString(), ready };
 }
 
 export async function requestCreator(brand: string, campaignId: number, creatorId?: string): Promise<RequestResponse> {
@@ -77,7 +75,8 @@ export async function requestCreator(brand: string, campaignId: number, creatorI
 
   // Re-check against the chain now: terms, limits and budget may have changed since the shortlist.
   const [b, creator] = await Promise.all([views.getBrand(brand), views.getCreator(pick.creatorId)]);
-  if (!b || !creator) throw new HttpError(409, "the brand or the creator is no longer registered");
+  if (!limitsSet(b) || BigInt(b.escrow) <= BigInt(b.reserved)) throw new HttpError(409, "deposit escrow and set your spending limits first (Set up once, above)");
+  if (!creator) throw new HttpError(409, "the creator is no longer registered");
   const ask = { brief: c.brief, use: c.usage as CampaignRequest["use"], durationDays: c.duration_days, renderCap: c.render_cap };
   const now = filterCreators([creator], ask, b);
   if (!now.eligible.length) throw new HttpError(409, `no longer eligible: ${now.ineligible[0]?.reason ?? "the creator is paused"}`);
