@@ -331,7 +331,8 @@ function LicenceRow({ l, act }: { l: LicenceView; act: Act }) {
           {USE_LABELS[l.use]} · {formatNear(l.price)} per render · {l.rendersUsed}/{l.renderCap} used{l.rendersReserved ? `, ${l.rendersReserved} waiting` : ""} · until {shortDay(l.expiresAt)}
         </span>
       </span>
-      {l.status === "Active" && (
+      {/* Revocable whenever the contract allows it: state Active, even once Exhausted or past its expiry. */}
+      {l.state === "Active" && (
         <button type="button" className={btnClass("danger", "min-h-9")} onClick={() => void act("Revoke the licence", calls.revokeLicence(l.id))}>
           Revoke
         </button>
@@ -380,7 +381,7 @@ function AdCard({ it, self, act }: { it: RenderItem; self: boolean; act: Act }) 
               Payment ↗
             </a>
           )}
-          {r.status === "Approved" && it.licence.status === "Active" && (
+          {r.status === "Approved" && it.licence.state === "Active" && (
             <button type="button" className={btnClass("danger", "min-h-9")} onClick={() => void act("Revoke the licence", calls.revokeLicence(it.licence.id))}>
               Revoke licence
             </button>
