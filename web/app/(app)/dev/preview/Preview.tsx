@@ -6,11 +6,11 @@
  */
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { AppPage, StatusPill } from "@/components/ds";
+import { AppPage } from "@/components/ds";
 import { BrandDashboardView } from "@/components/brand/BrandWorkspace";
 import { AgentFlow } from "@/components/brand/AgentFlow";
 import { DepositCard } from "@/components/brand/DepositCard";
-import { SetUpStep } from "@/components/brand/SetUp";
+import { CopyButton, SetPill, SetUpCard } from "@/components/brand/SetUp";
 import { LimitsCard } from "@/components/brand/LimitsCard";
 import { CreatorDashboardView } from "@/components/likeness/CreatorHome";
 import { AccountMenuView } from "@/components/site/AccountMenu";
@@ -63,13 +63,13 @@ export function Preview() {
             </>
           }
           agentKey={
-            <SetUpStep n={3} title="Agent key" wide pill={<StatusPill kind={demo ? "licensed" : "lime"}>{demo ? "On your account" : "Not added"}</StatusPill>}>
-              <p className="m-0 text-[14px] text-grey">
-                {demo
-                  ? "A function-call key on demo-brand.testnet: request_licence and submit_render only, 0.25 NEAR gas allowance. (Preview: the real card lists the keys from the chain and offers Add / Delete.)"
-                  : "Not added yet. (Preview: the real card shows the agent's public key with an Add button that signs one AddKey in your wallet.)"}
-              </p>
-            </SetUpStep>
+            <SetUpCard n={3} title="Agent key" pill={<SetPill ok={demo} yes="Active" no="Not added" />}>
+              <div className="flex items-center justify-between gap-2">
+                <code className="min-w-0 truncate text-[13px]">ed25519:PreviewK…NotReal1</code>
+                <CopyButton text="ed25519:PreviewKeyNotReal" label="Copy the agent's public key" />
+              </div>
+              <p className="m-0 text-[13px] text-grey">Can request and submit · can&apos;t move NEAR (preview: buttons are inert)</p>
+            </SetUpCard>
           }
           keyOn={demo}
           onChanged={() => undefined}

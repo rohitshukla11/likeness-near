@@ -1,30 +1,27 @@
 "use client";
 
 /**
- * 3. Agent key: the agent's key on the brand's own account: a function-call key that can call only request_licence and
- * submit_render on the Likeness contract, can't attach deposits, and has a 0.25 NEAR gas allowance. The brand adds it
- * with one AddKey and can delete it at any time (the kill switch). Every key on the account is listed, read from the
- * chain. If the wallet won't sign AddKey/DeleteKey, the near-cli-rs commands do the same.
+ * 3 · Agent key, compact: the agent's function-call key on the brand's own account (read from the chain), shortened
+ * with a copy button. It can call only request_licence and submit_render on the Likeness contract, can't attach
+ * deposits, and has a 0.25 NEAR gas allowance. Add it with one AddKey; the red kill switch deletes it (DeleteKey),
+ * which stops the agent at once.
  */
 import { useCallback, useEffect, useState } from "react";
-import { btnClass, Details, ErrorCard, StatusPill } from "@/components/ds";
-import { NotConnected } from "@/components/ds/NotConnected";
-import { runTx, TxLine, type TxState } from "@/components/likeness/TxLine";
-import { api, NotConnectedError } from "@/lib/api";
+import { btnClass } from "@/components/ds";
+import { runTx, type TxState } from "@/components/likeness/TxLine";
+import { api } from "@/lib/api";
 import { CONTRACT_ID, contractConfigured } from "@/lib/near/config";
 import { AGENT_ALLOWANCE, AGENT_METHODS } from "@/lib/near/methods";
 import { accessKeys, type AccessKey } from "@/lib/near/view";
 import { useWallet } from "@/lib/near/wallet";
-import { formatNear } from "@/lib/rules";
 import type { AgentKeyInfo } from "@/lib/types";
-import { SetUpStep } from "./SetUp";
+import { CopyButton, SetPill, SetUpCard, shortKey, TxNote } from "./SetUp";
 
 export function AgentKeyCard({ accountId, onStatus }: { accountId: string; onStatus?: (onChain: boolean) => void }) {
   const w = useWallet();
   const [keys, setKeys] = useState<AccessKey[] | null>(null);
-  const [keysError, setKeysError] = useState<string | null>(null);
   const [agent, setAgent] = useState<AgentKeyInfo | null>(null);
-  const [agentError, setAgentError] = useState<unknown>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [tx, setTx] = useState<TxState>({ kind: "idle" });
   const [reload, setReload] = useState(0);
   const refresh = useCallback(() => setReload((n) => n + 1), []);
@@ -32,113 +29,66 @@ export function AgentKeyCard({ accountId, onStatus }: { accountId: string; onSta
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      try {
-        const k = await accessKeys(accountId);
-        if (!cancelled) setKeys(k);
-      } catch (e) {
-        if (!cancelled) setKeysError((e as Error).message);
-      }
-      try {
-        const a = await api<AgentKeyInfo>("/api/agent-key");
-        if (!cancelled) setAgent(a);
-      } catch (e) {
-        if (!cancelled) setAgentError(e);
-      }
+      const [k, a] = await Promise.allSettled([accessKeys(accountId), api<AgentKeyInfo>("/api/agent-key")]);
+      if (cancelled) return;
+      if (k.status === "fulfilled") setKeys(k.value);
+      if (a.status === "fulfilled") setAgent(a.value);
+      setLoadError(k.status === "rejected" ? "Couldn't read your keys from NEAR." : a.status === "rejected" ? "This server has no agent key configured." : null);
     })();
     return () => {
       cancelled = true;
     };
   }, [accountId, reload]);
 
-  const agentOnChain = !!agent && !!keys?.some((k) => k.publicKey === agent.publicKey);
+  const onChain = !!agent && !!keys?.some((k) => k.publicKey === agent.publicKey);
   useEffect(() => {
-    if (keys && agent) onStatus?.(agentOnChain);
-  }, [keys, agent, agentOnChain, onStatus]);
-  const contractKeys = keys?.filter((k) => !k.fullAccess && k.receiverId === CONTRACT_ID) ?? [];
-  const pk = agent?.publicKey ?? "ed25519:<AGENT_PUBLIC_KEY>";
+    if (keys && agent) onStatus?.(onChain);
+  }, [keys, agent, onChain, onStatus]);
+  const busy = tx.kind === "busy";
 
   return (
-    <SetUpStep
-      n={3}
-      title="Agent key"
-      wide
-      pill={agentOnChain ? <StatusPill kind="licensed">On your account</StatusPill> : <StatusPill kind="lime">{keys && agent ? "Not added" : "Checking…"}</StatusPill>}
-    >
-      <p className="m-0 text-[14px]">
-        A function-call key on <b>{accountId}</b>: it may call only {AGENT_METHODS.join(" and ")} on the Likeness contract, can&apos;t move your
-        NEAR, and has a {formatNear(AGENT_ALLOWANCE)} gas allowance. Delete it and your agent stops at once.
-      </p>
-      {agentError instanceof NotConnectedError ? (
-        <NotConnected what="The agent's key (/api/agent-key)" />
-      ) : agentError ? (
-        <ErrorCard>{(agentError as Error).message}</ErrorCard>
-      ) : null}
-      {agent && (
-        <div className="flex flex-wrap items-center gap-3">
-          <code className="break-all text-[13px]">{agent.publicKey}</code>
-          {!agentOnChain && (
-            <button
-              type="button"
-              disabled={!contractConfigured() || tx.kind === "busy"}
-              className={btnClass("lime")}
-              onClick={async () => {
-                const ok = await runTx(setTx, "Add the agent key", () =>
-                  w.send(accountId, [{ type: "AddKey", params: { publicKey: agent.publicKey, accessKey: { permission: { receiverId: CONTRACT_ID, allowance: AGENT_ALLOWANCE, methodNames: [...AGENT_METHODS] } } } }]),
-                );
-                if (ok) refresh();
-              }}
-            >
-              Add it (one AddKey in your wallet)
-            </button>
-          )}
+    <SetUpCard n={3} title="Agent key" pill={<SetPill ok={onChain} yes="Active" no={keys && agent ? "Not added" : "Checking…"} />}>
+      {agent ? (
+        <div className="flex items-center justify-between gap-2">
+          <code className="min-w-0 truncate text-[13px]" title={agent.publicKey}>
+            {shortKey(agent.publicKey)}
+          </code>
+          <CopyButton text={agent.publicKey} label="Copy the agent's public key" />
         </div>
-      )}
-      <TxLine s={tx} />
-
-      <h4 className="m-0 text-[14px] font-semibold">Keys on {accountId} for this contract</h4>
-      {keysError && <ErrorCard>{keysError}</ErrorCard>}
-      {!contractConfigured() ? (
-        <NotConnected what="The Likeness contract" />
-      ) : keys && contractKeys.length === 0 ? (
-        <p className="m-0 text-[14px] text-grey">None: no agent can act for you.</p>
       ) : (
-        <ul className="m-0 flex list-none flex-col gap-2 p-0">
-          {contractKeys.map((k) => (
-            <li key={k.publicKey} className="flex flex-wrap items-center justify-between gap-2 rounded-[14px] border border-line p-3 text-[13px]">
-              <span className="min-w-0">
-                <code className="break-all">{k.publicKey}</code>
-                <span className="block text-grey">
-                  {k.methodNames?.join(", ") || "any method"} · allowance {k.allowance ? formatNear(k.allowance) : "unlimited"}
-                  {agent?.publicKey === k.publicKey ? " · your agent" : ""}
-                </span>
-              </span>
-              <button
-                type="button"
-                disabled={tx.kind === "busy"}
-                className={btnClass("danger")}
-                onClick={async () => {
-                  if (await runTx(setTx, "Delete the key", () => w.send(accountId, [{ type: "DeleteKey", params: { publicKey: k.publicKey } }]))) refresh();
-                }}
-              >
-                Delete (kill switch)
-              </button>
-            </li>
-          ))}
-        </ul>
+        <p className="m-0 text-[13px] text-grey">{loadError ?? "Reading the key…"}</p>
       )}
-
-      <Details summary="If your wallet won't sign AddKey or DeleteKey">
-        <p className="m-0 mb-2 text-[13px] text-grey">The same with near-cli-rs, signed by your own keychain:</p>
-        <pre className="m-0 overflow-x-auto whitespace-pre-wrap rounded-[12px] bg-ink p-3 text-[12px] text-white">
-          {`near account add-key ${accountId} grant-function-call-access --allowance '${formatNear(AGENT_ALLOWANCE)}' \\
-  --contract-account-id ${CONTRACT_ID || "<contract>"} --function-names '${AGENT_METHODS.join(", ")}' \\
-  use-manually-provided-public-key ${pk} network-config testnet sign-with-keychain send
-
-near account list-keys ${accountId} network-config testnet now
-
-near account delete-keys ${accountId} public-keys ${pk} network-config testnet sign-with-keychain send`}
-        </pre>
-      </Details>
-    </SetUpStep>
+      <p className="m-0 text-[13px] text-grey">Can request and submit · can&apos;t move NEAR</p>
+      <div className="mt-auto">
+        {agent && onChain ? (
+          <button
+            type="button"
+            disabled={busy}
+            className="min-h-11 w-full rounded-[12px] border-2 border-bad/60 px-4 text-[14px] font-semibold text-bad hover:bg-bad-bg disabled:opacity-60"
+            onClick={async () => {
+              if (await runTx(setTx, "Delete the agent key", () => w.send(accountId, [{ type: "DeleteKey", params: { publicKey: agent.publicKey } }]))) refresh();
+            }}
+          >
+            Kill switch: delete key
+          </button>
+        ) : agent ? (
+          <button
+            type="button"
+            disabled={!contractConfigured() || busy}
+            className={btnClass("lime", "min-h-11 w-full")}
+            title={`A function-call key: ${AGENT_METHODS.join(", ")} only`}
+            onClick={async () => {
+              const ok = await runTx(setTx, "Add the agent key", () =>
+                w.send(accountId, [{ type: "AddKey", params: { publicKey: agent.publicKey, accessKey: { permission: { receiverId: CONTRACT_ID, allowance: AGENT_ALLOWANCE, methodNames: [...AGENT_METHODS] } } } }]),
+              );
+              if (ok) refresh();
+            }}
+          >
+            Add key (one AddKey)
+          </button>
+        ) : null}
+      </div>
+      <TxNote s={tx} />
+    </SetUpCard>
   );
 }

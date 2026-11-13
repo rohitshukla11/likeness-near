@@ -1,44 +1,54 @@
 "use client";
 
 /**
- * 1. Escrow: the brand's escrow on the contract, read straight from the chain (deposited, reserved for ads waiting on
- * creators, spent, free to withdraw). Deposit and withdraw are transactions from the brand's own wallet.
+ * 1 · Escrow, compact: the free NEAR (escrow − reserved, from the contract) with what's reserved, a thin
+ * spent / reserved / free bar, and one row: amount, Deposit, withdraw. Both are transactions from the brand's wallet.
  */
 import { useState } from "react";
-import { btnClass, StatusPill } from "@/components/ds";
-import { inputClass } from "@/components/ui";
-import { runTx, TxLine, type TxState } from "@/components/likeness/TxLine";
+import { btnClass } from "@/components/ds";
+import { runTx, type TxState } from "@/components/likeness/TxLine";
 import { calls } from "@/lib/near/methods";
 import { useWallet } from "@/lib/near/wallet";
 import { formatNear, parseNear } from "@/lib/rules";
 import type { BrandView } from "@/lib/types";
-import { SetUpStep, Tile } from "./SetUp";
+import { SetPill, SetUpCard, TxNote } from "./SetUp";
+
+const n2 = (y: bigint) => (Number(y / 10n ** 18n) / 1e6).toFixed(2);
 
 export function DepositCard({ brand, onChanged }: { brand: BrandView | null; onChanged: () => void }) {
   const w = useWallet();
   const [amount, setAmount] = useState("0.5");
   const [tx, setTx] = useState<TxState>({ kind: "idle" });
   const y = parseNear(amount);
-  const free = brand ? BigInt(brand.escrow) - BigInt(brand.reserved) : 0n;
+  const escrow = brand ? BigInt(brand.escrow) : 0n;
+  const reserved = brand ? BigInt(brand.reserved) : 0n;
+  const spent = brand ? BigInt(brand.spent) : 0n;
+  const free = escrow > reserved ? escrow - reserved : 0n;
+  const total = spent + reserved + free;
+  const pct = (v: bigint) => (total > 0n ? Number((v * 1000n) / total) / 10 : 0);
+  const busy = tx.kind === "busy";
 
   return (
-    <SetUpStep n={1} title="Escrow" pill={free > 0n ? <StatusPill kind="licensed">Funded</StatusPill> : <StatusPill kind="lime">Not funded</StatusPill>}>
-      <p className="m-0 text-[14px]">Deposit testnet NEAR once. Each ad your creators approve is paid from it; until then its price is only reserved.</p>
-      <dl className="m-0 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Tile label="Deposited" value={brand ? formatNear(brand.escrow) : "—"} />
-        <Tile label="Reserved" value={brand ? formatNear(brand.reserved) : "—"} />
-        <Tile label="Spent" value={brand ? formatNear(brand.spent) : "—"} />
-        <Tile label="Free" value={brand ? formatNear(free) : "—"} />
-      </dl>
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="text-[12px] font-semibold text-grey">Amount (NEAR)</span>
-          <input className={inputClass} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.trim())} />
+    <SetUpCard n={1} title="Escrow" pill={<SetPill ok={free > 0n} yes="Funded" no="Not funded" />}>
+      <div className="flex items-baseline gap-2">
+        <span className="tnum font-display text-[26px] font-extrabold leading-none">{n2(free)}</span>
+        <span className="text-[13px] text-grey">NEAR free · {n2(reserved)} reserved</span>
+      </div>
+      <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-paper" role="img" aria-label={`Spent ${formatNear(spent)}, reserved ${formatNear(reserved)}, free ${formatNear(free)}`}>
+        <span className="bg-grey" style={{ width: `${pct(spent)}%` }} />
+        <span className="bg-wait" style={{ width: `${pct(reserved)}%` }} />
+        <span className="bg-ok" style={{ width: `${pct(free)}%` }} />
+      </div>
+      <div className="mt-auto flex items-stretch gap-2">
+        <label className="flex min-h-11 min-w-0 flex-1 items-center rounded-[12px] border border-field bg-white px-3">
+          <span className="sr-only">Amount (NEAR)</span>
+          <input className="tnum min-w-0 flex-1 bg-transparent text-[15px] outline-none" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.trim())} />
+          <span className="text-[12px] font-semibold text-grey">NEAR</span>
         </label>
         <button
           type="button"
-          disabled={!y || tx.kind === "busy"}
-          className={btnClass("ink")}
+          disabled={!y || busy}
+          className={btnClass("ink", "min-h-11 px-4")}
           onClick={async () => {
             if (y && (await runTx(setTx, `Deposit ${formatNear(y)}`, () => w.call(calls.deposit(y.toString()))))) onChanged();
           }}
@@ -47,17 +57,18 @@ export function DepositCard({ brand, onChanged }: { brand: BrandView | null; onC
         </button>
         <button
           type="button"
-          disabled={!y || y > free || tx.kind === "busy"}
-          className={btnClass("outline")}
+          disabled={!y || y > free || busy}
+          aria-label="Withdraw this amount"
+          title="Withdraw this amount (free balance only)"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] border border-field text-[18px] text-ink hover:border-ink disabled:opacity-40"
           onClick={async () => {
             if (y && (await runTx(setTx, `Withdraw ${formatNear(y)}`, () => w.call(calls.withdraw(y.toString()))))) onChanged();
           }}
         >
-          Withdraw
+          ↑
         </button>
       </div>
-      <TxLine s={tx} />
-      <span className="text-[12px] text-grey">Storage for each licence request and ad comes from this escrow too. Only the free balance can be withdrawn.</span>
-    </SetUpStep>
+      <TxNote s={tx} />
+    </SetUpCard>
   );
 }

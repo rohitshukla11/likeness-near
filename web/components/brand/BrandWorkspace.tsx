@@ -156,11 +156,12 @@ export function BrandDashboardView({
         <Stat label="Ads approved" value={overview ? renders.filter((r) => r.receipt.status === "Approved").length : "—"} />
       </section>
 
-      <SetUpPanel ready={!!brand && BigInt(brand.escrow) > BigInt(brand.reserved) && brand.maxPerRender !== "0" && keyOn}>
-        <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
-          {money}
-          {agentKey}
-        </div>
+      <SetUpPanel
+        done={[!!brand && BigInt(brand.escrow) > BigInt(brand.reserved), !!brand && brand.maxPerRender !== "0", keyOn]}
+        summary={brand && free !== null ? `${formatNear(free)} free · up to ${formatNear(brand.maxPerRender)} per ad · budget ${formatNear(brand.totalBudget)}` : undefined}
+      >
+        {money}
+        {agentKey}
       </SetUpPanel>
 
       {campaign}
