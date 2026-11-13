@@ -10,7 +10,7 @@
  * being used": nothing is rendered until the creator approves the licence, and every ad still waits for their approval.
  */
 import "server-only";
-import { addCampaign, campaignById, linkCampaign, log } from "../db/records";
+import { addCampaign, campaignById, linkCampaign, log, videoOptIns } from "../db/records";
 import { HttpError } from "../http";
 import { agentCall } from "../near/agent";
 import { views } from "../near/view";
@@ -40,7 +40,9 @@ export async function findCreators(brand: string, req: CampaignRequest): Promise
   const b = await views.getBrand(brand);
   const ready = limitsSet(b) && BigInt(b.escrow) > BigInt(b.reserved);
   if (!ready) await log(brand, { kind: "shortlist", summary: "no escrow or spending limits yet: showing the shortlist; requesting a licence needs both (Set up once)" });
-  const { eligible, ineligible, left } = filterCreators(await views.listCreators(0, 50), { brief: req.brief, use: req.use, durationDays: req.durationDays, renderCap: req.renderCap }, b);
+  const all = await views.listCreators(0, 50);
+  const video = req.media === "video" ? { needed: true, allows: await videoOptIns(all.map((c) => c.accountId)) } : undefined;
+  const { eligible, ineligible, left } = filterCreators(all, { brief: req.brief, use: req.use, durationDays: req.durationDays, renderCap: req.renderCap }, b, video);
   for (const e of ineligible) await log(brand, { kind: "skip", summary: `${e.creator.accountId}: not eligible: ${e.reason}` });
   const notEligible = ineligible.map((e) => ({ creatorId: e.creator.accountId, reason: e.reason }));
   if (!eligible.length) {
@@ -78,7 +80,7 @@ export async function requestCreator(brand: string, campaignId: number, creatorI
   if (!limitsSet(b) || BigInt(b.escrow) <= BigInt(b.reserved)) throw new HttpError(409, "deposit escrow and set your spending limits first (Set up once, above)");
   if (!creator) throw new HttpError(409, "the creator is no longer registered");
   const ask = { brief: c.brief, use: c.usage as CampaignRequest["use"], durationDays: c.duration_days, renderCap: c.render_cap };
-  const now = filterCreators([creator], ask, b);
+  const now = filterCreators([creator], ask, b, c.media === "video" ? { needed: true, allows: await videoOptIns([creator.accountId]) } : undefined);
   if (!now.eligible.length) throw new HttpError(409, `no longer eligible: ${now.ineligible[0]?.reason ?? "the creator is paused"}`);
   if (!now.eligible[0]!.fitsBudget) throw new HttpError(409, `over your budget now: ${formatNear(now.eligible[0]!.total)} is more than the ${formatNear(now.left)} left`);
 

@@ -46,6 +46,7 @@ const render = (n: number, l: LicenceView, status: RenderItem["receipt"]["status
   receipt: { sha256: String(n).repeat(64).slice(0, 64), licenceId: l.id, amount: l.price, faceCheck: verdict, status, createdAt: T - n * 3_600_000, decidedAt: status === "Reserved" ? null : T - n * 3_000_000 },
   licence: l,
   mediaUrl: face,
+  mime: "image/jpeg",
   faceCheck: { verdict, reason: verdict === "likely_match" ? "Same face shape, eyes, nose and hairline; only the scene differs." : "The face is small and partly turned.", samePerson: verdict === "likely_match" ? "yes" : "unclear", confidence: verdict === "likely_match" ? 0.93 : 0.6 },
   prompt: "Head-and-shoulders or waist-up advertisement photo, front-facing, face large in frame. … Scene: a sunny running track at dawn. Product: plain white running shoes. No other people. No text or logos.",
   decisionTx: status === "Approved" ? "9xPreviewTxHashNotOnChain" : null,

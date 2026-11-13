@@ -119,6 +119,8 @@ export interface RenderItem {
   licence: LicenceView;
   /** Same-origin URL of the exact bytes (GET /api/media/<sha256>). */
   mediaUrl: string;
+  /** "image/jpeg" etc., or "video/mp4" for a video ad (shown in a labelled player). */
+  mime: string;
   faceCheck: FaceCheckDetail;
   /** The exact prompt sent to the image model. */
   prompt: string;
@@ -157,6 +159,8 @@ export interface CampaignRequest {
   renderCap: number;
   scene?: string;
   product?: string;
+  /** "video": the brand wants a video too, so only creators who allow video are eligible. Default "image". */
+  media?: "image" | "video";
 }
 
 /** One of the agent's top 3: public profile and terms only. */

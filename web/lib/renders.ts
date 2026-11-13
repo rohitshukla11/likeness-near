@@ -14,6 +14,7 @@ export async function toRenderItem(row: RenderRow, licences?: Map<string, Licenc
     receipt,
     licence,
     mediaUrl: `/api/media/${row.sha256}`,
+    mime: typeof row.provenance?.mime === "string" ? row.provenance.mime : "image/jpeg",
     faceCheck: row.face_check,
     prompt: row.prompt,
     decisionTx: row.decision_tx,

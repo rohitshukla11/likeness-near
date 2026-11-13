@@ -1,6 +1,7 @@
 /**
- * Images, content-addressed by the sha256 of their exact bytes (the same hash the contract records). Captures are
- * private to their creator; ads are private to their creator and brand until the contract says Licensed.
+ * Images and video ads, content-addressed by the sha256 of their exact bytes (the same hash the contract records).
+ * Captures are private to their creator; ads (images or MP4 videos) are private to their creator and brand until the
+ * contract says Licensed.
  */
 import "server-only";
 import { createHash } from "node:crypto";
@@ -8,7 +9,8 @@ import { fromB64, q, toB64 } from "./index";
 
 export const MAX_FRAME_BYTES = 600_000;
 export const MAX_AD_BYTES = 3_000_000;
-export type Mime = "image/jpeg" | "image/png" | "image/webp";
+export const MAX_VIDEO_AD_BYTES = 8_000_000;
+export type Mime = "image/jpeg" | "image/png" | "image/webp" | "video/mp4";
 
 export interface MediaRow {
   sha256: string;
@@ -22,20 +24,21 @@ export interface MediaRow {
 
 export const sha256Hex = (b: Uint8Array) => createHash("sha256").update(b).digest("hex");
 
-/** The image type from its first bytes, or null (no SVG, nothing else). */
+/** The type from its first bytes (JPEG, PNG, WebP, or an MP4's "ftyp" box), or null (no SVG, nothing else). */
 export function sniffMime(b: Uint8Array): Mime | null {
   if (b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
   if (b.length > 8 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
   if (b.length > 12 && b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return "image/webp";
+  if (b.length > 12 && b[4] === 0x66 && b[5] === 0x74 && b[6] === 0x79 && b[7] === 0x70) return "video/mp4";
   return null;
 }
 
 /** Stores bytes under their sha256 (idempotent: the same bytes are stored once). Returns the sha256. */
 export async function putMedia(bytes: Uint8Array, m: { kind: "capture" | "ad"; creator: string; brand?: string | null }): Promise<string> {
   const mime = sniffMime(bytes);
-  if (!mime) throw new Error("not a JPEG, PNG or WebP image");
-  const max = m.kind === "capture" ? MAX_FRAME_BYTES : MAX_AD_BYTES;
-  if (bytes.length > max) throw new Error(`image too large (${bytes.length} bytes; at most ${max})`);
+  if (!mime || (mime === "video/mp4" && m.kind !== "ad")) throw new Error("not a JPEG, PNG or WebP image (or an MP4 video ad)");
+  const max = m.kind === "capture" ? MAX_FRAME_BYTES : mime === "video/mp4" ? MAX_VIDEO_AD_BYTES : MAX_AD_BYTES;
+  if (bytes.length > max) throw new Error(`file too large (${bytes.length} bytes; at most ${max})`);
   const sha = sha256Hex(bytes);
   await q(
     `insert into media (sha256, mime, bytes, size, kind, creator, brand)

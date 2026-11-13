@@ -42,12 +42,19 @@ export function budgetLeft(b: BrandView | null): bigint {
   return left > 0n ? left : 0n;
 }
 
-export function filterCreators(creators: CreatorView[], ask: LicenceAsk, brand: BrandView | null): { eligible: Candidate[]; ineligible: Ineligible[]; left: bigint } {
+/** For a video campaign: who allows video (the creator's own opt-in, default off). */
+export interface VideoNeed {
+  needed: boolean;
+  allows: ReadonlySet<string>;
+}
+
+export function filterCreators(creators: CreatorView[], ask: LicenceAsk, brand: BrandView | null, video?: VideoNeed): { eligible: Candidate[]; ineligible: Ineligible[]; left: bigint } {
   const left = budgetLeft(brand);
   const eligible: Candidate[] = [];
   const ineligible: Ineligible[] = [];
   for (const c of listedCreators(creators)) {
     const problems = checkAsk(c.terms, ask);
+    if (video?.needed && !video.allows.has(c.accountId)) problems.push("the creator hasn't allowed video");
     if (problems.length) {
       ineligible.push({ creator: c, reason: problems.join("; ") });
       continue;

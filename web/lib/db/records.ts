@@ -7,8 +7,8 @@ import type { ActivityEvent, CampaignRequest, FaceCheckDetail } from "../types";
  * agent's shortlist (top 3 and who wasn't eligible) that the request step reads back. */
 export async function addCampaign(brand: string, c: CampaignRequest, shortlist: unknown): Promise<number> {
   const r = await q<{ id: string }>(
-    `insert into campaigns (brand, brief, usage, duration_days, render_cap, scene, product, shortlist) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`,
-    [brand, c.brief, c.use, c.durationDays, c.renderCap, c.scene ?? "", c.product ?? "", JSON.stringify(shortlist)],
+    `insert into campaigns (brand, brief, usage, duration_days, render_cap, scene, product, shortlist, media) values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`,
+    [brand, c.brief, c.use, c.durationDays, c.renderCap, c.scene ?? "", c.product ?? "", JSON.stringify(shortlist), c.media === "video" ? "video" : "image"],
   );
   return Number(r[0]!.id);
 }
@@ -35,9 +35,10 @@ export interface CampaignRow {
   creator: string | null;
   licence_id: string | null;
   shortlist: { top?: unknown[]; notEligible?: unknown[]; left?: string } | null;
+  media: "image" | "video";
 }
 
-const CAMPAIGN_COLS = "id, brand, brief, usage, duration_days, render_cap, scene, product, creator, licence_id, shortlist";
+const CAMPAIGN_COLS = "id, brand, brief, usage, duration_days, render_cap, scene, product, creator, licence_id, shortlist, media";
 
 /** The campaign behind a licence (its scene and product feed the image prompt). */
 export async function campaignByLicence(licenceId: string): Promise<CampaignRow | null> {
@@ -120,4 +121,24 @@ export async function activity(brand: string, limit = 100): Promise<ActivityEven
     [brand, Math.min(limit, 200)],
   );
   return r.map((x) => ({ at: new Date(x.at).getTime(), kind: x.kind, summary: x.summary, licenceId: x.licence_id, sha256: x.sha256, tx: x.tx }));
+}
+
+/** The creators (of these accounts) who allow video. */
+export async function videoOptIns(accounts: string[]): Promise<Set<string>> {
+  if (!accounts.length) return new Set();
+  const r = await q<{ account: string }>(`select account from creator_settings where allow_video and account = any($1::text[])`, [accounts]);
+  return new Set(r.map((x) => x.account));
+}
+
+export async function allowsVideo(account: string): Promise<boolean> {
+  return (await videoOptIns([account])).has(account);
+}
+
+/** The creator's own opt-in (or opt-out) to video. */
+export async function setAllowVideo(account: string, allow: boolean) {
+  await q(
+    `insert into creator_settings (account, allow_video, updated_at) values ($1, $2, now())
+     on conflict (account) do update set allow_video = excluded.allow_video, updated_at = now()`,
+    [account, allow],
+  );
 }

@@ -110,3 +110,40 @@ create table if not exists ai_spend (
   usd_micros  bigint not null default 0,
   primary key (day, scope)
 );
+
+-- Video (lib/video): MP4 ads up to 8 MB beside images, in the same content-addressed table and privacy rule.
+alter table media drop constraint if exists media_mime_check;
+alter table media add constraint media_mime_check check (mime in ('image/jpeg', 'image/png', 'image/webp', 'video/mp4'));
+alter table media drop constraint if exists media_size_check;
+alter table media add constraint media_size_check check (size > 0 and size <= 8000000);
+
+-- A creator's opt-in to video (made outside NEAR AI's TEE). Default off; only the creator changes it.
+create table if not exists creator_settings (
+  account      text primary key,
+  allow_video  boolean not null default false,
+  updated_at   timestamptz not null default now()
+);
+
+-- Whether a campaign wants video too (its shortlist then keeps only creators who allow video).
+alter table campaigns add column if not exists media text not null default 'image';
+
+-- One video job: started from a creator-approved ad image, polled until the clip is stored and submitted.
+create table if not exists video_jobs (
+  id              bigserial primary key,
+  brand           text not null,
+  licence_id      text not null,
+  creator         text not null,
+  from_sha256     text not null,
+  interaction_id  text,
+  status          text not null check (status in ('starting', 'running', 'storing', 'submitted', 'failed', 'refused')),
+  prompt          text not null,
+  model           text not null,
+  est_usd         numeric not null,
+  sha256          text,
+  submit_tx       text,
+  error           text,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+create index if not exists video_jobs_day on video_jobs (created_at);
+create index if not exists video_jobs_brand on video_jobs (brand, created_at desc);
