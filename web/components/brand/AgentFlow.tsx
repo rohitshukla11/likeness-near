@@ -16,7 +16,7 @@
 import { useEffect, useRef, useState } from "react";
 import { btnClass, ErrorCard, Initial, StatusPill } from "@/components/ds";
 import { NotConnected } from "@/components/ds/NotConnected";
-import { Field, inputClass } from "@/components/ui";
+import { inputClass } from "@/components/ui";
 import { CHIP, MUTED, SURFACE } from "@/components/likeness/Dash";
 import { SyntheticBadge } from "@/components/likeness/Synthetic";
 import { api, NotConnectedError } from "@/lib/api";
@@ -136,21 +136,24 @@ export function AgentFlow({ onChanged, preview }: { onChanged: () => void; previ
     <div className="flex flex-col gap-[18px]">
       <section id="brief" className="flex scroll-mt-4 flex-col gap-4 rounded-[22px] bg-lime p-5 text-ink sm:p-6" aria-label="Brief your agent">
         <div className="flex flex-col gap-1">
-          <h2 className="m-0 text-[20px] font-bold">Brief your agent</h2>
-          <p className="m-0 text-[14px]">Banned uses are refused before anything else. The agent may only ask; every creator decides for themselves.</p>
+          <h2 className="m-0 text-[22px] font-bold">Brief your agent</h2>
+          <p className="m-0 text-[14px] text-ink/70">
+            What the ad shows, where it&apos;s used, for how long and how many renders. Banned uses are refused first; the agent shortlists only creators
+            whose on-chain terms fit.
+          </p>
         </div>
         <form
-          className="flex flex-col gap-4 rounded-[18px] bg-white p-4"
+          className="flex flex-col gap-4"
           onSubmit={(e) => {
             e.preventDefault();
             if (!problems.length && !preview) void findCreators();
           }}
         >
-          <Field label="Description" hint={`What the campaign is for, up to ${BRIEF_MAX} characters`}>
-            <textarea className={`${inputClass} min-h-24`} value={brief} maxLength={BRIEF_MAX} onChange={(e) => setBrief(e.target.value)} placeholder="e.g. Morning coffee campaign for a neighbourhood café" />
-          </Field>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Field label="Use">
+          <Lbl text="What the ad shows">
+            <textarea className={`${inputClass} min-h-24 resize-y`} value={brief} maxLength={BRIEF_MAX} onChange={(e) => setBrief(e.target.value)} placeholder="e.g. Morning coffee campaign for a neighbourhood café" />
+          </Lbl>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-7">
+            <Lbl text="Category" className="col-span-2 md:col-span-1">
               <select className={inputClass} value={use} onChange={(e) => setUse(e.target.value as Use)}>
                 {USES.map((u) => (
                   <option key={u} value={u}>
@@ -158,33 +161,33 @@ export function AgentFlow({ onChanged, preview }: { onChanged: () => void; previ
                   </option>
                 ))}
               </select>
-            </Field>
-            <Field label="Licence length (days)">
+            </Lbl>
+            <Lbl text="Days of use">
               <input className={inputClass} type="number" min={1} max={MAX_DAYS_LIMIT} value={durationDays} onChange={(e) => setDays(Number(e.target.value))} />
-            </Field>
-            <Field label="Renders">
+            </Lbl>
+            <Lbl text="Renders">
               <input className={inputClass} type="number" min={1} max={20} value={renderCap} onChange={(e) => setCap(Number(e.target.value))} />
-            </Field>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Scene (optional)" hint="Empty: the agent writes it after the creator approves">
-              <input className={inputClass} value={scene} maxLength={FIELD_MAX} onChange={(e) => setScene(e.target.value)} placeholder="e.g. a bright café counter in the morning" />
-            </Field>
-            <Field label="Product (optional)" hint="Empty: the agent writes it after the creator approves">
-              <input className={inputClass} value={product} maxLength={FIELD_MAX} onChange={(e) => setProduct(e.target.value)} placeholder="e.g. a white ceramic coffee cup with no logo" />
-            </Field>
+            </Lbl>
+            <Lbl text="Scene (optional)" className="col-span-2">
+              <input className={inputClass} value={scene} maxLength={FIELD_MAX} onChange={(e) => setScene(e.target.value)} placeholder="the agent writes it if empty" />
+            </Lbl>
+            <Lbl text="Product (optional)" className="col-span-2">
+              <input className={inputClass} value={product} maxLength={FIELD_MAX} onChange={(e) => setProduct(e.target.value)} placeholder="the agent writes it if empty" />
+            </Lbl>
           </div>
           {problems.length > 0 && brief && (
-            <ul className="m-0 pl-5 text-[14px] text-wait">
+            <ul className="m-0 pl-5 text-[14px] text-bad">
               {problems.map((p) => (
                 <li key={p}>{p}</li>
               ))}
             </ul>
           )}
-          <button type="submit" disabled={!!busy || problems.length > 0} className={btnClass("ink", "self-start")}>
-            {busy && !asked && !ok ? "Finding…" : "Find creators"}
-          </button>
-          {busy && <p className={`m-0 text-[13px] ${MUTED}`}>{busy}</p>}
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="submit" disabled={!!busy || problems.length > 0} className={btnClass("ink", "min-h-12 px-6")}>
+              {busy && !asked && !ok ? "Finding…" : "Find creators"}
+            </button>
+            {busy ? <span className="text-[13px] text-ink/70">{busy}</span> : <span className="text-[13px] text-ink/70">No transaction: nothing is asked or paid until you pick a creator.</span>}
+          </div>
         </form>
       </section>
 
@@ -273,6 +276,16 @@ export function AgentFlow({ onChanged, preview }: { onChanged: () => void; previ
         </section>
       )}
     </div>
+  );
+}
+
+/** A label over its field, as on the earlier brief form. */
+function Lbl({ text, className = "", children }: { text: string; className?: string; children: React.ReactNode }) {
+  return (
+    <label className={`flex min-w-0 flex-col gap-1.5 ${className}`}>
+      <span className="text-[14px] font-medium text-ink/70">{text}</span>
+      {children}
+    </label>
   );
 }
 
