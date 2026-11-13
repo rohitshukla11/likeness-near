@@ -12,6 +12,7 @@ import { pillClass } from "@/components/ds";
 import { signOutOfApi } from "@/lib/near/signin";
 import { useWallet } from "@/lib/near/wallet";
 import { isOwner, profileOf } from "@/lib/profiles";
+import { useSessionAccount } from "@/lib/near/session-client";
 
 export type Role = "creator" | "brand";
 const KEY = "likeness:role";
@@ -50,10 +51,13 @@ export function AccountMenu() {
   const w = useWallet();
   const router = useRouter();
   const chosen = useRole();
+  const session = useSessionAccount();
   const [busy, setBusy] = useState(false);
+  // The signed-in account comes from our session (it survives reloads); the wallet may still be reconnecting.
+  const account = session.me?.accountId ?? w.accountId;
 
-  if (!w.ready) return <span className="text-[14px] text-grey-dark">Loading wallets…</span>;
-  if (!w.accountId)
+  if (!w.ready && !account) return <span className="text-[14px] text-grey-dark">Loading wallets…</span>;
+  if (!account)
     return (
       <span className="flex items-center gap-3">
         {w.error && <span className="text-[13px] text-coral">{w.error}</span>}
@@ -84,10 +88,10 @@ export function AccountMenu() {
 
   return (
     <AccountMenuView
-      accountId={w.accountId}
+      accountId={account}
       walletName={w.walletName}
-      role={isOwner(w.accountId) ? chosen : "brand"}
-      canSwitch={isOwner(w.accountId)}
+      role={isOwner(account) ? chosen : "brand"}
+      canSwitch={isOwner(account)}
       busy={busy}
       onRole={go}
       onSignOut={async () => {

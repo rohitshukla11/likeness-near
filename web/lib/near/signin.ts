@@ -18,8 +18,19 @@ export async function signInToApi(signMessage: (message: string, recipient: stri
   const ch = await api<Challenge>("/api/auth/challenge", {});
   const signed = await signMessage(ch.message, ch.recipient, b64ToBytes(ch.nonce));
   await api("/api/auth/verify", { ...signed, message: ch.message, recipient: ch.recipient, nonce: ch.nonce });
+  announceSession();
 }
 
 export async function signOutOfApi() {
-  await api("/api/auth/logout", {});
+  try {
+    await api("/api/auth/logout", {});
+  } finally {
+    announceSession();
+  }
+}
+
+/** Tells every useSessionAccount() on the page that the sign-in session changed (signed in or out). */
+export const SESSION_EVENT = "likeness:session";
+export function announceSession() {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(SESSION_EVENT));
 }
