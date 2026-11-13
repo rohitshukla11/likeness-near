@@ -1,8 +1,8 @@
 /**
  * One ad under an Active licence, step by step, for the brand's console: render (one image edit of the creator's
- * reference photo; the agent writes the scene and product first if the brand left them empty) → AI similarity check
- * (advisory) → on-chain submission for the creator's approval; a confident "different person" regenerates once with
- * the next prompt. Each step is reported through `add`. Returns how it ended.
+ * reference photo; the agent writes the scene and product first if the brand left them empty) → safety screen on the ad
+ * (no minors, nothing sexualised, no other people; no identity judgement) → on-chain submission for the creator's
+ * review. Other people in the ad regenerate once with the next prompt, then the ad is dropped. Returns how it ended.
  */
 import { api } from "@/lib/api";
 import { txUrl } from "@/lib/near/config";
@@ -20,20 +20,20 @@ export async function makeOneAd(licenceId: string, add: (s: Step) => void): Prom
       add({ text: "The model returned an image that was already made: nothing new was submitted.", tone: "bad" });
       return "stopped";
     }
-    add({ text: `Made ad (prompt ${r.attempt + 1}), sha256 ${r.sha256.slice(0, 12)}…. Running the AI similarity check (advisory)…`, tone: "wait" });
-    const c = await api<{ status: string; faceCheck: { verdict: string; reason: string | null }; tx?: string }>("/api/agent/check", { sha256: r.sha256 });
+    add({ text: `Made ad (prompt ${r.attempt + 1}), sha256 ${r.sha256.slice(0, 12)}…. Running the safety screen…`, tone: "wait" });
+    const c = await api<{ status: string; faceCheck: { safety?: string; reason: string | null }; tx?: string }>("/api/agent/check", { sha256: r.sha256 });
     const why = c.faceCheck.reason ? ` (${c.faceCheck.reason})` : "";
     if (c.status === "submitted") {
-      add({ text: `Submitted for the creator's approval: ${c.faceCheck.verdict === "likely_match" ? "likely the same person" : "flagged for the creator's review"}${why}. Price reserved, not paid.`, tone: "ok" });
+      add({ text: `Submitted for the creator's review (safety screen ${c.faceCheck.safety === "passed" ? "passed" : "didn't answer"}). Only the creator can confirm it's them. Price reserved, not paid.`, tone: "ok" });
       if (c.tx) add({ text: `Transaction ${c.tx.slice(0, 10)}…: ${txUrl(c.tx)}` });
       return "submitted";
     }
     if (c.status === "regenerate") {
       retryOf = r.sha256;
-      add({ text: `The check says a different person${why}.`, tone: "bad" });
+      add({ text: `Other people are in the ad${why}.`, tone: "bad" });
       continue;
     }
-    add({ text: c.status === "blocked" ? `Blocked${why}: never submitted, nothing reserved.` : `A different person again${why}: never submitted, nothing reserved.`, tone: "bad" });
+    add({ text: c.status === "blocked" ? `Blocked by the safety screen${why}: never submitted, nothing reserved.` : `Other people in the ad again${why}: dropped, never submitted, nothing reserved.`, tone: "bad" });
     return "stopped";
   }
   return "stopped";

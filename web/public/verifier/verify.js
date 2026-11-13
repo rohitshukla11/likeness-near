@@ -52,7 +52,7 @@
         if (l.creator === l.brand) html += '<p class="small"><b>Self-licence (demo):</b> the creator and the brand are the same account.</p>';
         html += "<dl><dt>Creator</dt><dd>" + esc(l.creator) + "</dd><dt>Brand</dt><dd>" + esc(l.brand) + "</dd><dt>Use</dt><dd>" + esc(l.use) + "</dd>" +
           "<dt>Licence</dt><dd>#" + esc(l.id) + ", " + esc(l.status) + ", " + l.renders_used + "/" + l.render_cap + " renders, until " + day(l.expires_at_ms) + "</dd>";
-        if (rc) html += "<dt>Paid</dt><dd>" + near(rc.amount) + " (" + esc(rc.status) + ", " + day(rc.decided_at_ms) + ")</dd><dt>AI similarity check (advisory)</dt><dd>" + (rc.face_check === "likely_match" ? "likely the same person" : "flagged for the creator's review") + "</dd>";
+        if (rc) html += "<dt>Paid</dt><dd>" + near(rc.amount) + " (" + esc(rc.status) + ", " + day(rc.decided_at_ms) + ")</dd><dt>Confirmed by</dt><dd>" + (rc.status === "Approved" ? "the creator, who approved this exact file" : "the creator decides (no AI confirms identity)") + "</dd>";
         html += "</dl>";
       }
       html += '<p class="small">sha256 <code>' + sha + "</code></p>";

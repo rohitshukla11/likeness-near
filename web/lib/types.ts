@@ -104,13 +104,18 @@ export interface MeResponse {
   capture: { captureSha256: Sha256Hex; consentAt: number } | null;
 }
 
-/** The advisory similarity check as the app shows it (the receipt keeps only likely_match / needs_creator_review). */
+/**
+ * What we record about an ad's check. There is no identity verdict: only the creator can confirm it's them. `verdict` is
+ * what the on-chain receipt carries (always needs_creator_review for new ads; ads made before 13 Nov may say
+ * likely_match, which the app no longer shows). `safety` is the safety screen's outcome (no minors, nothing sexualised,
+ * no other people).
+ */
 export interface FaceCheckDetail {
   verdict: FaceCheck;
-  /** The model's one-line reason, if it answered. */
+  safety?: "passed" | "unchecked";
+  facesInAd?: number;
+  /** The screen's one-line reason, if it answered. */
   reason: string | null;
-  samePerson?: "yes" | "no" | "unclear";
-  confidence?: number;
 }
 
 /** One ad as the creator and brand see it. */

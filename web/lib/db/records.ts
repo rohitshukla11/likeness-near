@@ -61,7 +61,7 @@ export interface RenderRow {
   provenance: Record<string, unknown>;
   submit_tx: string | null;
   decision_tx: string | null;
-  status: "generated" | "regenerate" | "blocked" | "mismatch" | "submitted";
+  status: "generated" | "regenerate" | "blocked" | "mismatch" | "dropped" | "submitted";
   attempt: number;
   retry_of: string | null;
 }

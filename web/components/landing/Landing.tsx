@@ -185,7 +185,7 @@ const STEPS = [
   },
   {
     title: "YOU APPROVE EVERY AD",
-    body: "Each ad waits for you, with an advisory AI similarity check. Approve that exact file (its sha256) in your wallet, or reject it: a rejected ad doesn't count toward the cap.",
+    body: "Each ad waits for you. Only you can confirm it's you: approve that exact file (its sha256) in your wallet, or reject it: a rejected ad doesn't count toward the cap.",
   },
   {
     title: "PAID PER RENDER",

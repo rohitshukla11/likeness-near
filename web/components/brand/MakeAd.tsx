@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * "Make the next ad" for one Active licence (components/brand/runAd.ts): render → AI similarity check (advisory) →
+ * "Make the next ad" for one Active licence (components/brand/runAd.ts): render → safety screen →
  * on-chain submission for the creator's approval. Shows each step as it happens; the price is only reserved, never
  * paid, until the creator approves.
  */

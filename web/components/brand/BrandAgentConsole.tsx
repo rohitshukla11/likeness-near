@@ -132,7 +132,7 @@ export function AgentActivity({ events }: { events: ActivityEvent[] }) {
         </ol>
       ) : (
         <p className="m-0 text-[14px] text-[#B9BCC4]">
-          The agent&apos;s steps show here: screened → shortlisted (a reason for every pick and skip) → licence asked → ad made → similarity checked →
+          The agent&apos;s steps show here: screened → shortlisted (a reason for every pick and skip) → licence asked → ad made → safety screened →
           submitted, or blocked with the reason.
         </p>
       )}

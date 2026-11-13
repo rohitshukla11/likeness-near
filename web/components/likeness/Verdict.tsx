@@ -1,6 +1,6 @@
 /**
  * Verify's answer for one file, read from the contract: Licensed / Expired / Revoked / Unknown, the licence token,
- * who licensed whom for what, and what the receipt records (the amount and the advisory similarity check).
+ * who licensed whom for what, and what the receipt records (the amount, and that the creator approved this exact file).
  */
 import { StatusPill, type PillKind } from "@/components/ds";
 import { accountUrl } from "@/lib/near/config";
@@ -60,8 +60,8 @@ export function Verdict({ r }: { r: VerifyResult }) {
               <dd className="m-0">
                 {formatNear(rc.amount)} ({rc.status}, {day(rc.decidedAt)})
               </dd>
-              <dt className="text-grey">AI similarity check (advisory)</dt>
-              <dd className="m-0">{rc.faceCheck === "likely_match" ? "likely the same person" : "flagged for the creator's review; the creator decided"}</dd>
+              <dt className="text-grey">Confirmed by</dt>
+              <dd className="m-0">{rc.status === "Approved" ? "the creator, who approved this exact file" : "the creator decides (no AI confirms identity)"}</dd>
             </>
           )}
         </dl>

@@ -1,6 +1,6 @@
 /**
- * POST /api/agent/check {sha256}: the advisory AI similarity check on an ad the agent made, then (if allowed) its
- * submission on-chain for the creator's approval. A separate call from the render, with its own 45 s model timeout.
+ * POST /api/agent/check {sha256}: the safety screen on an ad the agent made (the ad only: no minors, nothing sexualised,
+ * no other people; no identity judgement), then (if it passes) its submission on-chain for the creator's review.
  */
 import { HEX64, HttpError, json, readJson, route } from "@/lib/http";
 import { rateLimit } from "@/lib/ratelimit";

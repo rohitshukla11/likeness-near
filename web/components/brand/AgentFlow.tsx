@@ -10,7 +10,7 @@
  *   4. the brand picks a card ("Request licence") or "Let the agent choose" (#1); over-budget cards are disabled.
  *      The agent's function-call key sends request_licence: "Waiting for <creator>";
  *   5. once the creator approves, the agent makes each render (writing the scene and product first if empty, then
- *      the image edit, the similarity check and the submission), with every step in the console.
+ *      the image edit, the safety screen and the submission), with every step in the console.
  * Nothing is paid until the creator approves each ad in their own wallet.
  */
 import { useEffect, useRef, useState } from "react";

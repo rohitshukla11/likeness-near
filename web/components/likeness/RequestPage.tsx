@@ -8,7 +8,7 @@
  */
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AiTag, AppPage, btnClass, Card, ErrorCard, StatusPill } from "@/components/ds";
+import { AiTag, AppPage, btnClass, Card, ErrorCard } from "@/components/ds";
 import { NotConnected } from "@/components/ds/NotConnected";
 import { runTx, TxLine, type TxState } from "./TxLine";
 import { isSelfLicence, SELF_LICENCE_NOTE } from "./SelfLicence";
@@ -21,8 +21,6 @@ import { calls } from "@/lib/near/methods";
 import { useWallet } from "@/lib/near/wallet";
 import { formatNear, USE_LABELS } from "@/lib/rules";
 import type { RenderItem } from "@/lib/types";
-
-const FACE_LABEL = { likely_match: "Likely the same person", needs_creator_review: "Needs your review" } as const;
 
 export function RequestPage({ sha256 }: { sha256: string }) {
   const w = useWallet();
@@ -86,7 +84,7 @@ export function RequestPage({ sha256 }: { sha256: string }) {
             </div>
             <p className="m-0 text-[13px] text-grey">
               {isVideo(item.mime)
-                ? `${VIDEO_LABEL}: a video made from an ad image you approved, outside NEAR AI's TEE. No AI similarity check runs on video; watch it and decide.`
+                ? `${VIDEO_LABEL}: a video made from an ad image you approved, outside NEAR AI's TEE. Only you can confirm it's you: watch it and decide.`
                 : "AI-edited from the creator's consented photo."}
             </p>
             <p className="m-0 break-all text-[13px]">
@@ -109,12 +107,12 @@ export function RequestPage({ sha256 }: { sha256: string }) {
                 <p className="mt-2 mb-0 whitespace-pre-wrap text-grey">{item.prompt}</p>
               </details>
             </Card>
-            <Card title="AI similarity check (advisory)">
-              <span className="flex flex-wrap items-center gap-2">
-                <StatusPill kind={item.faceCheck.verdict === "likely_match" ? "licensed" : "waiting"}>{FACE_LABEL[item.faceCheck.verdict]}</StatusPill>
-              </span>
-              {item.faceCheck.reason && <p className="m-0 text-[14px] text-grey">&ldquo;{item.faceCheck.reason}&rdquo;</p>}
-              <p className="m-0 text-[13px] text-grey">An AI model compared this ad with your reference photo. It is not identity verification and never approves anything: you do.</p>
+            <Card title="Is this you?">
+              <p className="m-0 text-[16px] font-semibold">Only you can confirm it&apos;s you.</p>
+              <p className="m-0 text-[13px] text-grey">
+                No AI decides whether this is your face. The ad was only screened for safety (no minors, nothing sexualised, no other people)
+                {item.faceCheck.safety === "passed" ? ": passed." : "."} Approve it only if it&apos;s you and you&apos;re happy with it.
+              </p>
             </Card>
             <Card tone={open ? "lime" : "white"} title={open ? "Your decision" : `Decided: ${item.receipt.status}`}>
               {!w.accountId ? (

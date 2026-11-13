@@ -196,7 +196,7 @@ export function CreatorDashboardView({
                       {it.licence.brand === creator.accountId ? "You (your brand side)" : it.licence.brand} made {isVideo(it.mime) ? "a video" : "an ad"} with your face
                     </b>
                     <span className="text-[13px] text-grey">
-                      {formatNear(it.receipt.amount)} to you on approval · AI similarity check: {it.faceCheck.verdict === "likely_match" ? "likely you" : "needs your review"}
+                      {formatNear(it.receipt.amount)} to you on approval · only you can confirm it&apos;s you
                     </span>
                   </span>
                 </span>
@@ -362,7 +362,7 @@ function AdCard({ it, self, act }: { it: RenderItem; self: boolean; act: Act }) 
         </span>
         <dl className="m-0 grid grid-cols-3 gap-2 text-[13px]">
           <Fact label={r.status === "Approved" ? "Paid" : "Price"} value={formatNear(r.amount)} />
-          <Fact label="Similarity" value={it.faceCheck.verdict === "likely_match" ? "likely you" : "review"} />
+          <Fact label="Safety" value={it.faceCheck.safety === "passed" ? "passed" : "—"} />
           <Fact label="Licence" value={`#${it.licence.id}`} />
         </dl>
         <div className="mt-auto flex flex-wrap gap-2 pt-1">

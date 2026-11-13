@@ -47,7 +47,7 @@ const render = (n: number, l: LicenceView, status: RenderItem["receipt"]["status
   licence: l,
   mediaUrl: face,
   mime: "image/jpeg",
-  faceCheck: { verdict, reason: verdict === "likely_match" ? "Same face shape, eyes, nose and hairline; only the scene differs." : "The face is small and partly turned.", samePerson: verdict === "likely_match" ? "yes" : "unclear", confidence: verdict === "likely_match" ? 0.93 : 0.6 },
+  faceCheck: { verdict: "needs_creator_review", safety: verdict === "likely_match" ? "passed" : "unchecked", facesInAd: 1, reason: verdict === "likely_match" ? "One adult, nothing unsafe." : null },
   prompt: "Head-and-shoulders or waist-up advertisement photo, front-facing, face large in frame. … Scene: a sunny running track at dawn. Product: plain white running shoes. No other people. No text or logos.",
   decisionTx: status === "Approved" ? "9xPreviewTxHashNotOnChain" : null,
 });
@@ -80,8 +80,8 @@ const bL2 = licence("5", maya!.accountId, PREVIEW_BRAND, { use: "Fitness", price
 const bL3 = licence("6", OWNER.accountId, PREVIEW_BRAND, { use: "FoodDrink", price: near(0.04), renderCap: 1, rendersUsed: 1, status: "Exhausted" });
 
 const events: ActivityEvent[] = [
-  { at: T - 10 * 60_000, kind: "submit", summary: "submitted the ad for the creator's approval; AI similarity check (advisory): needs the creator's review; the price is reserved, not paid", licenceId: "4", sha256: "1".repeat(64), tx: "9xPreviewTxHashNotOnChain" },
-  { at: T - 11 * 60_000, kind: "render", summary: "made ad 2 for licence 4 in 4.2 s; not submitted until the similarity check", licenceId: "4", sha256: "1".repeat(64) },
+  { at: T - 10 * 60_000, kind: "submit", summary: "submitted the ad for the creator's approval; safety screen passed; only the creator can confirm it's them; the price is reserved, not paid", licenceId: "4", sha256: "1".repeat(64), tx: "9xPreviewTxHashNotOnChain" },
+  { at: T - 11 * 60_000, kind: "render", summary: "made ad 2 for licence 4 in 4.2 s; not submitted until the safety screen", licenceId: "4", sha256: "1".repeat(64) },
   { at: T - 40 * 60_000, kind: "request", summary: `asked ${maya!.accountId} for a Fitness licence (14 days, 3 renders); waiting for the creator`, licenceId: "5", tx: "9xPreviewTxHashNotOnChain" },
   { at: T - 41 * 60_000, kind: "shortlist", summary: `chose ${maya!.accountId} (model): the brief is about running shoes; Maya is a fitness coach and allows Fitness` },
   { at: T - 42 * 60_000, kind: "skip", summary: `${asha!.accountId}: the creator doesn't allow Fitness` },

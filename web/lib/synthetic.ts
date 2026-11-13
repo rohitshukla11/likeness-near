@@ -18,7 +18,7 @@ export interface SyntheticCreator {
   niche: string;
   /** One line about the (fictional) creator. */
   bio: string;
-  /** Public path of the face (also the capture frame stored for edits and the similarity check). */
+  /** Public path of the face (also the reference frame stored for edits). */
   face: string;
   /** sha256 of that file = the capture_sha256 registered on-chain. */
   faceSha256: string;
