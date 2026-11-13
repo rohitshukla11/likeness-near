@@ -55,6 +55,34 @@ agent's function-call key can only call `request_licence` and `submit_render`, n
 - **On-chain (NEAR testnet):** terms, licences (non-transferable tokens), escrow, receipts by sha256, payments.
 - **Verify** hashes an image or video file in your browser (it's never uploaded) and asks the contract.
 
+## Known limitation: likeness on FLUX.2-klein
+
+NEAR AI Cloud's image model, `black-forest-labs/FLUX.2-klein-4B` (its only image model), doesn't keep the creator's face
+exactly. What we tested on 13 Nov 2026, with the author's own face, and what we saw:
+
+- **Stage photo** (800×800, a microphone over the chin), as the full frame and as the 500×500 crop the app used: the
+  live-run ad and two minimal-change edits ("keep the pose, framing and face; change only the background") kept the
+  clothes, hair shape and pose but gave a rounder, different face, and added people in the background.
+- **Background-only prompt** on the same full photo, run twice: both runs returned byte-identical images (the same
+  input and prompt give the same output; in our 12 Nov spike the seed had no effect either). The face drifted, the pose
+  changed and two people appeared, although the prompt said "No other people".
+- **An unedited iPhone front-camera photo** (cropped; a wall socket covered in the background) with four templates:
+  three made a new café scene with 3 to 5 extra people and a changed face; the one template that tells the model to
+  leave the person untouched (only the background and a cup on a table change) kept the face, framing and expression,
+  though a blurred figure still appeared behind and the safety screen counted only one face.
+
+In short: the face is kept only when the edit leaves the person untouched; the output can't be varied by seed; extra
+people appear even when the prompt forbids them.
+
+Mitigations in the app: **the creator reviews and approves every image** (nothing is paid before that, and no AI says
+whether it's really them); **the safety screen** blocks minors and sexualised content, regenerates once and then drops an
+ad with other people in it, and fails closed. An earlier AI identity check was removed after it rated an ad that wasn't
+the author "likely the same person, 0.95".
+
+Feedback for NEAR AI: an identity-preserving image-edit model (or reference-image conditioning) on NEAR AI Cloud would
+remove this limitation. Not built here: an exact-likeness composite (the creator's own pixels over a generated
+background), kept as a documented fallback.
+
 ## Layout
 
 - `web/`: the Next.js app (pages and API routes), deployed on Vercel.
