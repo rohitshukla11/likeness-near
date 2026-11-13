@@ -57,11 +57,11 @@ const creator = (accountId: string): CreatorView => ({ accountId, terms: { price
 const brand: BrandView = { accountId: "b.testnet", escrow: (10n ** 24n).toString(), reserved: "0", maxPerRender: (10n ** 23n).toString(), totalBudget: (10n ** 24n).toString(), spent: "0" };
 const ask = { brief: "Morning coffee campaign for a café", use: "FoodDrink" as Use, durationDays: 30, renderCap: 2 };
 
-test("a video campaign shortlists only creators who opted in", () => {
+test("a video campaign leaves out creators who opted out (everyone else is in by default)", () => {
   const r = filterCreators([creator("yes.testnet"), creator("no.testnet")], ask, brand, { needed: true, allows: new Set(["yes.testnet"]) });
   assert.deepEqual(r.eligible.map((e) => e.creator.accountId), ["yes.testnet"]);
   assert.deepEqual(r.ineligible.map((i) => [i.creator.accountId, i.reason]), [["no.testnet", "the creator hasn't allowed video"]]);
-  // An image campaign ignores the opt-in.
+  // An image campaign ignores the video setting.
   assert.equal(filterCreators([creator("no.testnet")], ask, brand).eligible.length, 1);
 });
 

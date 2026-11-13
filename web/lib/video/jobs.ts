@@ -1,6 +1,6 @@
 /**
  * Video jobs (Google Gemini Omni Flash, outside NEAR AI's TEE), as background work the brand's page drives:
- *   startVideo  checks everything first (flag, the creator's opt-in, the start image is an ad the creator APPROVED on
+ *   startVideo  checks everything first (flag, the creator not opted out, the start image is an ad the creator APPROVED on
  *               this licence, room left on the licence, the per-video cost cap, today's cap) and refuses with the
  *               reason, calling nothing; then reserves today's slot atomically, starts the interaction (the approved
  *               image as the first frame; the fixed template + the campaign's screened scene and product) and returns.

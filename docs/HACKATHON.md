@@ -43,8 +43,8 @@ for them are edits of the synthetic face.
 
 ## Video (optional)
 
-Video ads are made with Google Gemini Omni Flash, outside NEAR AI's TEE, only when the server has video turned on and
-only for creators who opted in ("Allow video", off by default). Each clip starts from an ad image the creator already
+Video ads are made with Google Gemini Omni Flash, outside NEAR AI's TEE, only when the server has video turned on. Video
+is on by default for every creator (no opt-in setting; disclosed here, in the README and on the review page). Each clip starts from an ad image the creator already
 approved, is submitted as a render for the creator's review, and is paid only on their approval. The project's privacy
 claim (NEAR AI's private inference) covers images only. Code: `web/lib/video/`.
 

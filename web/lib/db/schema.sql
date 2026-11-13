@@ -117,7 +117,8 @@ alter table media add constraint media_mime_check check (mime in ('image/jpeg', 
 alter table media drop constraint if exists media_size_check;
 alter table media add constraint media_size_check check (size > 0 and size <= 8000000);
 
--- A creator's opt-in to video (made outside NEAR AI's TEE). Default off; only the creator changes it.
+-- A creator's video setting (video is made outside NEAR AI's TEE). Video is on by default (13 Nov decision): only a
+-- row with allow_video = false opts a creator out; the column default doesn't change that rule.
 create table if not exists creator_settings (
   account      text primary key,
   allow_video  boolean not null default false,

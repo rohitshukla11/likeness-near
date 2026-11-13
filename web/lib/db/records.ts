@@ -123,22 +123,14 @@ export async function activity(brand: string, limit = 100): Promise<ActivityEven
   return r.map((x) => ({ at: new Date(x.at).getTime(), kind: x.kind, summary: x.summary, licenceId: x.licence_id, sha256: x.sha256, tx: x.tx }));
 }
 
-/** The creators (of these accounts) who allow video. */
+/** The creators (of these accounts) who can be in a video: video is on by default; only an explicit opt-out excludes. */
 export async function videoOptIns(accounts: string[]): Promise<Set<string>> {
   if (!accounts.length) return new Set();
-  const r = await q<{ account: string }>(`select account from creator_settings where allow_video and account = any($1::text[])`, [accounts]);
-  return new Set(r.map((x) => x.account));
+  const r = await q<{ account: string }>(`select account from creator_settings where not allow_video and account = any($1::text[])`, [accounts]);
+  const out = new Set(r.map((x) => x.account));
+  return new Set(accounts.filter((a) => !out.has(a)));
 }
 
 export async function allowsVideo(account: string): Promise<boolean> {
   return (await videoOptIns([account])).has(account);
-}
-
-/** The creator's own opt-in (or opt-out) to video. */
-export async function setAllowVideo(account: string, allow: boolean) {
-  await q(
-    `insert into creator_settings (account, allow_video, updated_at) values ($1, $2, now())
-     on conflict (account) do update set allow_video = excluded.allow_video, updated_at = now()`,
-    [account, allow],
-  );
 }

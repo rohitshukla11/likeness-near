@@ -42,7 +42,7 @@ export function budgetLeft(b: BrandView | null): bigint {
   return left > 0n ? left : 0n;
 }
 
-/** For a video campaign: who allows video (the creator's own opt-in, default off). */
+/** For a video campaign: who can be in a video (everyone by default; an explicit opt-out excludes). */
 export interface VideoNeed {
   needed: boolean;
   allows: ReadonlySet<string>;

@@ -55,8 +55,8 @@ agent's function-call key can only call `request_licence` and `submit_render`, n
   there. These calls run in NEAR AI's private (TEE) inference; the privacy claim of this project covers **images only**.
 - **Video (optional, off unless `VIDEO_ENABLED=true`):** a short clip (4 s, 720p, 16:9, no audio) made by
   **Google Gemini Omni Flash** on its public API, **outside NEAR AI's TEE**. It starts from an ad image the creator has
-  already approved (that image is the first frame) and only for creators who turned on "Allow video" in their profile
-  (off by default). The clip is stored as uploaded (sha256 over the stored bytes), submitted with `submit_render`
+  already approved (that image is the first frame). Video is on by default for every creator: there is no opt-in
+  setting; this README and the review page disclose that videos are made outside NEAR AI's TEE. The clip is stored as uploaded (sha256 over the stored bytes), submitted with `submit_render`
   (`needs_creator_review`: no frames are compared), counts toward the licence's render cap, and is paid only when the
   creator approves it, like any ad. It carries the label "AI-generated video · licensed likeness" over the player and in
   its record; the pixels aren't re-encoded. Caps: about $0.41 estimated per clip, refused over $0.50; 3 clips a day

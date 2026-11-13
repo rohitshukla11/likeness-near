@@ -15,7 +15,6 @@ import { RulesForm } from "./RulesForm";
 import { SelfLicenceBadge } from "./SelfLicence";
 import { AdMedia, isVideo } from "./LabelledVideo";
 import { LikenessChip } from "./Proven";
-import { VideoConsent } from "./VideoConsent";
 import { SyntheticBadge, SyntheticNote } from "./Synthetic";
 import { runTx, TxLine, type TxState } from "./TxLine";
 import { api, NotConnectedError } from "@/lib/api";
@@ -243,7 +242,6 @@ export function CreatorDashboardView({
         )}
       </section>
 
-      <VideoConsent />
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <section className={`${SURFACE} flex flex-col gap-4 p-5 sm:p-6`} aria-label="Your terms">

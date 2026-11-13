@@ -1,6 +1,6 @@
 /**
  * Video settings. Videos are made with Google Gemini Omni Flash on the Gemini API (model VIDEO_MODEL, default
- * gemini-omni-1.2-flash), OUTSIDE NEAR AI's TEE: only creators who opt in can be in a video, and only from an ad
+ * gemini-omni-1.2-flash), OUTSIDE NEAR AI's TEE: on by default for every creator (no opt-in), and only from an ad
  * image they already approved. Pure (reads env only): the server and the tests share it.
  *   VIDEO_ENABLED=true      turns video on (also needs GEMINI_API_KEY); off → the image flow is unchanged, video hidden
  *   VIDEO_MODEL             default gemini-omni-1.2-flash

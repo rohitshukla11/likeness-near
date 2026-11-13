@@ -1,7 +1,7 @@
 /**
  * Whether a video may be started, as one plain reason or null. Pure: the job runner gathers the facts (the flag, the
- * creator's opt-in, the start image's approval, the licence's room, the estimate, today's count) and refuses on the
- * first reason. Nothing is called or billed when this refuses.
+ * creator not having opted out (video is on by default), the start image's approval, the licence's room, the
+ * estimate, today's count) and refuses on the first reason. Nothing is called or billed when this refuses.
  */
 export interface VideoAsk {
   enabled: boolean;
