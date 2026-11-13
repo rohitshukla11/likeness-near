@@ -12,7 +12,7 @@ import { NotConnected } from "@/components/ds/NotConnected";
 import { inputClass } from "@/components/ui";
 import { Verdict } from "@/components/likeness/Verdict";
 import { sha256Hex } from "@/lib/api";
-import { contractConfigured, DEMO_RECEIPT_SHA } from "@/lib/near/config";
+import { contractConfigured, DEMO_RECEIPT_LICENSED_SHA, DEMO_RECEIPT_SHA } from "@/lib/near/config";
 import { views } from "@/lib/near/view";
 import type { VerifyResult } from "@/lib/types";
 
@@ -91,12 +91,23 @@ function VerifyInner() {
       </Card>
       {error && <ErrorCard>{error}</ErrorCard>}
       {result && <Verdict r={result} />}
-      <p className="m-0 text-[14px]">
-        <Link href={`/verify?sha256=${DEMO_RECEIPT_SHA}`} className="font-semibold underline">
-          Try with a real receipt
-        </Link>{" "}
-        <span className="text-grey">: an ad from our live run, approved and paid on testnet, then its licence was revoked.</span>
-      </p>
+      <div className="flex flex-col gap-1 text-[14px]">
+        <span className="font-semibold">Try with a real receipt:</span>
+        {DEMO_RECEIPT_LICENSED_SHA && (
+          <span>
+            <Link href={`/verify?sha256=${DEMO_RECEIPT_LICENSED_SHA}`} className="font-semibold underline">
+              Licensed example
+            </Link>{" "}
+            <span className="text-grey">: an ad approved and paid on testnet, its licence still active.</span>
+          </span>
+        )}
+        <span>
+          <Link href={`/verify?sha256=${DEMO_RECEIPT_SHA}`} className="font-semibold underline">
+            Revoked example
+          </Link>{" "}
+          <span className="text-grey">: an ad from our live run, approved and paid, then its licence was revoked.</span>
+        </span>
+      </div>
       <p className="m-0 text-[13px] text-grey">
         Prefer not to trust this page? The standalone verifier at <a href="/verifier/index.html">/verifier/index.html</a> talks only to the NEAR RPC.
       </p>

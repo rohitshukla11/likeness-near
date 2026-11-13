@@ -13,8 +13,10 @@ export const contractConfigured = () => CONTRACT_ID !== "";
 
 /** Public testnet RPC for view calls from the browser. */
 export const RPC_URL = process.env.NEXT_PUBLIC_NEAR_RPC_URL || "https://rpc.testnet.near.org";
-/** A real receipt from the 13 Nov live run (approved and paid, then the licence was revoked), for "Try with a real receipt". */
+/** Real receipts for Verify's examples. Revoked: the 13 Nov live-run ad (approved and paid, then its licence was revoked). */
 export const DEMO_RECEIPT_SHA = process.env.NEXT_PUBLIC_DEMO_RECEIPT_SHA || "cb3c711510d2280036121a4df1de7bea7a4f7f2739877e568226c029e6b2ff9a";
+/** Licensed: an approved ad whose licence is still active; the example is hidden until this is set. */
+export const DEMO_RECEIPT_LICENSED_SHA = /^[0-9a-f]{64}$/.test(process.env.NEXT_PUBLIC_DEMO_RECEIPT_LICENSED_SHA ?? "") ? process.env.NEXT_PUBLIC_DEMO_RECEIPT_LICENSED_SHA! : null;
 
 export const EXPLORER = "https://testnet.nearblocks.io";
 export const txUrl = (hash: string) => `${EXPLORER}/txns/${hash}`;

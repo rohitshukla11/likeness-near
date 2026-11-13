@@ -40,8 +40,9 @@ agent's function-call key can only call `request_licence` and `submit_render`, n
   banned-use screen, then the agent's top 3 with reasons and the "Not eligible" list. Nothing is stored or requested
   on-chain; it's rate-limited per IP and counts toward the daily AI cap. Licence requests run only for the brand that
   holds the server's agent key.
-- **Verify a real receipt:** the Verify page's "Try with a real receipt" opens an ad from our live run (approved and paid
-  on testnet, then its licence was revoked, so it reads Revoked).
+- **Verify a real receipt:** the Verify page links two examples: a **Revoked** one (an ad from our live run, approved
+  and paid on testnet, then its licence was revoked) and, once one exists, a **Licensed** one
+  (`NEXT_PUBLIC_DEMO_RECEIPT_LICENSED_SHA`).
 
 ## What runs where (and what's private)
 
