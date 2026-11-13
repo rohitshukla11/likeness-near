@@ -1,7 +1,7 @@
 // node --test: the fixed image prompt template (decision, 12 Nov).
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildPrompt, clean, FIELD_MAX, TEMPLATE, VARIATIONS } from "../lib/ai/prompt.ts";
+import { buildPrompt, clean, FIELD_MAX, TEMPLATE, VARIATIONS, variation } from "../lib/ai/prompt.ts";
 
 const scene = "a bright café counter in the morning";
 const product = "a white ceramic coffee cup with no logo";
@@ -13,12 +13,13 @@ test("the template is the only prompt shape", () => {
   assert.ok(p.endsWith("No other people. No text or logos."));
 });
 
-test("a retry never repeats a prompt; at most three retries", () => {
-  const all = [0, 1, 2, 3].map((n) => buildPrompt(scene, product, n));
-  assert.equal(new Set(all).size, 4);
-  for (let n = 1; n <= 3; n++) assert.ok(all[n]!.endsWith(`Variation: ${VARIATIONS[n - 1]}.`));
-  assert.throws(() => buildPrompt(scene, product, 4), /at most 3 retries/);
+test("a creator's prompts never repeat, however many renders they have", () => {
+  const all = Array.from({ length: 50 }, (_, k) => buildPrompt(scene, product, k));
+  assert.equal(new Set(all).size, 50);
+  for (let k = 1; k <= VARIATIONS.length; k++) assert.ok(all[k]!.endsWith(`Variation: ${VARIATIONS[k - 1]}.`));
+  assert.equal(variation(VARIATIONS.length + 1), `${VARIATIONS[0]}, take 2`);
   assert.throws(() => buildPrompt(scene, product, -1));
+  assert.throws(() => buildPrompt(scene, product, 1.5));
 });
 
 test("scene and product can't break out of the template", () => {

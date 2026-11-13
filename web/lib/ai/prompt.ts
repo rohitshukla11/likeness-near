@@ -1,7 +1,9 @@
 /**
  * The only prompt shape ever sent to the image model (decision, 12 Nov): a fixed template where the agent supplies just
- * {scene} and {product}, each ≤ 200 characters and screened for banned uses before they get here. Seeds are ignored by
- * the edits endpoint, so a retry appends one phrase from a fixed list: an identical prompt is never sent twice.
+ * {scene} and {product}, each ≤ 200 characters and screened for banned uses before they get here. The edits endpoint is
+ * deterministic (seeds are ignored: the same photo and prompt give the same bytes), so render k of a creator (counted
+ * across ALL their licences, from the same reference) appends variation k: a creator's prompt is never repeated, so
+ * neither is an ad.
  * Pure functions (no I/O): unit-tested in test/prompt.test.ts.
  */
 /** Same value as rules.FIELD_MAX (this module has no imports so `node --test` can load it directly). */
@@ -10,7 +12,16 @@ export const FIELD_MAX = 200;
 export const TEMPLATE =
   "Head-and-shoulders or waist-up advertisement photo, front-facing, face large in frame. Keep the person's face, facial features, identity, age and hairstyle exactly unchanged. Scene: {scene}. Product: {product}. No other people. No text or logos.";
 
-export const VARIATIONS = ["slightly different camera angle", "warmer lighting", "different background colour"] as const;
+export const VARIATIONS = [
+  "slightly different camera angle",
+  "warmer lighting",
+  "different background colour",
+  "slightly closer framing",
+  "softer daylight from a window",
+  "a different angle of the product",
+  "cooler morning light",
+  "slightly wider framing",
+] as const;
 
 /** One line, no braces, no prompt-breaking punctuation runs; trimmed to the field limit. */
 export function clean(s: string): string {
@@ -23,15 +34,22 @@ export function clean(s: string): string {
     .slice(0, FIELD_MAX);
 }
 
+/** The variation phrase for render k ≥ 1: the list in order, then again with "take 2", "take 3", … (never repeats). */
+export function variation(k: number): string {
+  const i = (k - 1) % VARIATIONS.length;
+  const take = Math.floor((k - 1) / VARIATIONS.length) + 1;
+  return take === 1 ? VARIATIONS[i]! : `${VARIATIONS[i]}, take ${take}`;
+}
+
 /**
- * The prompt for attempt `n` (0 = first). Attempts 1..3 each add a different variation; there is no attempt 4.
- * Throws if scene or product is empty after cleaning.
+ * The prompt for a creator's render `k` (0 = their first ever). k ≥ 1 adds variation k, so prompts never repeat for
+ * the same creator. Throws if scene or product is empty after cleaning.
  */
-export function buildPrompt(scene: string, product: string, n = 0): string {
+export function buildPrompt(scene: string, product: string, k = 0): string {
   const s = clean(scene);
   const p = clean(product);
   if (!s || !p) throw new Error("scene and product are required");
-  if (!Number.isInteger(n) || n < 0 || n > VARIATIONS.length) throw new Error(`no attempt ${n}: at most ${VARIATIONS.length} retries`);
+  if (!Number.isInteger(k) || k < 0) throw new Error(`no render ${k}`);
   const base = TEMPLATE.replace("{scene}", s).replace("{product}", p);
-  return n === 0 ? base : `${base} Variation: ${VARIATIONS[n - 1]}.`;
+  return k === 0 ? base : `${base} Variation: ${variation(k)}.`;
 }

@@ -1,26 +1,30 @@
 /**
  * Making an ad under an approved licence, in two separate steps (each its own API call, decision 12 Nov):
  *   makeAd   the campaign's scene and product (written by the agent first if the brand left them empty, lib/agent/scene)
- *            → the fixed prompt (attempt n = renders so far for this licence: never an identical prompt twice) → FLUX.2-klein
- *            edit of the creator's consented front frame → final bytes + sha256 → stored privately. Same sha256 as an
- *            earlier render = already submitted, not a new render.
+ *            → the fixed prompt (variation n = the creator's renders so far, across all licences: the edit is deterministic,
+ *            so a repeated prompt would repeat an ad) → FLUX.2-klein edit of the creator's consented front frame → final
+ *            bytes + sha256 → stored privately. If the bytes still match an earlier ad, the next variation is tried (at
+ *            most COLLISION_TRIES more); only then is it reported as already submitted.
  *   checkAd  the safety screen on the ad alone (no identity judgement: only the creator can confirm it's them), then:
  *            blocked (a minor or sexualised: never submitted), regenerate once if other people are in it, dropped if they
  *            still are, or submit_render on-chain with needs_creator_review, signed by the agent's function-call key.
  * Nothing here pays anyone: only the creator's approve_render does.
  */
 import "server-only";
-import { addRender, campaignByLicence, log, renderBySha, renderCount, updateRender } from "../db/records";
+import { addRender, campaignByLicence, log, renderBySha, renderCountForCreator, updateRender } from "../db/records";
 import { captureOf, mediaBytes, mediaMeta, putMedia } from "../db/media";
 import { HttpError } from "../http";
 import { agentCall } from "../near/agent";
 import { views } from "../near/view";
-import { buildPrompt, VARIATIONS } from "../ai/prompt";
+import { buildPrompt } from "../ai/prompt";
 import { editImage } from "../ai/image";
 import { safetyCheck } from "../ai/faceCheck";
 import { finalize } from "../ai/finalize";
 import { ensureScene } from "./scene";
 import type { FaceCheckDetail } from "../types";
+
+/** Extra variations tried when the model returns an ad that already exists (each is one more billed edit). */
+const COLLISION_TRIES = 2;
 
 const self = (creator: string, brand: string) => (creator === brand ? " (self-licence for demo)" : "");
 
@@ -43,16 +47,24 @@ export async function makeAd(brand: string, licenceId: string, retryOf?: string)
   }
   const campaign = await campaignByLicence(licenceId);
   if (!campaign) throw new HttpError(409, "no campaign for this licence");
-  const n = await renderCount(licenceId);
-  if (n > VARIATIONS.length) throw new HttpError(409, "every distinct prompt for this campaign is used: start a new campaign with another scene");
-
   const plan = await ensureScene(brand, campaign);
-  const prompt = buildPrompt(plan.scene, plan.product, n);
-  const edited = await editImage(brand, await referenceOf(l.creator), prompt);
-  const f = await finalize(edited.bytes);
-  const existing = await renderBySha(f.sha256);
+  const reference = await referenceOf(l.creator);
+  const start = await renderCountForCreator(l.creator);
+  let n = start;
+  let prompt = buildPrompt(plan.scene, plan.product, n);
+  let edited = await editImage(brand, reference, prompt);
+  let f = await finalize(edited.bytes);
+  let existing = await renderBySha(f.sha256);
+  while (existing && n < start + COLLISION_TRIES) {
+    await log(brand, { kind: "render", summary: `prompt ${n + 1} gave an image already made for licence ${existing.licence_id}; trying the next variation`, licenceId, sha256: f.sha256 });
+    n += 1;
+    prompt = buildPrompt(plan.scene, plan.product, n);
+    edited = await editImage(brand, reference, prompt);
+    f = await finalize(edited.bytes);
+    existing = await renderBySha(f.sha256);
+  }
   if (existing) {
-    await log(brand, { kind: "render", summary: `the model returned an image already made for licence ${existing.licence_id}: treated as already submitted, nothing new`, licenceId, sha256: f.sha256 });
+    await log(brand, { kind: "render", summary: `the model returned an image already made for licence ${existing.licence_id}, ${COLLISION_TRIES + 1} times: nothing new submitted`, licenceId, sha256: f.sha256 });
     return { sha256: f.sha256, prompt, attempt: n, status: "already_submitted" as const, wrote: plan.wrote ? { scene: plan.scene, product: plan.product } : null };
   }
   await putMedia(f.bytes, { kind: "ad", creator: l.creator, brand });

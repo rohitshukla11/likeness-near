@@ -85,7 +85,13 @@ export async function updateRender(sha: string, u: { status: RenderRow["status"]
   ]);
 }
 
-/** How many renders this licence has had (each used a distinct prompt). */
+/** How many renders this creator has had, across all licences and brands (each used a distinct prompt). */
+export async function renderCountForCreator(creator: string): Promise<number> {
+  const r = await q<{ n: string }>(`select count(*) as n from renders where creator = $1`, [creator]);
+  return Number(r[0]?.n ?? 0);
+}
+
+/** How many renders this licence has had. */
 export async function renderCount(licenceId: string): Promise<number> {
   const r = await q<{ n: string }>(`select count(*) as n from renders where licence_id = $1`, [licenceId]);
   return Number(r[0]?.n ?? 0);
