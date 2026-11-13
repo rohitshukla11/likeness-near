@@ -8,6 +8,7 @@
  * No token or key is ever sent back to the browser.
  */
 import "server-only";
+import { sameOriginOk } from "./origin";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { JsonRpcProvider } from "near-api-js";
@@ -29,11 +30,10 @@ function secret(): Buffer {
 }
 const mac = (id: string) => createHmac("sha256", secret()).update(id).digest("base64url");
 
-/** POSTs only from our own pages: the Origin must match the Host, and the body must be JSON. */
+/** POSTs only from our own pages: the Origin must match the Host (or the app's public URL), and the body must be JSON. */
 export function requireSameOrigin(req: Request) {
-  const origin = req.headers.get("origin");
   const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
-  if (!origin || !host || new URL(origin).host !== host) throw new HttpError(403, "cross-site request refused");
+  if (!sameOriginOk(req.headers.get("origin"), host)) throw new HttpError(403, "cross-site request refused");
   if (!(req.headers.get("content-type") ?? "").includes("application/json")) throw new HttpError(415, "send JSON");
 }
 

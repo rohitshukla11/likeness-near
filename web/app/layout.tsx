@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/origin";
 import type { Metadata } from "next";
 import { Poppins, Unbounded } from "next/font/google";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -11,7 +12,7 @@ const TAGLINE = "License your face to AI. Only you approve each ad.";
 const DESCRIPTION = `${TAGLINE} A brand's AI agent proposes ads within your terms; you approve every licence and every ad, and you're paid per render from the brand's escrow on NEAR.`;
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(appUrl()),
   title: { default: `Likeness: ${TAGLINE}`, template: "%s · Likeness" },
   description: DESCRIPTION,
   openGraph: { type: "website", siteName: "Likeness", title: `Likeness: ${TAGLINE}`, description: DESCRIPTION },
