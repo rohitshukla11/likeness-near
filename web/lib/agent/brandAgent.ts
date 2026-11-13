@@ -20,49 +20,60 @@ import { screen } from "../ai/filter";
 import { aiEnabled, chatJson } from "../ai/nearai";
 import { agentChoice, rankCreators, RANK_SCHEMA, requestable, type RankedCard } from "./rank";
 import { filterCreators, limitsSet } from "./shortlist";
+import { DEMO_SCOPE, type FindMode } from "./mode";
 
 const self = (creator: string, brand: string) => (creator === brand ? " (self-licence for demo: creator and brand are the same account; the creator still approves in their own wallet)" : "");
 
-export async function findCreators(brand: string, req: CampaignRequest): Promise<FindResponse> {
+/**
+ * `mode` "agent": the brand holding the server's key (stored shortlist, then licence requests). "demo": anyone else,
+ * signed in or not: the same screen, filter and ranking, but nothing is stored (no campaign, no activity rows) and
+ * nothing goes on-chain; AI spend counts under the shared "demo" scope (and the site's daily cap).
+ */
+export async function findCreators(brand: string | null, req: CampaignRequest, mode: FindMode = "agent"): Promise<FindResponse> {
+  const demo = mode === "demo" || !brand;
+  const scope = demo ? DEMO_SCOPE : brand!;
+  const note = demo ? async () => undefined : (e: Parameters<typeof log>[1]) => log(brand!, e);
+
   // 1. The brand's own words, screened first (keywords, then the model; fail closed). A refusal stops everything.
   const fields: Record<string, string> = { brief: req.brief };
   if (req.scene) fields.scene = req.scene;
   if (req.product) fields.product = req.product;
   const regex = [...textProblems(req.brief), ...(req.scene ? textProblems(req.scene, "the scene", FIELD_MAX) : []), ...(req.product ? textProblems(req.product, "the product", FIELD_MAX) : [])];
-  const first = regex.length ? { allowed: false, reasons: regex, by: "keywords" } : await screen(brand, req.use, fields);
+  const first = regex.length ? { allowed: false, reasons: regex, by: "keywords" } : await screen(scope, req.use, fields);
   if (!first.allowed) {
-    await log(brand, { kind: "blocked", summary: `campaign refused before anything was asked (${first.by}): ${first.reasons.join("; ")}` });
+    await note({ kind: "blocked", summary: `campaign refused before anything was asked (${first.by}): ${first.reasons.join("; ")}` });
     return { status: "blocked", reasons: first.reasons };
   }
 
-  // 2. The brand's limits and the creators, from the chain; the deterministic filter. Finding works before the brand
-  //    has deposited or set limits: the cards then show, but none can be requested until it has.
-  const b = await views.getBrand(brand);
-  const ready = limitsSet(b) && BigInt(b.escrow) > BigInt(b.reserved);
-  if (!ready) await log(brand, { kind: "shortlist", summary: "no escrow or spending limits yet: showing the shortlist; requesting a licence needs both (Set up once)" });
+  // 2. The brand's limits (read-only; none in demo without a signed-in account) and the creators, from the chain; the
+  //    deterministic filter. Finding works before the brand has deposited or set limits.
+  const b = brand ? await views.getBrand(brand) : null;
+  const ready = !demo && limitsSet(b) && BigInt(b.escrow) > BigInt(b.reserved);
+  if (!ready) await note({ kind: "shortlist", summary: "no escrow or spending limits yet: showing the shortlist; requesting a licence needs both (Set up once)" });
   const all = await views.listCreators(0, 50);
   const video = req.media === "video" ? { needed: true, allows: await videoOptIns(all.map((c) => c.accountId)) } : undefined;
   const { eligible, ineligible, left } = filterCreators(all, { brief: req.brief, use: req.use, durationDays: req.durationDays, renderCap: req.renderCap }, b, video);
-  for (const e of ineligible) await log(brand, { kind: "skip", summary: `${e.creator.accountId}: not eligible: ${e.reason}` });
+  for (const e of ineligible) await note({ kind: "skip", summary: `${e.creator.accountId}: not eligible: ${e.reason}` });
   const notEligible = ineligible.map((e) => ({ creatorId: e.creator.accountId, reason: e.reason }));
   if (!eligible.length) {
-    await log(brand, { kind: "blocked", summary: "no registered creator fits this campaign; nothing was requested" });
+    await note({ kind: "blocked", summary: "no registered creator fits this campaign; nothing was requested" });
     return { status: "no_creator", reasons: ["no creator fits this brief's use, length and renders within your limits"], notEligible };
   }
 
   // 3. The model ranks the eligible creators (text only); the brand sees the top 3.
   const chat = aiEnabled()
-    ? async (messages: { role: "system" | "user"; content: string }[]) => (await chatJson({ brand, what: "chat", schemaName: "creator_ranking", schema: RANK_SCHEMA, messages, maxTokens: 600 })).json
+    ? async (messages: { role: "system" | "user"; content: string }[]) => (await chatJson({ brand: scope, what: "chat", schemaName: "creator_ranking", schema: RANK_SCHEMA, messages, maxTokens: 600 })).json
     : undefined;
   const ranked = await rankCreators(req.brief, req.use, eligible, chat);
   const top = ranked.slice(0, 3);
+  if (demo) return { status: "ok", campaignId: 0, top, notEligible, budgetLeft: left.toString(), ready: false, demo: true };
   top.forEach((c, i) =>
-    void log(brand, {
+    void log(brand!, {
       kind: "shortlist",
       summary: `#${i + 1} ${c.creatorId} (${c.by === "model" ? "model" : "rule"}): ${c.reason}; ${formatNear(c.price)} × ${req.renderCap} = ${formatNear(c.total)}${c.fitsBudget ? "" : ", over your budget"}`,
     }),
   );
-  const campaignId = await addCampaign(brand, req, { top, notEligible, left: left.toString() });
+  const campaignId = await addCampaign(brand!, req, { top, notEligible, left: left.toString() });
   return { status: "ok", campaignId, top, notEligible, budgetLeft: left.toString(), ready };
 }
 

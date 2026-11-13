@@ -25,6 +25,7 @@ import { views } from "@/lib/near/view";
 import { profileOf } from "@/lib/profiles";
 import { BRIEF_MAX, FIELD_MAX, formatNear, MAX_DAYS_LIMIT, textProblems, USE_LABELS, USES, type Use } from "@/lib/rules";
 import type { CampaignRequest, FindResponse, LicenceStatus, RequestResponse, ShortlistCard, VideoStatus } from "@/lib/types";
+import { DEMO_BANNER } from "@/lib/agent/mode";
 import { makeOneAd, type Step } from "./runAd";
 
 /** The brief form loads with this café example, editable (1 render, so a first live run costs one image edit). */
@@ -137,7 +138,8 @@ export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void
   }
 
   const ok = find?.status === "ok" ? find : null;
-  const canChoose = !!ok && ok.ready && ok.top.some((c) => c.fitsBudget) && !asked;
+  const isDemo = !!ok?.demo;
+  const canChoose = !!ok && !isDemo && ok.ready && ok.top.some((c) => c.fitsBudget) && !asked;
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -220,6 +222,12 @@ export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void
         </section>
       )}
 
+      {isDemo && (
+        <p role="status" className="m-0 rounded-[16px] bg-violet-soft px-4 py-3 text-[14px] font-semibold text-wait">
+          {DEMO_BANNER}
+        </p>
+      )}
+
       {find && find.status !== "blocked" && (
         <section className={`${SURFACE} flex flex-col gap-4 p-5 sm:p-6`} aria-label="The agent's shortlist">
           <div className="flex flex-wrap items-end justify-between gap-3">
@@ -228,11 +236,11 @@ export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void
               <h2 className="m-0 font-display text-[clamp(22px,3.4vw,30px)] font-extrabold leading-[1.05]">{ok ? "Top 3 for this brief" : "No creator fits"}</h2>
               <p className={`m-0 text-[14px] ${MUTED}`}>
                 {ok
-                  ? `Filtered on the creators' on-chain terms and your limits, then ranked by the agent from public profiles and terms only (no images). ${ok.ready ? `Budget left: ${formatNear(ok.budgetLeft)}.` : "Deposit escrow and set your spending limits (Set up once, above) to request a licence."}`
+                  ? `Filtered on the creators' on-chain terms${isDemo ? "" : " and your limits"}, then ranked by the agent from public profiles and terms only (no images). ${isDemo ? "" : ok.ready ? `Budget left: ${formatNear(ok.budgetLeft)}.` : "Deposit escrow and set your spending limits (Set up once, above) to request a licence."}`
                   : find.status === "no_creator" ? find.reasons.join("; ") : ""}
               </p>
             </div>
-            {ok && (
+            {ok && !isDemo && (
               <button type="button" disabled={!canChoose || !!busy || !!preview} onClick={() => void request()} className={btnClass("lime", "min-h-11")}>
                 Let the agent choose
               </button>
@@ -242,7 +250,7 @@ export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void
           {ok && (
             <ol className="m-0 grid list-none grid-cols-1 gap-3 p-0 md:grid-cols-3">
               {ok.top.map((c, i) => (
-                <ShortCard key={c.creatorId} c={c} rank={i + 1} ready={ok.ready} renders={renderCap} disabled={!!busy || !!asked || !!preview} onRequest={() => void request(c.creatorId)} chosen={asked?.creatorId === c.creatorId} />
+                <ShortCard key={c.creatorId} c={c} rank={i + 1} ready={ok.ready} demo={isDemo} renders={renderCap} disabled={!!busy || !!asked || !!preview} onRequest={() => void request(c.creatorId)} chosen={asked?.creatorId === c.creatorId} />
               ))}
             </ol>
           )}
@@ -304,7 +312,7 @@ function Lbl({ text, className = "", children }: { text: string; className?: str
   );
 }
 
-function ShortCard({ c, rank, ready, renders, disabled, onRequest, chosen }: { c: ShortlistCard; rank: number; ready: boolean; renders: number; disabled: boolean; onRequest: () => void; chosen: boolean }) {
+function ShortCard({ c, rank, ready, demo, renders, disabled, onRequest, chosen }: { c: ShortlistCard; rank: number; ready: boolean; demo: boolean; renders: number; disabled: boolean; onRequest: () => void; chosen: boolean }) {
   const p = profileOf(c.creatorId);
   return (
     <li className={`${SURFACE} flex min-w-0 flex-col overflow-hidden ${c.fitsBudget ? "" : "opacity-70"}`}>
@@ -324,7 +332,7 @@ function ShortCard({ c, rank, ready, renders, disabled, onRequest, chosen }: { c
           <a href={accountUrl(c.creatorId)} target="_blank" rel="noreferrer" className="min-w-0 truncate text-[17px] font-bold text-ink no-underline hover:underline" title={c.creatorId}>
             {c.name}
           </a>
-          {ready ? (
+          {demo ? null : ready ? (
             <StatusPill kind={c.fitsBudget ? "licensed" : "revoked"}>{c.fitsBudget ? "Fits budget: yes" : "Fits budget: no"}</StatusPill>
           ) : (
             <StatusPill kind="neutral">Budget: not set</StatusPill>
@@ -338,7 +346,9 @@ function ShortCard({ c, rank, ready, renders, disabled, onRequest, chosen }: { c
           {c.reason} <span className={MUTED}>({c.by === "model" ? "agent" : "rule"})</span>
         </span>
         <div className="mt-auto pt-1">
-          {chosen ? (
+          {demo ? (
+            <span className="text-[13px] text-grey">Demo mode: no licence is requested.</span>
+          ) : chosen ? (
             <span className={`text-[13px] font-semibold text-ok`}>Requested</span>
           ) : !ready ? (
             <a href="#setup" className={btnClass("outline", "min-h-11")}>

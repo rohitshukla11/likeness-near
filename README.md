@@ -33,6 +33,13 @@ activity log, Verify and the standalone verifier, and its payment moves from the
 The consent rules don't change: the creator still approves every licence and every ad from their own wallet, and the
 agent's function-call key can only call `request_licence` and `submit_render`, never an approval.
 
+- **Try the agent, no wallet needed:** `/try` runs "Find creators" in demo mode for any visitor (signed in or not): the
+  banned-use screen, then the agent's top 3 with reasons and the "Not eligible" list. Nothing is stored or requested
+  on-chain; it's rate-limited per IP and counts toward the daily AI cap. Licence requests run only for the brand that
+  holds the server's agent key.
+- **Verify a real receipt:** the Verify page's "Try with a real receipt" opens an ad from our live run (approved and paid
+  on testnet, then its licence was revoked, so it reads Revoked).
+
 ## What runs where (and what's private)
 
 - **Images:** every ad image is an edit of the creator's reference photo made on **NEAR AI Cloud** (FLUX.2-klein-4B).

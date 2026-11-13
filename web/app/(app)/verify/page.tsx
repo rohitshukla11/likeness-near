@@ -4,6 +4,7 @@
  * Verify: drop a file (hashed in the browser, never uploaded) or paste its sha256, and read the answer straight from
  * the contract (verify(sha256)): Licensed, Expired, Revoked or Unknown. No wallet, no sign-in, no Likeness server.
  */
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { AppPage, btnClass, Card, ErrorCard, Skeleton } from "@/components/ds";
@@ -11,7 +12,7 @@ import { NotConnected } from "@/components/ds/NotConnected";
 import { inputClass } from "@/components/ui";
 import { Verdict } from "@/components/likeness/Verdict";
 import { sha256Hex } from "@/lib/api";
-import { contractConfigured } from "@/lib/near/config";
+import { contractConfigured, DEMO_RECEIPT_SHA } from "@/lib/near/config";
 import { views } from "@/lib/near/view";
 import type { VerifyResult } from "@/lib/types";
 
@@ -90,6 +91,12 @@ function VerifyInner() {
       </Card>
       {error && <ErrorCard>{error}</ErrorCard>}
       {result && <Verdict r={result} />}
+      <p className="m-0 text-[14px]">
+        <Link href={`/verify?sha256=${DEMO_RECEIPT_SHA}`} className="font-semibold underline">
+          Try with a real receipt
+        </Link>{" "}
+        <span className="text-grey">: an ad from our live run, approved and paid on testnet, then its licence was revoked.</span>
+      </p>
       <p className="m-0 text-[13px] text-grey">
         Prefer not to trust this page? The standalone verifier at <a href="/verifier/index.html">/verifier/index.html</a> talks only to the NEAR RPC.
       </p>

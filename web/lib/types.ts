@@ -183,7 +183,7 @@ export interface ShortlistCard {
 export type FindResponse =
   | { status: "blocked"; reasons: string[] }
   | { status: "no_creator"; reasons: string[]; notEligible: { creatorId: string; reason: string }[] }
-  | { status: "ok"; campaignId: number; top: ShortlistCard[]; notEligible: { creatorId: string; reason: string }[]; budgetLeft: Yocto; ready: boolean };
+  | { status: "ok"; campaignId: number; top: ShortlistCard[]; notEligible: { creatorId: string; reason: string }[]; budgetLeft: Yocto; ready: boolean; demo?: boolean };
 
 /** POST /api/agent/request {campaignId, creatorId?}: no creatorId = "Let the agent choose" (#1). */
 export interface RequestResponse {
