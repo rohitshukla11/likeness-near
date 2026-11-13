@@ -13,6 +13,8 @@ export const OWNER = {
   niche: "Lifestyle & food",
   bio: "The project's author, licensing his own face for this demo.",
   face: "/creators/rohit.jpg",
+  /** A wider crop of the same photo (jacket and mic in frame), for the creator cards only; never the reference. */
+  card: "/creators/rohit-card.jpg",
   faceSha256: "89a4d9973341de96b3342ec2c678ea8e7975b219af30a2b676cfe18883c172af",
   terms: { pricePerRenderNear: "0.04", allowedUses: ["FoodDrink", "Travel", "Fashion", "Beauty"] as Use[], maxDays: 30, renderCap: 10 },
 };
@@ -26,14 +28,16 @@ export interface PublicProfile {
   bio: string;
   /** A public face: the owner's photo or a synthetic AI-generated face. */
   face: string;
+  /** The image on the creator cards (a wider crop for the owner; the face for everyone else). */
+  card: string;
   synthetic: boolean;
 }
 
 /** The public profile of the owner or a synthetic demo creator; undefined for anyone else (who shows an initial). */
 export function profileOf(accountId: string | null | undefined): PublicProfile | undefined {
-  if (isOwner(accountId)) return { name: OWNER.name, niche: OWNER.niche, bio: OWNER.bio, face: OWNER.face, synthetic: false };
+  if (isOwner(accountId)) return { name: OWNER.name, niche: OWNER.niche, bio: OWNER.bio, face: OWNER.face, card: OWNER.card, synthetic: false };
   const s = syntheticOf(accountId);
-  return s && { name: s.name, niche: s.niche, bio: s.bio, face: s.face, synthetic: true };
+  return s && { name: s.name, niche: s.niche, bio: s.bio, face: s.face, card: s.face, synthetic: true };
 }
 
 /** "Rohit Shukla", "Asha (synthetic demo creator)", or the account id. */

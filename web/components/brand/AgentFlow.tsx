@@ -324,7 +324,7 @@ function ShortCard({ c, rank, ready, demo, renders, disabled, onRequest, chosen 
       <div className="relative aspect-[16/10] w-full bg-paper">
         {p ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={p.face} alt={p.synthetic ? `${p.name}: AI-generated face, not a real person` : p.name} className="absolute inset-0 h-full w-full object-cover object-[50%_35%]" />
+          <img src={p.card} alt={p.synthetic ? `${p.name}: AI-generated face, not a real person` : p.name} className="absolute inset-0 h-full w-full object-cover object-[50%_30%]" />
         ) : (
           <span className="absolute inset-0 flex items-center justify-center">
             <Initial name={c.creatorId} size={64} />

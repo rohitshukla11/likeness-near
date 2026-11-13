@@ -22,7 +22,7 @@ export function CreatorCard({ c, status, chips, action }: { c: CreatorView; stat
       <div className="relative aspect-[4/3] w-full bg-paper">
         {p ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={p.face} alt={p.synthetic ? `${p.name}: AI-generated face, not a real person` : p.name} className="absolute inset-0 h-full w-full object-cover object-[50%_35%]" />
+          <img src={p.card} alt={p.synthetic ? `${p.name}: AI-generated face, not a real person` : p.name} className="absolute inset-0 h-full w-full object-cover object-[50%_30%]" />
         ) : (
           <span className="absolute inset-0 flex items-center justify-center">
             <Initial name={c.accountId} size={72} />

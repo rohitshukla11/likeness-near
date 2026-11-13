@@ -14,7 +14,9 @@ appear in any commit.
 The one real creator is the project's author, Rohit Shukla (`rohitshukla.testnet`). His photo
 (`web/public/creators/rohit.jpg`) is a photo of himself that he supplied for this demo on 13 Nov 2026, cropped to
 head and shoulders and converted to JPEG (no other edits, no embedded metadata), and published here with his consent.
-It is his reference: every ad of him is an edit of it, and its sha256
+The creator cards show `web/public/creators/rohit-card.jpg`, a wider crop of the same photo (jacket and microphone
+in frame), copied unchanged from his own likeness-paypal project (`private/rohit.jpg`, no embedded metadata); it is
+for display only. The reference is `rohit.jpg`: every ad of him is an edit of it, and its sha256
 (`89a4d9973341de96b3342ec2c678ea8e7975b219af30a2b676cfe18883c172af`) is the `capture_sha256` he registers with
 (`web/scripts/owner-creator.ts` stores it). There is no creator sign-up; every other account is a brand.
 
