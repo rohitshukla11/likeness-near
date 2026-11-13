@@ -23,7 +23,7 @@ export interface Terms {
 export interface CreatorView {
   accountId: AccountId;
   terms: Terms;
-  /** sha256 of the creator's consented front capture frame; null until they prove their likeness. */
+  /** sha256 of the creator's reference photo (what every ad is edited from); null if none is recorded. */
   captureSha256: Sha256Hex | null;
   active: boolean;
   registeredAt: number;
@@ -100,20 +100,8 @@ export interface MeResponse {
   accountId: AccountId | null;
   /** The creator's on-chain record, if registered. */
   creator: CreatorView | null;
-  /** Their stored live capture (consented), if any. */
+  /** Their stored reference photo, if any. */
   capture: { captureSha256: Sha256Hex; consentAt: number } | null;
-}
-
-/** POST /api/capture: three compressed JPEG frames (data URLs), the liveness result and explicit consent. */
-export interface CaptureRequest {
-  frames: string[];
-  liveness: { blinks: number; turnedLeft: boolean; turnedRight: boolean };
-  consent: true;
-}
-export interface CaptureResponse {
-  /** sha256 of the stored front frame (what register_creator records on-chain). */
-  captureSha256: Sha256Hex;
-  consentAt: number;
 }
 
 /** The advisory similarity check as the app shows it (the receipt keeps only likely_match / needs_creator_review). */

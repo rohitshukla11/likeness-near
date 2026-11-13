@@ -102,7 +102,7 @@ export function RequestPage({ sha256 }: { sha256: string }) {
                 <StatusPill kind={item.faceCheck.verdict === "likely_match" ? "licensed" : "waiting"}>{FACE_LABEL[item.faceCheck.verdict]}</StatusPill>
               </span>
               {item.faceCheck.reason && <p className="m-0 text-[14px] text-grey">&ldquo;{item.faceCheck.reason}&rdquo;</p>}
-              <p className="m-0 text-[13px] text-grey">An AI model compared this ad with your capture. It is not identity verification and never approves anything: you do.</p>
+              <p className="m-0 text-[13px] text-grey">An AI model compared this ad with your reference photo. It is not identity verification and never approves anything: you do.</p>
             </Card>
             <Card tone={open ? "lime" : "white"} title={open ? "Your decision" : `Decided: ${item.receipt.status}`}>
               {!w.accountId ? (

@@ -12,6 +12,5 @@
 next-env.d.ts
 npm-debug.log*
 .pnpm-debug.log*
-/public/mediapipe/wasm/
 AGENTS.md
 CLAUDE.md

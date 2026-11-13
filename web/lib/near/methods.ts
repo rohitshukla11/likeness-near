@@ -39,7 +39,7 @@ export type ContractCall =
 export const calls = {
   registerCreator: (terms: TermsArgs, captureSha256: Sha256Hex): ContractCall => ({ method: "register_creator", args: { terms, capture_sha256: captureSha256 }, deposit: REGISTER_DEPOSIT, gas: gas(30) }),
   updateTerms: (terms: TermsArgs): ContractCall => ({ method: "update_terms", args: { terms }, deposit: "0", gas: gas(30) }),
-  /** "Prove your likeness" after registering: records the consented capture's sha256. */
+  /** Records (or replaces) a registered creator's reference photo sha256. */
   setCapture: (sha256: Sha256Hex): ContractCall => ({ method: "set_capture", args: { capture_sha256: sha256 }, deposit: "0", gas: gas(30) }),
   setActive: (active: boolean): ContractCall => ({ method: "set_active", args: { active }, deposit: "0", gas: gas(30) }),
   approveLicence: (id: string): ContractCall => ({ method: "approve_licence", args: { licence_id: id }, deposit: "0", gas: gas(30) }),

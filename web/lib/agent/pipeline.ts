@@ -23,9 +23,9 @@ const self = (creator: string, brand: string) => (creator === brand ? " (self-li
 
 async function referenceOf(creator: string): Promise<Uint8Array> {
   const cap = await captureOf(creator);
-  if (!cap) throw new HttpError(409, "the creator hasn't proven their likeness yet, so there's no consented reference photo to edit");
+  if (!cap) throw new HttpError(409, "there's no reference photo for this creator yet, so there's nothing to edit");
   const ref = await mediaBytes(cap.front_sha256);
-  if (!ref) throw new HttpError(409, "the creator's capture is missing");
+  if (!ref) throw new HttpError(409, "the creator's reference photo is missing");
   return ref;
 }
 

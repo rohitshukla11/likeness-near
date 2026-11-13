@@ -1,4 +1,4 @@
-/** GET /api/me: the signed-in account, its creator record on-chain, and whether it has a consented capture. */
+/** GET /api/me: the signed-in account, its creator record on-chain, and whether it has a stored reference photo. */
 import { json, route } from "@/lib/http";
 import { captureOf } from "@/lib/db/media";
 import { rateLimit } from "@/lib/ratelimit";

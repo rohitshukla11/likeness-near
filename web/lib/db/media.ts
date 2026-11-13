@@ -68,21 +68,6 @@ export interface CaptureRow {
   consent_at: string;
 }
 
-/** Saves a creator's consented capture (replacing an earlier one). Frames are stored as uploaded: hashed bytes = stored bytes. */
-export async function saveCapture(creator: string, frames: [Uint8Array, Uint8Array, Uint8Array], liveness: unknown): Promise<{ captureSha256: string; consentAt: number }> {
-  for (const f of frames) if (sniffMime(f) !== "image/jpeg") throw new Error("capture frames must be JPEG from the camera");
-  const [front, left, right] = await Promise.all(frames.map((f) => putMedia(f, { kind: "capture", creator })));
-  const r = await q<{ consent_at: string }>(
-    `insert into captures (creator, front_sha256, left_sha256, right_sha256, liveness, consent_at)
-     values ($1, $2, $3, $4, $5, now())
-     on conflict (creator) do update set front_sha256 = excluded.front_sha256, left_sha256 = excluded.left_sha256,
-       right_sha256 = excluded.right_sha256, liveness = excluded.liveness, consent_at = now()
-     returning consent_at`,
-    [creator, front, left, right, JSON.stringify(liveness)],
-  );
-  return { captureSha256: front!, consentAt: new Date(r[0]!.consent_at).getTime() };
-}
-
 export async function captureOf(creator: string): Promise<CaptureRow | null> {
   const r = await q<CaptureRow>(`select creator, front_sha256, left_sha256, right_sha256, consent_at from captures where creator = $1`, [creator]);
   return r[0] ?? null;
