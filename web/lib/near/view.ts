@@ -8,13 +8,47 @@ import type { BrandView, CreatorView, FaceCheck, LicenceState, LicenceStatus, Li
 
 export class ViewError extends Error {}
 
-async function rpc<T>(params: object, rpcUrl = RPC_URL): Promise<T> {
-  const r = await fetch(rpcUrl, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: "likeness", method: "query", params }) });
+/**
+ * Public testnet RPCs, tried in order: the configured one, then FastNEAR's, then NEAR's own. The public
+ * rpc.testnet.near.org is slow and rate-limited for shared cloud IPs (our host), so a 429, a 5xx, a network error or an
+ * 8 s timeout moves on to the next. A contract-level answer (an error the contract returned) is final.
+ */
+const FALLBACK_RPCS = ["https://rpc.testnet.fastnear.com", "https://rpc.testnet.near.org"];
+const RPC_TIMEOUT_MS = 8_000;
+
+class RpcUnavailable extends Error {}
+
+async function rpcOnce<T>(rpcUrl: string, params: object): Promise<T> {
+  let r: Response;
+  try {
+    r = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: "likeness", method: "query", params }),
+      signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
+    });
+  } catch (e) {
+    throw new RpcUnavailable(`${new URL(rpcUrl).host}: ${(e as Error).name === "TimeoutError" ? "timed out" : "unreachable"}`);
+  }
+  if (r.status === 429 || r.status >= 500) throw new RpcUnavailable(`${new URL(rpcUrl).host}: HTTP ${r.status}`);
   if (!r.ok) throw new ViewError(`NEAR RPC answered HTTP ${r.status}`);
   const j = (await r.json()) as { result?: T & { error?: string }; error?: { data?: string; message?: string; cause?: { name?: string } } };
   if (j.error) throw new ViewError(j.error.cause?.name ?? j.error.data ?? j.error.message ?? "NEAR RPC error");
   if (j.result?.error) throw new ViewError(j.result.error);
   return j.result as T;
+}
+
+async function rpc<T>(params: object, rpcUrl = RPC_URL): Promise<T> {
+  const tried: string[] = [];
+  for (const url of [...new Set([rpcUrl, ...FALLBACK_RPCS])]) {
+    try {
+      return await rpcOnce<T>(url, params);
+    } catch (e) {
+      if (!(e instanceof RpcUnavailable)) throw e;
+      tried.push(e.message);
+    }
+  }
+  throw new ViewError(`no NEAR RPC answered (${tried.join("; ")})`);
 }
 
 const b64 = (s: string) => (typeof btoa === "function" ? btoa(s) : Buffer.from(s, "utf8").toString("base64"));

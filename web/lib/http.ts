@@ -3,6 +3,7 @@
  * JSON error (never a stack trace, never a secret). Images are never returned as base64 JSON: see /api/media.
  */
 import "server-only";
+import { ViewError } from "./near/view";
 import { NextResponse } from "next/server";
 import { DbNotConfigured } from "./db";
 
@@ -27,6 +28,11 @@ export function route<A extends unknown[]>(fn: (...args: A) => Promise<Response>
       if (e instanceof HttpError) return json({ error: e.message }, { status: e.status });
       if (e instanceof DbNotConfigured) return json({ error: e.message }, { status: 503 });
       console.error("route error:", e instanceof Error ? e.message : e);
+      // A NEAR RPC failure (every endpoint tried): say so, with its cause.
+      if (e instanceof ViewError) return json({ error: `NEAR RPC: ${e.message}` }, { status: 502 });
+      // A database error: its Postgres code (e.g. 42P01 = a table is missing) is safe to show and says what broke.
+      const code = (e as { code?: unknown }).code;
+      if (typeof code === "string" && /^[0-9A-Z]{5}$/.test(code)) return json({ error: `database error ${code}: something went wrong on the server` }, { status: 500 });
       // The database driver couldn't connect (network or DNS): say so, rather than "something went wrong".
       if (e instanceof Error && /^Error connecting to database/.test(e.message))
         return json({ error: "Can't reach the database right now (a network or DNS problem on the server). Nothing was changed; try again in a moment." }, { status: 503 });
