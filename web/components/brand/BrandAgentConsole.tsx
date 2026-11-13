@@ -16,6 +16,7 @@ import { txUrl } from "@/lib/near/config";
 import { formatNear, USE_LABELS } from "@/lib/rules";
 import { creatorLabel } from "@/lib/synthetic";
 import type { ActivityEvent, CreatorView, LicenceStatus, LicenceView, RenderItem } from "@/lib/types";
+import { LicenceActions } from "./LicenceActions";
 import { MakeAd } from "./MakeAd";
 
 const LICENCE_PILL: Record<LicenceStatus, PillKind> = { Pending: "waiting", Declined: "neutral", Active: "licensed", Exhausted: "expired", Expired: "expired", Revoked: "revoked" };
@@ -50,6 +51,7 @@ export function BrandLicences({ licences, creators, onChanged, preview = false }
                 </span>
                 {l.status === "Active" && l.rendersUsed + l.rendersReserved < l.renderCap &&
                   (unproven.has(l.creator) ? <span className={`text-[13px] ${MUTED}`}>{NOT_PROVEN_NOTE}</span> : !preview && <MakeAd licenceId={l.id} onDone={onChanged} />)}
+                {!preview && <LicenceActions l={l} onDone={onChanged} />}
               </div>
             </li>
           ))}

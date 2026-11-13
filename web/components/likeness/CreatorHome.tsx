@@ -14,6 +14,7 @@ import { BigAvatar, CHIP, Fact, MUTED, OUTLINE, ProfileHeader, Rule, shortDay, S
 import { RulesForm } from "./RulesForm";
 import { SelfLicenceBadge } from "./SelfLicence";
 import { LikenessChip, ProveCard } from "./Proven";
+import { ProveLikeness } from "./ProveLikeness";
 import { SyntheticBadge, SyntheticNote } from "./Synthetic";
 import { runTx, TxLine, type TxState } from "./TxLine";
 import { api, NotConnectedError } from "@/lib/api";
@@ -93,6 +94,7 @@ export function CreatorDashboardView({
   onProven?: () => void;
 }) {
   const [editTerms, setEditTerms] = useState(false);
+  const [recapture, setRecapture] = useState(false);
   const licences = inbox?.licences ?? [];
   const requests = licences.filter((l) => l.status === "Pending");
   const pendingAds = inbox?.pending ?? [];
@@ -108,7 +110,16 @@ export function CreatorDashboardView({
       {notice}
       <ProfileHeader
         label="Your creator profile"
-        avatar={<BigAvatar src={faceSrc} alt={s ? `${s.name}: AI-generated face, not a real person` : "Your live capture"} letter={creator.accountId[0] ?? "C"} />}
+        avatar={
+          <div className="flex flex-col items-center gap-2 sm:items-start">
+            <BigAvatar src={faceSrc} alt={s ? `${s.name}: AI-generated face, not a real person` : "Your live capture"} letter={creator.accountId[0] ?? "C"} />
+            {creator.captureSha256 && !s && (
+              <button type="button" onClick={() => setRecapture((v) => !v)} className={`${OUTLINE} min-h-8 px-3 text-[13px]`}>
+                {recapture ? "Close" : "Re-capture"}
+              </button>
+            )}
+          </div>
+        }
         eyebrow="Creator profile"
         title={creatorLabel(creator.accountId)}
         subtitle={`${s ? `${s.bio} ` : ""}Brands' agents ask for a licence and make the ad; nothing is paid or released until you approve that exact ad in your wallet.`}
@@ -128,6 +139,18 @@ export function CreatorDashboardView({
       />
       <SyntheticNote accountId={creator.accountId} />
       {!creator.captureSha256 && <ProveCard onProven={onProven} />}
+      {recapture && (
+        <section className={`${SURFACE} flex flex-col gap-3 p-5`} aria-label="Re-capture">
+          <h2 className="m-0 text-[18px] font-bold">Re-capture your face</h2>
+          <ProveLikeness
+            registered
+            onProven={() => {
+              setRecapture(false);
+              onProven();
+            }}
+          />
+        </section>
+      )}
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-5" aria-label="Your numbers">
         <Stat label="Earned" value={inbox ? formatNear(inbox.earned) : "—"} note={inbox && inbox.earned !== "0" ? "paid on approval, testnet NEAR" : "nothing yet"} accent />
