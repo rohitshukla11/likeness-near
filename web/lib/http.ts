@@ -27,6 +27,9 @@ export function route<A extends unknown[]>(fn: (...args: A) => Promise<Response>
       if (e instanceof HttpError) return json({ error: e.message }, { status: e.status });
       if (e instanceof DbNotConfigured) return json({ error: e.message }, { status: 503 });
       console.error("route error:", e instanceof Error ? e.message : e);
+      // The database driver couldn't connect (network or DNS): say so, rather than "something went wrong".
+      if (e instanceof Error && /^Error connecting to database/.test(e.message))
+        return json({ error: "Can't reach the database right now (a network or DNS problem on the server). Nothing was changed; try again in a moment." }, { status: 503 });
       return json({ error: "something went wrong on the server" }, { status: 500 });
     }
   };
