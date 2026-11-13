@@ -96,6 +96,7 @@ function Dashboard() {
               <CreatorHome
                 creator={me.creator}
                 captureSha={me.capture?.captureSha256 ?? null}
+                onProven={refresh}
                 onSwitchToBrand={() => {
                   rememberRole("brand");
                   router.replace(`${path}?role=brand`);

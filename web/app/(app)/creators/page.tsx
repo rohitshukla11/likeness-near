@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { AppPage, EmptyState, ErrorCard, Skeleton, StatusPill } from "@/components/ds";
 import { NotConnected } from "@/components/ds/NotConnected";
+import { LikenessChip } from "@/components/likeness/Proven";
 import { CreatorAvatar, SyntheticBadge, SyntheticNote } from "@/components/likeness/Synthetic";
 import { accountUrl, contractConfigured } from "@/lib/near/config";
 import { views } from "@/lib/near/view";
@@ -77,6 +78,9 @@ export default function CreatorsPage() {
                     </span>
                   )}
                   <span className="text-[13px]">{c.terms.allowedUses.map((u) => USE_LABELS[u]).join(", ")}</span>
+                  <span className="flex flex-wrap gap-1.5">
+                    <LikenessChip proven={!!c.captureSha256} captureSha={c.captureSha256} />
+                  </span>
                   <SyntheticNote accountId={c.accountId} />
                 </div>
               </li>

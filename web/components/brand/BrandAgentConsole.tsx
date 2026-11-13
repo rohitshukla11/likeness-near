@@ -10,17 +10,20 @@ import { StatusPill, type PillKind } from "@/components/ds";
 import { MUTED, SURFACE } from "@/components/likeness/Dash";
 import { ReceiptTile } from "@/components/likeness/ReceiptTile";
 import { SelfLicenceBadge } from "@/components/likeness/SelfLicence";
+import { LikenessChip, NOT_PROVEN_NOTE } from "@/components/likeness/Proven";
 import { CreatorAvatar, SyntheticBadge } from "@/components/likeness/Synthetic";
 import { txUrl } from "@/lib/near/config";
 import { formatNear, USE_LABELS } from "@/lib/rules";
 import { creatorLabel } from "@/lib/synthetic";
-import type { ActivityEvent, LicenceStatus, LicenceView, RenderItem } from "@/lib/types";
+import type { ActivityEvent, CreatorView, LicenceStatus, LicenceView, RenderItem } from "@/lib/types";
 import { MakeAd } from "./MakeAd";
 
 const LICENCE_PILL: Record<LicenceStatus, PillKind> = { Pending: "waiting", Declined: "neutral", Active: "licensed", Exhausted: "expired", Expired: "expired", Revoked: "revoked" };
 const EVENT_PILL: Record<ActivityEvent["kind"], PillKind> = { shortlist: "lime", skip: "neutral", request: "waiting", render: "waiting", check: "waiting", submit: "licensed", blocked: "revoked", error: "revoked" };
 
-export function BrandLicences({ licences, onChanged, preview = false }: { licences: LicenceView[]; onChanged: () => void; preview?: boolean }) {
+export function BrandLicences({ licences, creators, onChanged, preview = false }: { licences: LicenceView[]; creators?: CreatorView[] | null; onChanged: () => void; preview?: boolean }) {
+  /** Creators known not to have proven their likeness (unknown creators get no label). */
+  const unproven = new Set((creators ?? []).filter((c) => !c.captureSha256).map((c) => c.accountId));
   return (
     <section id="licences" className={`${SURFACE} flex scroll-mt-4 flex-col gap-3 p-5`} aria-label="Licences">
       <h2 className="m-0 text-[20px] font-bold">Licences</h2>
@@ -39,12 +42,14 @@ export function BrandLicences({ licences, onChanged, preview = false }: { licenc
                 <span className="flex flex-wrap gap-1.5">
                   <SelfLicenceBadge l={l} />
                   <SyntheticBadge accountId={l.creator} />
+                  {unproven.has(l.creator) && <LikenessChip proven={false} />}
                 </span>
                 <span className={`text-[13px] ${MUTED}`}>
                   {l.rendersUsed}/{l.renderCap} renders used{l.rendersReserved ? `, ${l.rendersReserved} waiting for the creator` : ""}
                   {l.tokenId ? ` · licence token #${l.tokenId}` : " · no token until the creator approves"}
                 </span>
-                {!preview && l.status === "Active" && l.rendersUsed + l.rendersReserved < l.renderCap && <MakeAd licenceId={l.id} onDone={onChanged} />}
+                {l.status === "Active" && l.rendersUsed + l.rendersReserved < l.renderCap &&
+                  (unproven.has(l.creator) ? <span className={`text-[13px] ${MUTED}`}>{NOT_PROVEN_NOTE}</span> : !preview && <MakeAd licenceId={l.id} onDone={onChanged} />)}
               </div>
             </li>
           ))}

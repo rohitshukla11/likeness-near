@@ -24,7 +24,9 @@ export function shortlist(creators: CreatorView[], ask: LicenceAsk, brand: Brand
       }
       const synth = syntheticOf(c.accountId);
       const self = c.accountId === brand.accountId ? "same account as the brand: a self-licence for demo; " : synth ? `${synth.name} (${synth.niche}), a synthetic demo creator (AI-generated face, not a real person); ` : "";
-      return { creator: c, pick: true, reason: `${self}fits: ${formatNear(c.terms.pricePerRender)} per render, up to ${c.terms.renderCap} renders, ${c.terms.maxDays} days max` };
+      const proof = c.captureSha256 ? "" : "; likeness not proven yet, so no ad can be made until they prove it";
+      return { creator: c, pick: true, reason: `${self}fits: ${formatNear(c.terms.pricePerRender)} per render, up to ${c.terms.renderCap} renders, ${c.terms.maxDays} days max${proof}` };
     })
-    .sort((a, b) => Number(b.pick) - Number(a.pick) || (BigInt(a.creator.terms.pricePerRender) < BigInt(b.creator.terms.pricePerRender) ? -1 : 1));
+    // Picks first; among them, proven creators first (an ad can be made right away); then the cheaper.
+    .sort((a, b) => Number(b.pick) - Number(a.pick) || Number(!!b.creator.captureSha256) - Number(!!a.creator.captureSha256) || (BigInt(a.creator.terms.pricePerRender) < BigInt(b.creator.terms.pricePerRender) ? -1 : 1));
 }

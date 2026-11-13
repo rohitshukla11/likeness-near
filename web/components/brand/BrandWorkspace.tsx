@@ -156,7 +156,7 @@ export function BrandDashboardView({
 
       <div className="grid grid-cols-1 items-start gap-[18px] desk:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-[18px]">
-          <BrandLicences licences={licences} onChanged={onChanged} preview={preview} />
+          <BrandLicences licences={licences} creators={creators} onChanged={onChanged} preview={preview} />
           <BrandAds renders={renders} />
         </div>
         <AgentActivity events={overview?.activity ?? []} />

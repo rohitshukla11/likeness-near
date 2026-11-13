@@ -13,6 +13,7 @@ import { NotConnected } from "@/components/ds/NotConnected";
 import { BigAvatar, CHIP, Fact, MUTED, OUTLINE, ProfileHeader, Rule, shortDay, Stat, SURFACE } from "./Dash";
 import { RulesForm } from "./RulesForm";
 import { SelfLicenceBadge } from "./SelfLicence";
+import { LikenessChip, ProveCard } from "./Proven";
 import { SyntheticBadge, SyntheticNote } from "./Synthetic";
 import { runTx, TxLine, type TxState } from "./TxLine";
 import { api, NotConnectedError } from "@/lib/api";
@@ -30,7 +31,7 @@ const AD_LABEL: Record<ReceiptStatus, string> = { Reserved: "Waiting for you", A
 export type Act = (what: string, call: ContractCall) => Promise<void>;
 
 /** Loads the creator's inbox and runs their wallet decisions. */
-export function CreatorHome({ creator, captureSha, onSwitchToBrand }: { creator: CreatorView; captureSha: string | null; onSwitchToBrand: () => void }) {
+export function CreatorHome({ creator, captureSha, onSwitchToBrand, onProven }: { creator: CreatorView; captureSha: string | null; onSwitchToBrand: () => void; onProven: () => void }) {
   const w = useWallet();
   const [inbox, setInbox] = useState<CreatorInbox | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
@@ -66,6 +67,7 @@ export function CreatorHome({ creator, captureSha, onSwitchToBrand }: { creator:
       tx={<TxLine s={tx} />}
       act={act}
       onSwitchToBrand={onSwitchToBrand}
+      onProven={onProven}
     />
   );
 }
@@ -78,6 +80,7 @@ export function CreatorDashboardView({
   tx,
   act,
   onSwitchToBrand,
+  onProven = () => undefined,
 }: {
   creator: CreatorView;
   inbox: CreatorInbox | null;
@@ -86,6 +89,8 @@ export function CreatorDashboardView({
   tx?: React.ReactNode;
   act: Act;
   onSwitchToBrand: () => void;
+  /** After "Prove your likeness" records the capture on NEAR: reload the creator. */
+  onProven?: () => void;
 }) {
   const [editTerms, setEditTerms] = useState(false);
   const licences = inbox?.licences ?? [];
@@ -110,6 +115,7 @@ export function CreatorDashboardView({
         chips={
           <>
             {creator.active ? <span className={`${CHIP} bg-lime text-ink`}>● Registered on NEAR</span> : <span className={`${CHIP} bg-black/5 text-ink`}>Paused: no new requests</span>}
+            <LikenessChip proven={!!creator.captureSha256} captureSha={creator.captureSha256} />
             <SyntheticBadge accountId={creator.accountId} />
             <a href={accountUrl(creator.accountId)} target="_blank" rel="noreferrer" className={`${CHIP} bg-violet-soft text-wait no-underline hover:underline`} title="Brands pay you here, from their escrow on the contract">
               Paid to {creator.accountId} ↗
@@ -121,6 +127,7 @@ export function CreatorDashboardView({
         }
       />
       <SyntheticNote accountId={creator.accountId} />
+      {!creator.captureSha256 && <ProveCard onProven={onProven} />}
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-5" aria-label="Your numbers">
         <Stat label="Earned" value={inbox ? formatNear(inbox.earned) : "—"} note={inbox && inbox.earned !== "0" ? "paid on approval, testnet NEAR" : "nothing yet"} accent />

@@ -4,6 +4,7 @@
  * brand's own per-render limit. The agent's real shortlist (with the brief and use) is in the activity log.
  */
 import { CHIP, MUTED, SURFACE } from "@/components/likeness/Dash";
+import { LikenessChip } from "@/components/likeness/Proven";
 import { CreatorAvatar, SyntheticBadge } from "@/components/likeness/Synthetic";
 import { formatNear, USE_LABELS } from "@/lib/rules";
 import { syntheticOf } from "@/lib/synthetic";
@@ -41,11 +42,13 @@ export function CreatorsToAsk({ creators, brand, self }: { creators: CreatorView
                   <span className={`text-[12px] ${MUTED}`}>per render · up to {c.terms.renderCap} · {c.terms.maxDays} days max</span>
                   {s && <span className="text-[13px]">{s.bio}</span>}
                   <span className="flex flex-wrap gap-1.5">
+                    <LikenessChip proven={!!c.captureSha256} captureSha={c.captureSha256} />
                     <SyntheticBadge accountId={c.accountId} />
                     {c.accountId === self && <span className={`${CHIP} bg-black/5 text-ink`}>You (a self-licence for demo)</span>}
                   </span>
                   <span className="text-[13px]">{c.terms.allowedUses.map((u) => USE_LABELS[u]).join(" · ")}</span>
                   <span className={`text-[13px] ${pick ? "text-ok" : MUTED}`}>{reason}</span>
+                  {!c.captureSha256 && <span className={`text-[12px] ${MUTED}`}>No ad can be made until they prove their likeness.</span>}
                 </div>
               </li>
             );
