@@ -37,7 +37,8 @@ agent's function-call key can only call `request_licence` and `submit_render`, n
 
 - **Images:** every ad image is an edit of the creator's reference photo made on **NEAR AI Cloud** (FLUX.2-klein-4B).
   Qwen on NEAR AI Cloud then screens the ad alone for safety: a minor or sexualised content blocks it; other people in it
-  regenerate it once, then drop it. **No AI judges whether the ad shows the creator** (an identity check was removed on
+  regenerate it once, then drop it; if the screen gives no valid answer, it's asked once more, and still none drops the
+  ad (fail closed). **No AI judges whether the ad shows the creator** (an identity check was removed on
   13 Nov after a false positive in our live run): only the creator can confirm it's them, by approving that exact file.
   Every receipt records `needs_creator_review`. The brief, the creator ranking and the banned-use screen also run
   there. These calls run in NEAR AI's private (TEE) inference; the privacy claim of this project covers **images only**.

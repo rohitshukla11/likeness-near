@@ -1,16 +1,35 @@
 // node --test: the safety screen (lib/ai/faceRule.ts). No identity verdict exists: only the creator confirms it's them.
-// The screen looks at the ad alone: minors or sexualised → blocked; more than one face → regenerate once, then dropped.
+// The screen looks at the ad alone and fails closed: no valid answer → retry once → still none → dropped; minors or
+// sexualised → blocked; more than one face → regenerate once, then dropped.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { safetyRule, SAFETY_SCHEMA, SAFETY_SYSTEM, validateSafety, type SafetyAnswer } from "../lib/ai/faceRule.ts";
+import { safetyRule, SAFETY_SCHEMA, SAFETY_SYSTEM, screenWithRetry, validateSafety, type SafetyAnswer } from "../lib/ai/faceRule.ts";
 
 const a = (o: Partial<SafetyAnswer>): SafetyAnswer => ({ faces_in_ad: 1, issues: [], reason: "one adult", ...o });
 
-test("one adult, nothing unsafe → passed; no answer → unchecked (the creator still decides)", () => {
+test("one adult, nothing unsafe → passed; no valid answer → dropped (fail closed)", () => {
   assert.equal(safetyRule(a({}), false), "passed");
   assert.equal(safetyRule(a({ faces_in_ad: 0, issues: ["no_face"] }), false), "passed", "no identity or face-count gate beyond other people");
-  assert.equal(safetyRule(undefined, false), "unchecked");
+  assert.equal(safetyRule(undefined, false), "dropped");
+});
+
+test("the screen is asked once more on no valid answer, and only once", async () => {
+  const ok = { faces_in_ad: 1, issues: [], reason: "one adult" };
+  let n = 0;
+  const second = await screenWithRetry(async () => (++n === 1 ? { nope: true } : ok));
+  assert.deepEqual([second.answer, second.attempts, n], [ok, 2, 2]);
+  n = 0;
+  const none = await screenWithRetry(async () => {
+    n++;
+    throw new Error("timeout");
+  });
+  assert.deepEqual([none.answer, none.attempts, n, none.error], [undefined, 2, 2, "timeout"]);
+  assert.equal(safetyRule(none.answer, false), "dropped");
+  n = 0;
+  const first = await screenWithRetry(async () => (n++, ok));
+  assert.deepEqual([first.attempts, n], [1, 1], "a good first answer isn't asked again");
+  await assert.rejects(screenWithRetry(async () => Promise.reject(Object.assign(new Error("cap"), { status: 429 }))), /cap/, "a cost-cap refusal surfaces, it isn't a miss");
 });
 
 test("a minor or sexualised content is blocked, whatever else", () => {

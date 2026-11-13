@@ -24,7 +24,7 @@ export async function makeOneAd(licenceId: string, add: (s: Step) => void): Prom
     const c = await api<{ status: string; faceCheck: { safety?: string; reason: string | null }; tx?: string }>("/api/agent/check", { sha256: r.sha256 });
     const why = c.faceCheck.reason ? ` (${c.faceCheck.reason})` : "";
     if (c.status === "submitted") {
-      add({ text: `Submitted for the creator's review (safety screen ${c.faceCheck.safety === "passed" ? "passed" : "didn't answer"}). Only the creator can confirm it's them. Price reserved, not paid.`, tone: "ok" });
+      add({ text: "Submitted for the creator's review (safety screen passed). Only the creator can confirm it's them. Price reserved, not paid.", tone: "ok" });
       if (c.tx) add({ text: `Transaction ${c.tx.slice(0, 10)}…: ${txUrl(c.tx)}` });
       return "submitted";
     }
@@ -33,7 +33,7 @@ export async function makeOneAd(licenceId: string, add: (s: Step) => void): Prom
       add({ text: `Other people are in the ad${why}.`, tone: "bad" });
       continue;
     }
-    add({ text: c.status === "blocked" ? `Blocked by the safety screen${why}: never submitted, nothing reserved.` : `Other people in the ad again${why}: dropped, never submitted, nothing reserved.`, tone: "bad" });
+    add({ text: c.status === "blocked" ? `Blocked by the safety screen${why}: never submitted, nothing reserved.` : `Dropped${why}: never submitted, nothing reserved.`, tone: "bad" });
     return "stopped";
   }
   return "stopped";

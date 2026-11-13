@@ -84,7 +84,7 @@ export async function checkAd(brand: string, sha256: string) {
   const reason = sc.answer?.reason ?? sc.error;
   const detail: FaceCheckDetail = {
     verdict: "needs_creator_review",
-    safety: sc.verdict === "unchecked" ? "unchecked" : "passed",
+    safety: "passed",
     ...(sc.answer ? { facesInAd: sc.answer.faces_in_ad } : {}),
     reason,
   };
@@ -94,7 +94,7 @@ export async function checkAd(brand: string, sha256: string) {
     await updateRender(sha256, { status: sc.verdict, face_check: raw });
     const what = {
       blocked: "blocked (a minor or sexualised content): never submitted, nothing reserved",
-      dropped: "other people in the ad again: dropped, never submitted, nothing reserved",
+      dropped: sc.answer ? "other people in the ad again: dropped, never submitted, nothing reserved" : "the safety screen gave no valid answer, twice: dropped (fail closed), never submitted, nothing reserved",
       regenerate: `${sc.answer?.faces_in_ad ?? "several"} faces in the ad (other people): regenerating once with the next prompt`,
     }[sc.verdict];
     await log(brand, { kind: sc.verdict === "regenerate" ? "check" : "blocked", summary: `safety screen on ${sha256.slice(0, 12)}…: ${what}${reason ? ` (${reason})` : ""}`, licenceId: row.licence_id, sha256 });
@@ -107,7 +107,7 @@ export async function checkAd(brand: string, sha256: string) {
     await updateRender(sha256, { status: "submitted", submit_tx: r.hash });
     await log(brand, {
       kind: "submit",
-      summary: `submitted the ad for the creator's approval${self(row.creator, brand)}; safety screen ${detail.safety === "passed" ? "passed" : "didn't answer"}; only the creator can confirm it's them; the price is reserved, not paid`,
+      summary: `submitted the ad for the creator's approval${self(row.creator, brand)}; safety screen passed; only the creator can confirm it's them; the price is reserved, not paid`,
       licenceId: row.licence_id,
       sha256,
       tx: r.hash,

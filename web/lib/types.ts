@@ -112,7 +112,7 @@ export interface MeResponse {
  */
 export interface FaceCheckDetail {
   verdict: FaceCheck;
-  safety?: "passed" | "unchecked";
+  safety?: "passed";
   facesInAd?: number;
   /** The screen's one-line reason, if it answered. */
   reason: string | null;
