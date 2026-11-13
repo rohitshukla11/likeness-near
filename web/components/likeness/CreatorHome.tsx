@@ -94,7 +94,8 @@ export function CreatorDashboardView({
   const pendingAds = inbox?.pending ?? [];
   const ads = [...pendingAds, ...(inbox?.decided ?? [])];
   const waiting = requests.length + pendingAds.length;
-  const active = licences.filter((l) => l.status === "Active").length;
+  const approvedAds = (inbox?.decided ?? []).filter((a) => a.receipt.status === "Approved").length;
+  const revokedAds = ads.filter((a) => a.licence.status === "Revoked").length;
   const revoked = licences.filter((l) => l.status === "Revoked").length;
   const brands = new Set(licences.filter((l) => l.status !== "Pending").map((l) => l.brand)).size;
   const s = profileOf(creator.accountId);
@@ -107,30 +108,50 @@ export function CreatorDashboardView({
         avatar={<BigAvatar src={faceSrc} alt={s ? (s.synthetic ? `${s.name}: AI-generated face, not a real person` : s.name) : "Your reference photo"} letter={creator.accountId[0] ?? "C"} />}
         eyebrow="Creator profile"
         title={displayName(creator.accountId)}
-        subtitle={`${s ? `${s.bio} ` : ""}Brands' agents ask for a licence and make the ad; nothing is paid or released until you approve that exact ad in your wallet.`}
+        subtitle="Brands' agents ask and make the ad; nothing is paid until you approve the finished ad here."
         chips={
           <>
-            {creator.active ? <span className={`${CHIP} bg-lime text-ink`}>● Registered on NEAR</span> : <span className={`${CHIP} bg-black/5 text-ink`}>Paused: no new requests</span>}
+            {creator.active ? <span className={`${CHIP} bg-lime text-ink`}>● Listed</span> : <span className={`${CHIP} bg-black/5 text-ink`}>Paused: no new requests</span>}
             <LikenessChip proven={!!creator.captureSha256} captureSha={creator.captureSha256} />
             <SyntheticBadge accountId={creator.accountId} />
-            <a href={accountUrl(creator.accountId)} target="_blank" rel="noreferrer" className={`${CHIP} bg-violet-soft text-wait no-underline hover:underline`} title="Brands pay you here, from their escrow on the contract">
-              Paid to {creator.accountId} ↗
+            <a href={accountUrl(CONTRACT_ID)} target="_blank" rel="noreferrer" className={`${CHIP} bg-sky text-ink no-underline hover:underline`} title="Your terms are on the Likeness contract">
+              Listed on NEAR ↗
             </a>
-            <a href={accountUrl(CONTRACT_ID)} target="_blank" rel="noreferrer" className={`${CHIP} bg-sky text-ink no-underline hover:underline`}>
-              Terms on-chain ↗
+            <a href={accountUrl(creator.accountId)} target="_blank" rel="noreferrer" className={`${CHIP} bg-violet-soft text-wait no-underline hover:underline`} title="Brands pay you here, from their escrow on the contract (testnet NEAR)">
+              NEAR {creator.accountId} ↗
             </a>
           </>
         }
+        note="Testnet demo: your terms, every licence and every receipt are public on NEAR testnet. Your photo is the reference every ad is edited from."
       />
       <SyntheticNote accountId={creator.accountId} />
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-5" aria-label="Your numbers">
-        <Stat label="Earned" value={inbox ? formatNear(inbox.earned) : "—"} note={inbox && inbox.earned !== "0" ? "paid on approval, testnet NEAR" : "nothing yet"} accent />
-        <Stat label="Active licences" value={inbox ? active : "—"} />
+        <Stat
+          label="Earned (NEAR)"
+          value={inbox ? formatNear(inbox.earned) : "—"}
+          note={
+            <a href={accountUrl(creator.accountId)} target="_blank" rel="noreferrer" className="text-grey-dark underline hover:text-white">
+              On the NEAR explorer ↗
+            </a>
+          }
+          accent
+        />
+        <Stat label="Ads approved" value={inbox ? approvedAds : "—"} />
         <Stat label="Waiting for you" value={inbox ? waiting : "—"} />
         <Stat label="Revoked" value={inbox ? revoked : "—"} />
         <Stat label="Brands" value={inbox ? brands : "—"} note="licensed your face" />
       </section>
+      <p className={`m-0 -mt-2 text-[13px] ${MUTED}`}>
+        Your numbers are public on NEAR:{" "}
+        <a href={accountUrl(creator.accountId)} target="_blank" rel="noreferrer" className="underline hover:text-ink">
+          your account ↗
+        </a>{" "}
+        ·{" "}
+        <a href={accountUrl(CONTRACT_ID)} target="_blank" rel="noreferrer" className="underline hover:text-ink">
+          the contract ↗
+        </a>
+      </p>
       {tx}
 
       <section className="flex flex-col gap-3 rounded-[22px] bg-lime p-5 text-ink sm:p-6" aria-label="Waiting for you">
@@ -183,8 +204,7 @@ export function CreatorDashboardView({
         ) : (
           <div className="flex flex-col items-start gap-3 rounded-[16px] bg-white/70 p-4">
             <p className="m-0 text-[15px]">
-              <b>No requests yet.</b> Try it yourself: switch to Brand, ask your agent for a campaign (it may pick this same account: a self-licence for
-              demo), then come back here to approve it.
+              <b>No requests yet.</b> Try it yourself: switch to Brand, request an ad of yourself, then come back here to approve it.
             </p>
             <button type="button" onClick={onSwitchToBrand} className={btnClass("ink", "min-h-9")}>
               Switch to Brand
@@ -196,7 +216,11 @@ export function CreatorDashboardView({
       <section className="flex flex-col gap-3" aria-label="Ads made with your face">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="m-0 text-[20px] font-bold text-ink">Ads made with your face</h2>
-          {ads.length > 0 && <span className={`text-[13px] ${MUTED}`}>{ads.length} made · {ads.filter((a) => a.receipt.status === "Approved").length} approved</span>}
+          {ads.length > 0 && (
+            <span className={`text-[13px] ${MUTED}`}>
+              {approvedAds} licensed · {revokedAds} revoked
+            </span>
+          )}
         </div>
         {inbox === null ? (
           <div className={`${SURFACE} h-40 animate-pulse motion-reduce:animate-none`} />

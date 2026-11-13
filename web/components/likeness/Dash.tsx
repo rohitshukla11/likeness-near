@@ -10,7 +10,7 @@ export const CHIP = "inline-flex max-w-full items-center gap-1.5 rounded-full px
 export const OUTLINE =
   "inline-flex min-h-9 items-center justify-center rounded-full border border-ink/15 px-4 text-[14px] font-semibold text-ink no-underline transition-colors hover:border-ink";
 
-export function ProfileHeader({ avatar, eyebrow, title, subtitle, chips, label }: { avatar: ReactNode; eyebrow: string; title: ReactNode; subtitle: ReactNode; chips?: ReactNode; label: string }) {
+export function ProfileHeader({ avatar, eyebrow, title, subtitle, chips, note, label }: { avatar: ReactNode; eyebrow: string; title: ReactNode; subtitle: ReactNode; chips?: ReactNode; note?: ReactNode; label: string }) {
   return (
     <section className={`${SURFACE} flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6`} aria-label={label}>
       <div className="flex shrink-0 justify-center sm:block">{avatar}</div>
@@ -21,6 +21,7 @@ export function ProfileHeader({ avatar, eyebrow, title, subtitle, chips, label }
           <p className={`m-0 text-[14px] ${MUTED}`}>{subtitle}</p>
         </div>
         {chips && <div className="flex flex-wrap gap-2">{chips}</div>}
+        {note && <p className={`m-0 text-[12px] ${MUTED}`}>{note}</p>}
       </div>
     </section>
   );

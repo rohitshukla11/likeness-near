@@ -11,7 +11,7 @@ import { useState, useSyncExternalStore } from "react";
 import { pillClass } from "@/components/ds";
 import { signOutOfApi } from "@/lib/near/signin";
 import { useWallet } from "@/lib/near/wallet";
-import { isOwner } from "@/lib/profiles";
+import { isOwner, profileOf } from "@/lib/profiles";
 
 export type Role = "creator" | "brand";
 const KEY = "likeness:role";
@@ -122,15 +122,16 @@ export function AccountMenuView({
 }) {
   const w = { accountId, walletName };
   const go = onRole;
+  const name = profileOf(accountId)?.name ?? accountId;
   return (
     <span className="flex min-w-0 flex-wrap items-center justify-end gap-x-4 gap-y-2">
       <span className="flex min-w-0 items-center gap-2.5">
         <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-lime font-display text-[16px] font-extrabold text-ink">
-          {w.accountId[0]!.toUpperCase()}
+          {name[0]!.toUpperCase()}
         </span>
         <span className="hidden min-w-0 flex-col leading-tight sm:flex">
           <span className="max-w-[180px] truncate text-[15px] font-semibold text-white" title={`${w.accountId} (testnet${w.walletName ? `, ${w.walletName}` : ""})`}>
-            {w.accountId}
+            {name}
           </span>
           <span className="text-[13px] text-grey-dark">{role === "brand" ? "Brand workspace" : "Creator profile"}</span>
         </span>
