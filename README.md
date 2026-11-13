@@ -36,10 +36,9 @@ activity log, Verify and the standalone verifier, and its payment moves from the
 The consent rules don't change: the creator still approves every licence and every ad from their own wallet, and the
 agent's function-call key can only call `request_licence` and `submit_render`, never an approval.
 
-- **Try the agent, no wallet needed:** `/try` runs "Find creators" in demo mode for any visitor (signed in or not): the
-  banned-use screen, then the agent's top 3 with reasons and the "Not eligible" list. Nothing is stored or requested
-  on-chain; it's rate-limited per IP and counts toward the daily AI cap. Licence requests run only for the brand that
-  holds the server's agent key.
+- **Demo mode for other brands:** any signed-in brand other than the one holding the server's agent key runs "Find
+  creators" in demo mode: the banned-use screen, then the agent's top 3 with reasons and the "Not eligible" list.
+  Nothing is stored or requested on-chain; it's rate-limited per IP and counts toward the daily AI cap.
 - **Verify a real receipt:** the Verify page links two examples: a **Revoked** one (an ad from our live run, approved
   and paid on testnet, then its licence was revoked) and, once one exists, a **Licensed** one
   (`NEXT_PUBLIC_DEMO_RECEIPT_LICENSED_SHA`).

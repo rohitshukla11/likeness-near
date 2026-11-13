@@ -2,35 +2,16 @@
 
 /**
  * "Set up once", compact: a dark panel with "N of 3" and a thin 3-segment bar over three small cards in a row
- * (1 · Escrow, 2 · Limits, 3 · Agent key; they wrap on phones). Once all three are done it shrinks to a slim accent bar,
- * "Your agent is ready", with Find creators (and Manage, to reopen the cards). Every number is the contract's.
+ * (1 · Escrow, 2 · Limits, 3 · Agent key; they wrap on phones), always open, even when all three are done. Every number
+ * is the contract's.
  */
 import { useState, type ReactNode } from "react";
-import { btnClass } from "@/components/ds";
 import { ContractNotConfigured } from "@/lib/near/wallet";
 import { txUrl } from "@/lib/near/config";
 import type { TxState } from "@/components/likeness/TxLine";
 
-export function SetUpPanel({ done, summary, children }: { done: [boolean, boolean, boolean]; summary?: ReactNode; children: ReactNode }) {
+export function SetUpPanel({ done, children }: { done: [boolean, boolean, boolean]; children: ReactNode }) {
   const n = done.filter(Boolean).length;
-  const [open, setOpen] = useState(false);
-  if (n === 3 && !open)
-    return (
-      <section id="setup" className="flex scroll-mt-4 flex-wrap items-center justify-between gap-3 rounded-[18px] bg-lime px-4 py-2.5 text-ink" aria-label="Set up once">
-        <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-          <b className="text-[15px]">✓ Your agent is ready</b>
-          {summary && <span className="text-[13px] text-ink/70">{summary}</span>}
-        </span>
-        <span className="flex items-center gap-2">
-          <button type="button" onClick={() => setOpen(true)} className="min-h-11 rounded-full px-3 text-[14px] font-semibold underline">
-            Manage
-          </button>
-          <a href="#brief" className={btnClass("ink", "min-h-11")}>
-            Find creators
-          </a>
-        </span>
-      </section>
-    );
   return (
     <section id="setup" className="flex min-w-0 scroll-mt-4 flex-col gap-3 rounded-[22px] bg-ink p-4 text-white sm:p-5" aria-label="Set up once">
       <div className="flex items-center justify-between gap-3">
@@ -42,11 +23,6 @@ export function SetUpPanel({ done, summary, children }: { done: [boolean, boolea
               <span key={i} className={`h-1 w-8 rounded-full ${d ? "bg-lime" : "bg-white/20"}`} />
             ))}
           </span>
-          {n === 3 && (
-            <button type="button" onClick={() => setOpen(false)} className="ml-1 min-h-11 px-1 text-white underline">
-              Close
-            </button>
-          )}
         </span>
       </div>
       <div className="grid grid-cols-1 items-stretch gap-3 md:grid-cols-3">{children}</div>

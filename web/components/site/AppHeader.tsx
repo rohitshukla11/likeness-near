@@ -8,7 +8,6 @@ import { IconPerson } from "@/components/ds/icons";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/try", label: "Try the agent" },
   { href: "/creators", label: "Creators" },
   { href: "/verify", label: "Verify" },
   { href: "/how", label: "How it works" },
