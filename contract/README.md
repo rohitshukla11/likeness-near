@@ -6,7 +6,7 @@ Face licences, escrow and per-render receipts, with non-transferable NEP-171 lic
 
 ```sh
 cd contract
-cargo test                       # 54 unit tests
+cargo test                       # 59 unit tests
 scripts/build.sh                 # tests, then cargo near build non-reproducible-wasm --no-abi --locked
 ```
 
@@ -38,7 +38,7 @@ scripts/agent-key.sh list   <brand>.testnet
 
 | Who | Method |
 |---|---|
-| creator (full access) | `register_creator(terms, capture_sha256)` payable · `update_terms(terms)` · `set_active(active)` |
+| creator (full access) | `register_creator(terms, capture_sha256)` payable (64 zeros = likeness not proven yet) · `set_capture(capture_sha256)` ("prove your likeness" later) · `update_terms(terms)` · `set_active(active)` |
 | creator | `approve_licence(licence_id)` (mints the token) · `decline_licence` · `revoke_licence` (releases pending ads) |
 | creator | `approve_render(sha256)` (pays the creator, records the receipt) · `reject_render(sha256)` · `claim_unclaimed()` |
 | brand (full access) | `deposit()` payable · `set_limits(max_per_render, total_budget)` · `withdraw(amount)` · `cancel_licence_request(licence_id)` |
@@ -88,5 +88,6 @@ function-call key can't call any approval. `one_account_can_license_itself_end_t
 
 - Account: `likeness-near-rohit.testnet`, deployed and initialised 12 Nov 2026 (tx
   `t4MegCBQbNoWCNMaa3ESGqp8mgE2BdVA5rhJi7ExDWe`).
-- Code sha256: `e75a3b4ce3bdd214d9ee4ad0546d2c1f1112317a71309a3b3fcdbfb2a18adbce` (299,251 bytes), equal to
-  `scripts/build.sh` output for the commit that added this contract.
+- Code redeployed 13 Nov 2026 (code only, state kept; tx `Hip8z8PiidxZ8QFetZDhJ3jbNf7SsEBUi1Vcsa49YG4m`) to add
+  `set_capture`. Code sha256: `0aac3cf0de146d7b833e8f0ce8b634dd866eaa6d4cc42ba87c5d62f977658b4d` (301,250 bytes), equal to
+  `scripts/build.sh` output for the commit that added `set_capture`.

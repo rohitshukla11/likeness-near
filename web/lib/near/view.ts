@@ -53,7 +53,7 @@ export interface TermsJson {
 export interface CreatorJson {
   account_id: string;
   terms: TermsJson;
-  capture_sha256: string;
+  capture_sha256: string | null;
   active: boolean;
   registered_at_ms: number;
 }

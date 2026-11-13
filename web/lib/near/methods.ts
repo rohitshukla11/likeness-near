@@ -10,6 +10,9 @@ export const TGAS = 10n ** 12n;
 export const gas = (tgas: number) => (BigInt(tgas) * TGAS).toString();
 export const NEAR = 10n ** 24n;
 
+/** The capture hash a creator registers with before proving their likeness ("not proven"). */
+export const NOT_PROVEN = "0".repeat(64);
+
 /** Storage a creator attaches to register (their record and its index entry); the contract refunds any excess. */
 export const REGISTER_DEPOSIT: Yocto = (NEAR / 100n).toString(); // 0.01 NEAR
 
@@ -24,6 +27,7 @@ export interface TermsArgs {
 export type ContractCall =
   | { method: "register_creator"; args: { terms: TermsArgs; capture_sha256: Sha256Hex }; deposit: Yocto; gas: string }
   | { method: "update_terms"; args: { terms: TermsArgs }; deposit: "0"; gas: string }
+  | { method: "set_capture"; args: { capture_sha256: Sha256Hex }; deposit: "0"; gas: string }
   | { method: "set_active"; args: { active: boolean }; deposit: "0"; gas: string }
   | { method: "approve_licence" | "decline_licence" | "revoke_licence" | "cancel_licence_request" | "release_expired"; args: { licence_id: string }; deposit: "0"; gas: string }
   | { method: "approve_render" | "reject_render"; args: { sha256: Sha256Hex }; deposit: "0"; gas: string }
@@ -35,6 +39,8 @@ export type ContractCall =
 export const calls = {
   registerCreator: (terms: TermsArgs, captureSha256: Sha256Hex): ContractCall => ({ method: "register_creator", args: { terms, capture_sha256: captureSha256 }, deposit: REGISTER_DEPOSIT, gas: gas(30) }),
   updateTerms: (terms: TermsArgs): ContractCall => ({ method: "update_terms", args: { terms }, deposit: "0", gas: gas(30) }),
+  /** "Prove your likeness" after registering: records the consented capture's sha256. */
+  setCapture: (sha256: Sha256Hex): ContractCall => ({ method: "set_capture", args: { capture_sha256: sha256 }, deposit: "0", gas: gas(30) }),
   setActive: (active: boolean): ContractCall => ({ method: "set_active", args: { active }, deposit: "0", gas: gas(30) }),
   approveLicence: (id: string): ContractCall => ({ method: "approve_licence", args: { licence_id: id }, deposit: "0", gas: gas(30) }),
   declineLicence: (id: string): ContractCall => ({ method: "decline_licence", args: { licence_id: id }, deposit: "0", gas: gas(30) }),

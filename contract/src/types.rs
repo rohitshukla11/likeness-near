@@ -137,7 +137,8 @@ pub enum Verdict {
 pub struct CreatorJson {
     pub account_id: AccountId,
     pub terms: Terms,
-    pub capture_sha256: String,
+    /// null until the creator proves their likeness (an all-zero hash on-chain).
+    pub capture_sha256: Option<String>,
     pub active: bool,
     pub registered_at_ms: u64,
 }

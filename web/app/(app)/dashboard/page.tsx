@@ -8,7 +8,7 @@
  */
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { AppPage, btnClass, Card, ErrorCard, Skeleton } from "@/components/ds";
+import { btnClass, Card, ErrorCard, Page, Skeleton } from "@/components/ds";
 import { NotConnected } from "@/components/ds/NotConnected";
 import { BrandWorkspace } from "@/components/brand/BrandWorkspace";
 import { Onboarding } from "@/components/dashboard/Onboarding";
@@ -91,12 +91,6 @@ function Dashboard() {
       )}
       {signedIn && (
         <>
-          <p className="m-0 text-[14px] text-grey">
-            {role === "creator"
-              ? "Your face, your terms: approve or decline licence requests and every ad made with your face."
-              : "Your escrow, limits and agent. Your agent may ask any registered creator, including this same account (a self-licence, labelled as such)."}{" "}
-            Switch sides with <b>Creator | Brand</b> at the top right.
-          </p>
           {role === "creator" ? (
             me?.creator ? (
               <CreatorHome
@@ -120,12 +114,11 @@ function Dashboard() {
 }
 
 export default function DashboardPage() {
-  const w = useWallet();
   return (
-    <AppPage title="Dashboard" description={w.accountId ? `Connected as ${w.accountId} (testnet): creator and brand on one account.` : "Creators license their face here; brands run their agent here."}>
+    <Page>
       <Suspense fallback={<Skeleton className="h-40" />}>
         <Dashboard />
       </Suspense>
-    </AppPage>
+    </Page>
   );
 }

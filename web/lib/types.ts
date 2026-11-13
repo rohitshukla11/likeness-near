@@ -23,8 +23,8 @@ export interface Terms {
 export interface CreatorView {
   accountId: AccountId;
   terms: Terms;
-  /** sha256 of the creator's consented front capture frame. */
-  captureSha256: Sha256Hex;
+  /** sha256 of the creator's consented front capture frame; null until they prove their likeness. */
+  captureSha256: Sha256Hex | null;
   active: boolean;
   registeredAt: number;
   /** Shown to signed-in accounts only; null when there's no capture or no session. */

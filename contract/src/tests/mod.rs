@@ -1,6 +1,7 @@
 //! Unit tests: one fixture (a creator, a funded brand with limits), then the brand, licence, render and NFT suites.
 
 mod brand;
+mod capture;
 mod licence;
 mod nft;
 mod render;

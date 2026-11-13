@@ -67,7 +67,7 @@ export const creatorDemo: { creator: CreatorView; inbox: CreatorInbox } = {
 };
 
 export const creatorEmpty: { creator: CreatorView; inbox: CreatorInbox } = {
-  creator: { accountId: "demo-new-creator.testnet", terms: { pricePerRender: near(0.05), allowedUses: ["Fashion", "Tech", "Travel", "Fitness"], maxDays: 30, renderCap: 10 }, captureSha256: "0".repeat(64), active: true, registeredAt: T },
+  creator: { accountId: "demo-new-creator.testnet", terms: { pricePerRender: near(0.05), allowedUses: ["Fashion", "Tech", "Travel", "Fitness"], maxDays: 30, renderCap: 10 }, captureSha256: null, active: true, registeredAt: T },
   inbox: { licences: [], pending: [], decided: [], earned: "0" },
 };
 

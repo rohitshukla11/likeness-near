@@ -68,7 +68,7 @@ impl Contract {
         self.creators.get(&account_id).map(|c| CreatorJson {
             account_id: account_id.clone(),
             terms: c.terms.clone(),
-            capture_sha256: to_hex(&c.capture_sha256),
+            capture_sha256: (c.capture_sha256 != [0u8; 32]).then(|| to_hex(&c.capture_sha256)),
             active: c.active,
             registered_at_ms: ms(c.registered_at),
         })
