@@ -10,7 +10,7 @@ export function SyntheticBadge({ accountId }: { accountId: string | null | undef
       title={`${SYNTHETIC_NOTE}. ${SYNTHETIC_DECIDER}`}
       className="inline-flex max-w-full items-center gap-1 rounded-full bg-[#FFF1D6] px-2.5 py-1 text-[12px] font-semibold text-[#7A4B00] ring-1 ring-[#E9C27A]"
     >
-      ◆ Synthetic demo creator
+      Demo creator · synthetic face
     </span>
   );
 }

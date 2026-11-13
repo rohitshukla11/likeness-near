@@ -27,7 +27,7 @@ export interface SyntheticCreator {
 
 /**
  * The synthetic demo creators beside the one real creator (lib/profiles.ts): Maya from the PayPal demo (name, niche,
- * terms scaled to NEAR) and Asha. Theo Marlowe was removed from the demo; his account stays registered but paused.
+ * terms scaled to NEAR) and Asha.
  */
 export const SYNTHETIC: SyntheticCreator[] = [
   {

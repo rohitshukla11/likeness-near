@@ -1,5 +1,5 @@
 // pnpm faces:synthetic [--confirm]
-//   Generates a synthetic demo creator's face (Maya Lindqvist, lib/synthetic.ts; Theo Marlowe's too, before he was removed) with NEAR AI Cloud,
+//   Generates a synthetic demo creator's face (Maya Lindqvist, lib/synthetic.ts) with NEAR AI Cloud,
 //   FLUX.2-klein-4B /images/generations, from a text prompt only (no source photo): fictional adults who don't exist.
 //   The prompt is the one the PayPal demo used for the same persona. BILLED: 1 image × $0.012, hard
 //   cap $0.06. DRY RUN by default (no network call). Output: spike-out/synthetic-faces/ (gitignored) with each image and

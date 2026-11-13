@@ -26,8 +26,9 @@ receipts and the standalone verifier). Both faces are our own generated files; n
 unknown origin.
 
 Maya mirrors the PayPal demo's synthetic creator of the same name (niche, render cap and licence days; price scaled to
-NEAR). A third, Theo Marlowe, was removed from the demo on 13 Nov 2026: his testnet account stays registered but
-paused (`set_active(false)`), so it takes no requests and the app doesn't list it, and his face was deleted.
+NEAR). A third synthetic test account, `likeness-synth-theo.testnet`, was registered and then
+paused (`set_active(false)`): the contract has no way to unregister a creator, so it stays paused, takes no requests,
+and the app never lists or shortlists it.
 
 | Face | Account | Niche | Origin |
 |---|---|---|---|

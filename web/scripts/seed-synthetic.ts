@@ -10,7 +10,7 @@
 // pnpm seed:synthetic approve-render  <account> <sha256>     [--confirm]
 // pnpm seed:synthetic reject-render   <account> <sha256>     [--confirm]
 //   The operator's decision for a synthetic creator (there is no person to consent), signed by its account. Dry run
-//   unless --confirm. Only accounts listed in lib/synthetic.ts (or RETIRED below) are accepted.
+//   unless --confirm. Only accounts listed in lib/synthetic.ts are accepted.
 //
 // pnpm seed:synthetic pause|resume <account> [--confirm]
 //   set_active(false|true) for a synthetic creator: a paused creator takes no new licence requests (the contract
@@ -99,11 +99,8 @@ async function seed() {
   if (!confirm) console.log("Re-run with --confirm to send these transactions and write the captures.");
 }
 
-/** Synthetic creators removed from the demo but still registered on-chain (paused, so they take no requests). */
-const RETIRED: Pick<SyntheticCreator, "accountId" | "name">[] = [{ accountId: "likeness-synth-theo.testnet", name: "Theo Marlowe" }];
-
 async function decide() {
-  const s = [...SYNTHETIC, ...RETIRED].find((x) => x.accountId === a1);
+  const s = SYNTHETIC.find((x) => x.accountId === a1);
   if (s && (cmd === "pause" || cmd === "resume")) {
     const argv = callArgs(s.accountId, "set_active", { active: cmd === "resume" });
     console.log(`The operator ${cmd === "pause" ? "pauses" : "resumes"} ${s.name} (synthetic demo creator): set_active(${cmd === "resume"})`);

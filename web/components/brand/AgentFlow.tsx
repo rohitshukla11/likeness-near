@@ -26,6 +26,16 @@ import { BRIEF_MAX, FIELD_MAX, formatNear, MAX_DAYS_LIMIT, textProblems, USE_LAB
 import type { CampaignRequest, FindResponse, LicenceStatus, RequestResponse, ShortlistCard } from "@/lib/types";
 import { makeOneAd, type Step } from "./runAd";
 
+/** "Use example brief": a café campaign, filled in on request (the form starts empty). */
+const EXAMPLE = {
+  brief: "Morning coffee campaign for a neighbourhood café: a warm, friendly portrait with a cup of coffee at the counter.",
+  use: "FoodDrink" as Use,
+  durationDays: 30,
+  renderCap: 1,
+  scene: "a bright café counter in the morning",
+  product: "a white ceramic coffee cup with no logo",
+};
+
 export function AgentFlow({ onChanged, preview }: { onChanged: () => void; preview?: { find: FindResponse | null; renders: number } }) {
   const [brief, setBrief] = useState("");
   const [use, setUse] = useState<Use>("FoodDrink");
@@ -170,9 +180,26 @@ export function AgentFlow({ onChanged, preview }: { onChanged: () => void; previ
               ))}
             </ul>
           )}
-          <button type="submit" disabled={!!busy || problems.length > 0} className={btnClass("ink", "self-start")}>
-            {busy && !asked && !ok ? "Finding…" : "Find creators"}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button type="submit" disabled={!!busy || problems.length > 0} className={btnClass("ink")}>
+              {busy && !asked && !ok ? "Finding…" : "Find creators"}
+            </button>
+            <button
+              type="button"
+              disabled={!!busy}
+              className={btnClass("outline")}
+              onClick={() => {
+                setBrief(EXAMPLE.brief);
+                setUse(EXAMPLE.use);
+                setDays(EXAMPLE.durationDays);
+                setCap(EXAMPLE.renderCap);
+                setScene(EXAMPLE.scene);
+                setProduct(EXAMPLE.product);
+              }}
+            >
+              Use example brief
+            </button>
+          </div>
           {busy && <p className={`m-0 text-[13px] ${MUTED}`}>{busy}</p>}
         </form>
       </section>
@@ -225,6 +252,7 @@ export function AgentFlow({ onChanged, preview }: { onChanged: () => void; previ
                 {find.notEligible.map((n) => (
                   <li key={n.creatorId} className="flex flex-wrap items-baseline gap-x-2 rounded-[14px] bg-paper px-3 py-2 text-[14px]">
                     <b>{profileOf(n.creatorId)?.name ?? n.creatorId}</b>
+                    <SyntheticBadge accountId={n.creatorId} />
                     <span className={MUTED}>{n.reason}</span>
                   </li>
                 ))}
