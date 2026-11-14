@@ -10,7 +10,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { ErrorCard } from "@/components/ds";
 import { NotConnected } from "@/components/ds/NotConnected";
-import { BigAvatar, CHIP, ProfileHeader, Stat } from "@/components/likeness/Dash";
+import { BigAvatar, CHIP, MUTED, ProfileHeader, Stat, SURFACE } from "@/components/likeness/Dash";
+import { LicenceNftGrid } from "@/components/likeness/LicenceNft";
 import { AgentKeyCard } from "./AgentKeyCard";
 import { AgentActivity, BrandAds, BrandLicences } from "./BrandAgentConsole";
 import { AgentFlow } from "./AgentFlow";
@@ -167,6 +168,11 @@ export function BrandDashboardView({
         <div className="flex min-w-0 flex-col gap-[18px]">
           <BrandLicences licences={licences} creators={creators} video={video} onChanged={onChanged} preview={preview} />
           <BrandAds renders={renders} video={video} onChanged={onChanged} />
+          <section className={`${SURFACE} flex flex-col gap-3 p-5`} aria-label="Licence NFTs">
+            <h2 className="m-0 text-[20px] font-bold">Licence NFTs</h2>
+            <p className={`m-0 text-[13px] ${MUTED}`}>Every licence token you hold (NEP-171). Each image is drawn by the contract from the licence&apos;s live state.</p>
+            <LicenceNftGrid owner={accountId} stamp={licences.map((l) => `${l.id}:${l.status}:${l.rendersUsed}:${l.rendersReserved}`).join(",")} />
+          </section>
         </div>
         <AgentActivity events={overview?.activity ?? []} />
       </div>

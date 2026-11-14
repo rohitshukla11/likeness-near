@@ -25,6 +25,7 @@ import { formatNear, USE_LABELS } from "@/lib/rules";
 import { displayName, profileOf } from "@/lib/profiles";
 import type { CreatorInbox, CreatorView, LicenceStatus, LicenceView, RenderItem, ReceiptStatus } from "@/lib/types";
 import { VIDEO_DISCLOSURE } from "@/lib/video/config";
+import { LicenceNftThumb } from "./LicenceNft";
 
 const LICENCE_PILL: Record<LicenceStatus, PillKind> = { Pending: "waiting", Declined: "neutral", Active: "licensed", Exhausted: "expired", Expired: "expired", Revoked: "revoked" };
 const AD_PILL: Record<ReceiptStatus, PillKind> = { Reserved: "waiting", Approved: "licensed", Rejected: "revoked", Released: "expired" };
@@ -321,7 +322,8 @@ export function CreatorDashboardView({
 function LicenceRow({ l, act }: { l: LicenceView; act: Act }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] bg-paper p-3 text-[14px]">
-      <span className="flex min-w-0 flex-col gap-1">
+      {l.tokenId && <LicenceNftThumb id={l.tokenId} stamp={`${l.status}:${l.rendersUsed}:${l.rendersReserved}`} width={104} />}
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="flex flex-wrap items-center gap-2">
           <b className="truncate">{l.brand}</b>
           <StatusPill kind={LICENCE_PILL[l.status]}>{l.status}</StatusPill>

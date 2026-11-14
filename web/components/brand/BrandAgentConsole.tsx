@@ -19,6 +19,7 @@ import type { ActivityEvent, CreatorView, LicenceStatus, LicenceView, RenderItem
 import { LicenceActions } from "./LicenceActions";
 import { MakeAd } from "./MakeAd";
 import { MakeVideo } from "./MakeVideo";
+import { LicenceNftThumb } from "@/components/likeness/LicenceNft";
 import { isVideo } from "@/components/likeness/LabelledVideo";
 
 const LICENCE_PILL: Record<LicenceStatus, PillKind> = { Pending: "waiting", Declined: "neutral", Active: "licensed", Exhausted: "expired", Expired: "expired", Revoked: "revoked" };
@@ -85,6 +86,7 @@ export function BrandLicences({
                   ))}
                 {!preview && <LicenceActions l={l} onDone={onChanged} />}
               </div>
+              {l.tokenId && <LicenceNftThumb id={l.tokenId} stamp={`${l.status}:${l.rendersUsed}:${l.rendersReserved}`} width={112} />}
             </li>
           ))}
         </ul>

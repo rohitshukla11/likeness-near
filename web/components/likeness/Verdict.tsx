@@ -8,6 +8,7 @@ import { accountUrl } from "@/lib/near/config";
 import { formatNear, USE_LABELS } from "@/lib/rules";
 import type { Verdict as V, VerifyResult } from "@/lib/types";
 import { isSelfLicence, SELF_LICENCE_NOTE } from "./SelfLicence";
+import { LicenceNftThumb } from "./LicenceNft";
 import { SyntheticNote } from "./Synthetic";
 import { displayName } from "@/lib/profiles";
 
@@ -33,6 +34,7 @@ export function Verdict({ r }: { r: VerifyResult }) {
           </Link>
         )}
       </span>
+      {r.tokenId && <LicenceNftThumb id={r.tokenId} stamp={`${l?.status ?? ""}:${l?.rendersUsed ?? ""}`} width={180} />}
       <p className="m-0">{look.body}</p>
       {l && isSelfLicence(l) && <p className="m-0 text-[14px] font-semibold text-wait">{SELF_LICENCE_NOTE}</p>}
       {l && <SyntheticNote accountId={l.creator} />}

@@ -72,6 +72,7 @@ export default function LicencePage({ params }: { params: Promise<{ id: string }
             ) : (
               <p className="m-0 text-[14px] text-grey">No token yet: it&apos;s minted when the creator approves the licence.</p>
             )}
+            <p className="m-0 mt-2 text-[13px] font-semibold">NEP-171 token · non-transferable · image drawn on-chain from live licence state</p>
             {data.token?.metadata?.media_hash && (
               <p className="m-0 mt-2 break-all text-[12px] text-grey">media_hash (base64 sha256 of this SVG): {data.token.metadata.media_hash}</p>
             )}

@@ -215,6 +215,8 @@ export const views = {
     return r && toReceipt(r);
   },
   getToken: (id: string) => viewCall<TokenJson | null>("nft_token", { token_id: id }),
+  /** NEP-181: the tokens an account holds (up to 50). */
+  tokensForOwner: (accountId: string) => viewCall<TokenJson[]>("nft_tokens_for_owner", { account_id: accountId, limit: 50 }),
   getLicenceSummary: (id: string) => viewCall<LicenceSummary | null>("licence_summary", { licence_id: id }),
   licencesForCreator: async (accountId: string, from = 0, limit = 50) =>
     (await viewCall<LicenceJson[]>("licences_for_creator", { creator_id: accountId, from_index: from, limit })).map(toLicence),
