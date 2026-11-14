@@ -45,11 +45,10 @@ for them are edits of the synthetic face.
 
 ## Video (optional)
 
-Video ads are made with Google Gemini Omni Flash (not NEAR AI), only when the server has video turned on. Video
-is on by default for every creator (no opt-in setting; disclosed here, in the README and on the review page). Each clip is made directly: the
-server makes its own opening still from the creator's consented photo (NEAR AI, safety-screened like an ad, never
-submitted on its own), Omni Flash animates it, and the clip is submitted as a render for the creator's review, and is paid only on their approval. The project makes no
-privacy or TEE claim for images or video. Code: `web/lib/video/`.
+Video: start frame and clip made with Google's models from the creator's reference photo (outside NEAR AI); the creator approves every video. On by default for this demo; a per-creator opt-in is on the roadmap.
+The pipeline follows the author's likeness-paypal project; the clip is made by Google Gemini Omni Flash, only when the
+server has video turned on, and is paid only on the creator's approval. The project makes no privacy or TEE claim for
+images or video. Code: `web/lib/video/`.
 
 ## Landing page images
 

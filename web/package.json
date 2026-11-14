@@ -17,6 +17,7 @@
     "test": "node --test \"test/**/*.test.ts\"",
     "faces:synthetic": "node --env-file-if-exists=.env.local scripts/synthetic-faces.ts",
     "video:dry": "node --env-file-if-exists=.env.local scripts/video-dry-run.ts",
+    "video:reference": "node --env-file-if-exists=.env.local scripts/video-reference.ts",
     "owner:creator": "node --env-file-if-exists=.env.local scripts/owner-creator.ts",
     "seed:synthetic": "node --env-file-if-exists=.env.local scripts/seed-synthetic.ts"
   },

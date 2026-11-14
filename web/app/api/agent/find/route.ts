@@ -24,11 +24,11 @@ export const POST = route(async (req: Request) => {
   const b = await readJson<CampaignRequest>(req, 10_000);
   const opt = (v: unknown) => v === undefined || v === "" || (typeof v === "string" && v.trim().length >= 3 && v.length <= FIELD_MAX);
   if (typeof b.brief !== "string" || b.brief.trim().length < 3 || b.brief.length > BRIEF_MAX) throw new HttpError(400, `the brief is required (3 to ${BRIEF_MAX} characters)`);
-  if (!opt(b.scene) || !opt(b.product)) throw new HttpError(400, "scene and product are optional; if given, 3 to 200 characters");
+  if (!opt(b.scene) || !opt(b.product) || !opt(b.motion)) throw new HttpError(400, "scene, product and video action are optional; if given, 3 to 200 characters");
   if (!isUse(b.use)) throw new HttpError(400, "unknown use");
   if (b.media !== undefined && b.media !== "image" && b.media !== "video") throw new HttpError(400, "media is image or video");
   if (!Number.isInteger(b.durationDays) || b.durationDays < 1 || b.durationDays > MAX_DAYS_LIMIT) throw new HttpError(400, "licence length is 1 to 180 days");
   if (!Number.isInteger(b.renderCap) || b.renderCap < 1 || b.renderCap > MAX_RENDER_CAP) throw new HttpError(400, "renders must be 1 to 1000");
   const t = (v?: string) => (v ?? "").trim();
-  return json(await findCreators(account, { brief: b.brief.trim(), use: b.use, durationDays: b.durationDays, renderCap: b.renderCap, scene: t(b.scene), product: t(b.product), media: b.media === "video" ? "video" : "image" }, mode));
+  return json(await findCreators(account, { brief: b.brief.trim(), use: b.use, durationDays: b.durationDays, renderCap: b.renderCap, scene: t(b.scene), product: t(b.product), media: b.media === "video" ? "video" : "image", ...(b.media === "video" && t(b.motion) ? { motion: t(b.motion) } : {}) }, mode));
 });

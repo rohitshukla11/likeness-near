@@ -18,7 +18,7 @@ export async function makeOneVideo(
   add({
     text: o.fromSha
       ? `Starting a ${o.seconds} s video from the approved ad (made by a third-party video model, not NEAR AI; about $${o.estUsd.toFixed(2)})…`
-      : `Making a ${o.seconds} s video: an opening still from the creator's photo, the safety screen, then the animation (a third-party video model, not NEAR AI; about $${o.estUsd.toFixed(2)})…`,
+      : `Making a ${o.seconds} s video: a start frame from the creator's reference photo, the safety screen, then the clip (third-party image and video models, not NEAR AI; about $${o.estUsd.toFixed(2)})…`,
     tone: "wait",
   });
   let job = await api<VideoJobView>("/api/agent/video", { licenceId, ...(o.fromSha ? { fromSha256: o.fromSha } : {}) });

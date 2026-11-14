@@ -14,18 +14,20 @@
  */
 import "server-only";
 import { q } from "../db";
-import { putMedia, mediaBytes, mediaMeta } from "../db/media";
+import { captureOf, putMedia, mediaBytes, mediaMeta, sniffMime } from "../db/media";
+import { isOwner, OWNER } from "../profiles";
 import { addRender, allowsVideo, campaignByLicence, log, renderBySha, renderCount, updateRender } from "../db/records";
 import { HttpError } from "../http";
 import { agentCall } from "../near/agent";
 import { views } from "../near/view";
 import { ensureScene } from "../agent/scene";
-import { openingStill } from "../agent/pipeline";
-import { estimateUsd, JOB_DEADLINE_MS, VIDEO_ASPECT, VIDEO_LABEL, VIDEO_PROVIDER, VIDEO_RESOLUTION, VIDEO_SECONDS, videoEnabled, videoMaxPerDay, videoModel, videoUsdCap } from "./config";
+import { safetyCheck } from "../ai/faceCheck";
+import { estimateUsd, JOB_DEADLINE_MS, VIDEO_ASPECT, VIDEO_LABEL, VIDEO_PROVIDER, VIDEO_RESOLUTION, VIDEO_SECONDS, videoEnabled, videoMaxPerDay, videoModel, videoStillModel, videoUsdCap } from "./config";
 import { videoRefusal } from "./caps";
 import { nextStep, type InteractionLike } from "./jobstate";
-import { cancelInteraction, getInteraction, outputBytes, startInteraction, VideoApiError } from "./omni";
-import { videoPrompt } from "./prompt";
+import { cancelInteraction, faceMatch, generateStill, getInteraction, outputBytes, startInteraction, VideoApiError } from "./omni";
+import { stillPrompt, videoBrief, videoPrompt } from "./prompt";
+import { runStartFrame } from "./startframe";
 import { videoStorage } from "./storage";
 
 export type JobStatus = "starting" | "running" | "storing" | "submitted" | "failed" | "refused";
@@ -86,6 +88,46 @@ async function setJob(id: number | string, u: Partial<Pick<JobRow, "status" | "i
 }
 
 /** Starts a video: direct (its own opening still) when `fromSha` is absent, else from that approved ad image. */
+/**
+ * The photo a video's start frame is made from, as likeness-paypal does: for the owner, the 800x800 original of their
+ * registered reference (stored privately; the on-chain reference 89a4… is a crop of it); for anyone else, their
+ * registered capture. Its sha256 goes into the video's record.
+ */
+export async function videoReferenceOf(creator: string): Promise<{ sha256: string; note: string } | null> {
+  if (isOwner(creator)) return { sha256: OWNER.videoReferenceSha256, note: `the 800x800 original; the on-chain reference ${OWNER.faceSha256.slice(0, 12)}… is a crop of it` };
+  const cap = await captureOf(creator);
+  return cap ? { sha256: cap.front_sha256, note: "the creator's registered capture" } : null;
+}
+
+/**
+ * The video's start frame, exactly as likeness-paypal makes it: Google's image model from the reference photo with
+ * paypal's still prompt (16:9, 1K), then paypal's face match as an internal retry (not the same person, or not exactly
+ * one person → one more start frame → still not → no video), then our safety screen on NEAR AI (blocked → no video;
+ * other people → the one retry; no valid answer → no video, fail closed). The face match is never shown as a verdict.
+ * Nothing here calls the video model; the start frame is never submitted on its own.
+ */
+async function startFrame(brand: string, creator: string, brief: string, licenceId: string) {
+  const ref = await videoReferenceOf(creator);
+  const reference = ref ? await mediaBytes(ref.sha256) : null;
+  if (!ref || !reference) return { ok: false as const, reason: "the creator's video reference photo isn't stored yet" };
+  const refMime = sniffMime(reference) ?? "image/jpeg";
+  const prompt = stillPrompt(brief);
+  return runStartFrame({
+    generate: async () => {
+      const still = await generateStill({ reference, referenceMime: refMime, prompt });
+      return { bytes: still.bytes, mime: sniffMime(still.bytes) ?? still.mime };
+    },
+    faceMatch: (f) => faceMatch({ bytes: reference, mime: refMime }, f),
+    store: (f) => putMedia(f.bytes, { kind: "ad", creator, brand }),
+    safety: async (f, sha256, round) => {
+      const sc = await safetyCheck(brand, f.bytes, f.mime, round > 0);
+      const why = sc.answer?.reason ?? sc.error ?? "";
+      await log(brand, { kind: "check", summary: `safety screen on the video's start frame ${sha256.slice(0, 12)}… (frame ${round + 1}): ${sc.verdict}${why ? ` (${why})` : ""}`, licenceId, sha256 });
+      return sc.verdict;
+    },
+  });
+}
+
 export async function startVideo(brand: string, licenceId: string, fromSha?: string): Promise<VideoJob> {
   // Everything is checked before anything is called or reserved.
   const [l, from, receipt, fromMeta] = await Promise.all([
@@ -116,7 +158,7 @@ export async function startVideo(brand: string, licenceId: string, fromSha?: str
   const campaign = await campaignByLicence(licenceId);
   if (!campaign) throw new HttpError(409, "no campaign for this licence");
   const plan = await ensureScene(brand, campaign);
-  const prompt = videoPrompt(plan.scene, plan.product);
+  const prompt = videoPrompt(campaign.motion || campaign.brief, plan.scene, plan.product);
 
   // Today's slot, reserved atomically: two starts can't both take the last one.
   const max = videoMaxPerDay();
@@ -139,7 +181,7 @@ export async function startVideo(brand: string, licenceId: string, fromSha?: str
       if (!image || !fromMeta) throw new VideoApiError("the approved ad's image is missing");
       mime = fromMeta.mime;
     } else {
-      const still = await openingStill(brand, l.creator, plan.scene, plan.product, licenceId);
+      const still = await startFrame(brand, l.creator, videoBrief(campaign.brief, plan.scene, plan.product), licenceId);
       if (!still.ok) {
         await setJob(job.id, { status: "refused", error: still.reason });
         await log(brand, { kind: "blocked", summary: `no video: ${still.reason}; nothing submitted, nothing reserved`, licenceId });
@@ -211,6 +253,8 @@ export async function pollVideo(brand: string, id: number): Promise<VideoJob> {
         resolution: VIDEO_RESOLUTION,
         aspect: VIDEO_ASPECT,
         startFrame: job.from_sha256,
+        startFrameModel: videoStillModel(),
+        reference: await videoReferenceOf(job.creator),
         label: VIDEO_LABEL,
         estUsd: Number(job.est_usd),
         bytes: bytes.length,

@@ -5,8 +5,9 @@
  * The key (GEMINI_API_KEY) is sent in the x-goog-api-key header only, never in a URL, a log or an error message.
  */
 import "server-only";
-import { VIDEO_ASPECT, VIDEO_RESOLUTION, VIDEO_SECONDS, videoModel } from "./config";
+import { VIDEO_ASPECT, VIDEO_RESOLUTION, VIDEO_SECONDS, videoFaceModel, videoModel, videoStillModel } from "./config";
 import { videoOf, type InteractionLike } from "./jobstate";
+import { faceMatchFrom } from "./startframe";
 
 const BASE = "https://generativelanguage.googleapis.com/v1beta";
 
@@ -43,6 +44,71 @@ async function call<T>(path: string, init: { method: "GET" | "POST"; body?: unkn
     throw new VideoApiError(`video model: HTTP ${r.status}: ${msg.split(k).join("<key>").slice(0, 300)}`);
   }
   return JSON.parse(text) as T;
+}
+
+/**
+ * The video's start frame (as likeness-paypal makes it): Google's image model (VIDEO_STILL_MODEL, default
+ * gemini-nano-banana-2.1) generates a new 16:9 image of the person from the creator's REAL reference photo, sent inline
+ * with the still prompt (./prompt stillPrompt). One call, 120 s timeout; a block or an empty answer is a VideoApiError.
+ */
+export async function generateStill(input: { reference: Uint8Array; referenceMime: string; prompt: string }): Promise<{ bytes: Uint8Array; mime: string; model: string }> {
+  const model = videoStillModel();
+  const res = await call<{
+    promptFeedback?: { blockReason?: string };
+    candidates?: { finishReason?: string; content?: { parts?: { thought?: boolean; inlineData?: { mimeType?: string; data?: string } }[] } }[];
+  }>(`/models/${encodeURIComponent(model)}:generateContent`, {
+    method: "POST",
+    timeoutMs: 120_000,
+    body: {
+      contents: [{ role: "user", parts: [{ inlineData: { mimeType: input.referenceMime, data: Buffer.from(input.reference).toString("base64") } }, { text: input.prompt }] }],
+      generationConfig: { responseModalities: ["IMAGE"], imageConfig: { aspectRatio: VIDEO_ASPECT, imageSize: "1K" } },
+    },
+  });
+  if (res.promptFeedback?.blockReason) throw new VideoApiError(`the image model blocked the start frame: ${res.promptFeedback.blockReason}`);
+  const c = res.candidates?.[0];
+  const img = c?.content?.parts?.find((p) => p.inlineData?.data && !p.thought)?.inlineData;
+  if (!img?.data) throw new VideoApiError(`the image model returned no start frame (${c?.finishReason ?? "no reason"})`);
+  return { bytes: new Uint8Array(Buffer.from(img.data, "base64")), mime: img.mimeType || "image/png", model };
+}
+
+const FACE_SCHEMA = {
+  type: "object",
+  properties: {
+    people: { type: "integer", description: "How many people are visible in the generated image" },
+    sameAsReference: { type: "boolean", description: "Is that person the same person as in the reference photo" },
+    reason: { type: "string" },
+  },
+  required: ["people", "sameAsReference", "reason"],
+};
+
+/**
+ * likeness-paypal's face match on the start frame, word for word: one person, the same person as the reference. An
+ * INTERNAL retry signal only (never a verdict shown anywhere). As in paypal, a check that can't run counts as a match
+ * (ran: false); the safety screen after it still fails closed.
+ */
+export function faceMatch(ref: { bytes: Uint8Array; mime: string }, still: { bytes: Uint8Array; mime: string }): Promise<{ ran: boolean; match: boolean }> {
+  return faceMatchFrom(async () => {
+    const res = await call<{ candidates?: { content?: { parts?: { text?: string }[] } }[] }>(`/models/${encodeURIComponent(videoFaceModel())}:generateContent`, {
+      method: "POST",
+      timeoutMs: 60_000,
+      body: {
+        systemInstruction: { parts: [{ text: "You compare faces for a likeness-licensing check. Clothing, setting, pose and lighting may differ; judge the face. Answer in JSON matching the schema." }] },
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: "Reference photo of the licensed creator:" },
+              { inlineData: { mimeType: ref.mime, data: Buffer.from(ref.bytes).toString("base64") } },
+              { text: "Generated advertising image:" },
+              { inlineData: { mimeType: still.mime, data: Buffer.from(still.bytes).toString("base64") } },
+            ],
+          },
+        ],
+        generationConfig: { temperature: 0, responseMimeType: "application/json", responseJsonSchema: FACE_SCHEMA },
+      },
+    });
+    return res.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+  });
 }
 
 /** Starts an image-to-video interaction in the background; returns its id (to poll) and status. */

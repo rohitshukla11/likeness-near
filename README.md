@@ -64,17 +64,18 @@ agent's function-call key can only call `request_licence` and `submit_render`, n
   Every receipt records `needs_creator_review`. The brief, the creator ranking and the banned-use screen also run
   there. These are plain API calls to NEAR AI Cloud (`cloud-api.near.ai`). This project makes **no privacy or TEE claim**: it
   doesn't fetch or verify NEAR AI's attestation.
-- **Video (optional, off unless `VIDEO_ENABLED=true`):** a short clip (4 s, 720p, 16:9, no audio) made by
-  **Google Gemini Omni Flash** on its public API, **not NEAR AI**. It is made directly: the server makes its own opening
-  still from the creator's consented photo (one NEAR AI image edit, safety-screened like an ad and never submitted on
-  its own), and Omni Flash animates that still. A brand can also animate an ad image the creator already approved. Video is on by default for every creator: there is no opt-in
-  setting; this README and the review page disclose that videos are made by Google Gemini Omni Flash, not NEAR AI. The clip is stored as uploaded (sha256 over the stored bytes), submitted with `submit_render`
-  (`needs_creator_review`: no frames are compared), counts toward the licence's render cap, and is paid only when the
-  creator approves it, like any ad. It carries the label "AI-generated video · licensed likeness" over the player and in
-  its record; the pixels aren't re-encoded. Caps: about $0.41 estimated per clip, refused over $0.50; 3 clips a day
-  site-wide. `pnpm -C web video:dry <licenceId> <approved sha256>` prints the exact request and the caps without
-  calling anything. Storage is local (Neon) for now; the video key goes in `web/.env.local` under the variable named in
-  `web/lib/video/config.ts`.
+- **Video (optional, off unless `VIDEO_ENABLED=true`):** Video: start frame and clip made with Google's models from the creator's reference photo (outside NEAR AI); the creator approves every video. On by default for this demo; a per-creator opt-in is on the roadmap.
+  Exactly as in the author's earlier likeness-paypal project: an image model makes a new 16:9 start frame (1K) of the
+  person from their real reference photo (for the author, the 800x800 original; the registered on-chain reference is a
+  crop of it; never from a FLUX ad), with rules that keep the face and drop the photo's clothes, accessories and pose. A
+  face match (the same person, exactly one person) only asks for one more start frame, then drops the video; it is never
+  shown as a verdict. The same safety screen as an ad then runs on it (on NEAR AI; fail closed). Only then **Google Gemini Omni Flash** turns it into a 4 s, 720p clip with the campaign's action, scene and
+  product, keeping the first frame's person and face. The clip is stored as uploaded (sha256 over the stored bytes),
+  submitted with `submit_render` (`needs_creator_review`), counts toward the licence's render cap, and is paid only when
+  the creator approves it. It carries the label "AI-generated video · licensed likeness" over the player and in its
+  record. Video is on by default for every creator (no opt-in). Caps: about $0.44 estimated per video (start frame +
+  clip), refused over $0.50; 3 a day site-wide. `pnpm -C web video:dry <licenceId>` prints both prompts and the cost
+  without calling anything. The key goes in `web/.env.local` under the variable named in `web/lib/video/config.ts`.
 - **On-chain (NEAR testnet):** terms, licences (non-transferable tokens), escrow, receipts by sha256, payments.
 - **Verify** hashes an image or video file in your browser (it's never uploaded) and asks the contract.
 

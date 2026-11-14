@@ -7,8 +7,8 @@ import type { ActivityEvent, CampaignRequest, FaceCheckDetail } from "../types";
  * agent's shortlist (top 3 and who wasn't eligible) that the request step reads back. */
 export async function addCampaign(brand: string, c: CampaignRequest, shortlist: unknown): Promise<number> {
   const r = await q<{ id: string }>(
-    `insert into campaigns (brand, brief, usage, duration_days, render_cap, scene, product, shortlist, media) values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`,
-    [brand, c.brief, c.use, c.durationDays, c.renderCap, c.scene ?? "", c.product ?? "", JSON.stringify(shortlist), c.media === "video" ? "video" : "image"],
+    `insert into campaigns (brand, brief, usage, duration_days, render_cap, scene, product, shortlist, media, motion) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id`,
+    [brand, c.brief, c.use, c.durationDays, c.renderCap, c.scene ?? "", c.product ?? "", JSON.stringify(shortlist), c.media === "video" ? "video" : "image", c.motion || null],
   );
   return Number(r[0]!.id);
 }
@@ -36,9 +36,11 @@ export interface CampaignRow {
   licence_id: string | null;
   shortlist: { top?: unknown[]; notEligible?: unknown[]; left?: string } | null;
   media: "image" | "video";
+  /** What the person does in a video (empty → the brief). */
+  motion: string | null;
 }
 
-const CAMPAIGN_COLS = "id, brand, brief, usage, duration_days, render_cap, scene, product, creator, licence_id, shortlist, media";
+const CAMPAIGN_COLS = "id, brand, brief, usage, duration_days, render_cap, scene, product, creator, licence_id, shortlist, media, motion";
 
 /** The campaign behind a licence (its scene and product feed the image prompt). */
 export async function campaignByLicence(licenceId: string): Promise<CampaignRow | null> {

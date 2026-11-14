@@ -31,12 +31,14 @@ import { makeOneVideo } from "./runVideo";
 
 /** The brief form loads with this café example, editable (1 render, so a first live run costs one image edit). */
 const EXAMPLE = {
-  brief: "Morning coffee campaign for a neighbourhood café: a warm, friendly portrait with a cup of coffee at the counter.",
-  use: "FoodDrink" as Use,
-  durationDays: 30,
+  brief: "Running shoe campaign: a confident runner after a morning run, standing in a city park at sunrise, holding the shoes.",
+  use: "Fitness" as Use,
+  durationDays: 14,
   renderCap: 1,
-  scene: "a bright café counter in the morning",
-  product: "a white ceramic coffee cup with no logo",
+  scene: "a city park at sunrise, soft golden light",
+  product: "white running shoes held in one hand",
+  /** What the runner does in a video (used only when Media is Video). */
+  motion: "The runner jogs slowly toward the camera, then smiles. Keep the face unchanged.",
 };
 
 export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void; preview?: { find: FindResponse | null; renders: number }; video?: VideoStatus | null }) {
@@ -46,6 +48,7 @@ export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void
   const [renderCap, setCap] = useState(preview?.renders ?? EXAMPLE.renderCap);
   const [scene, setScene] = useState(EXAMPLE.scene);
   const [product, setProduct] = useState(EXAMPLE.product);
+  const [motion, setMotion] = useState(EXAMPLE.motion);
   const [media, setMedia] = useState<"image" | "video">("image");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
@@ -63,6 +66,7 @@ export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void
     ...textProblems(brief),
     ...(scene ? textProblems(scene, "the scene", FIELD_MAX) : []),
     ...(product ? textProblems(product, "the product", FIELD_MAX) : []),
+    ...(wantsVideo && motion ? textProblems(motion, "the video action", FIELD_MAX) : []),
   ];
 
   // 4 → 5: watch the requested licence; once the creator approves, the agent makes the renders.
@@ -115,7 +119,7 @@ export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void
     setSteps([]);
     started.current = false;
     try {
-      const body: CampaignRequest = { brief, use, durationDays, renderCap, scene, product, media: wantsVideo ? "video" : "image" };
+      const body: CampaignRequest = { brief, use, durationDays, renderCap, scene, product, media: wantsVideo ? "video" : "image", ...(wantsVideo && motion.trim() ? { motion: motion.trim() } : {}) };
       setFind(await api<FindResponse>("/api/agent/find", body));
       onChanged();
     } catch (e) {
@@ -196,6 +200,11 @@ export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void
             <Lbl text="Product (optional)" className="col-span-2">
               <input className={inputClass} value={product} maxLength={FIELD_MAX} onChange={(e) => setProduct(e.target.value)} placeholder="the agent writes it if empty" />
             </Lbl>
+            {wantsVideo && (
+              <Lbl text="Video action (optional)" className="col-span-2">
+                <input className={inputClass} value={motion} maxLength={FIELD_MAX} onChange={(e) => setMotion(e.target.value)} placeholder="what the person does in the clip; the brief if empty" />
+              </Lbl>
+            )}
           </div>
           {problems.length > 0 && brief && (
             <ul className="m-0 pl-5 text-[14px] text-bad">

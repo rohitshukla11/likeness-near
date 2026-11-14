@@ -38,7 +38,8 @@ export async function findCreators(brand: string | null, req: CampaignRequest, m
   const fields: Record<string, string> = { brief: req.brief };
   if (req.scene) fields.scene = req.scene;
   if (req.product) fields.product = req.product;
-  const regex = [...textProblems(req.brief), ...(req.scene ? textProblems(req.scene, "the scene", FIELD_MAX) : []), ...(req.product ? textProblems(req.product, "the product", FIELD_MAX) : [])];
+  if (req.motion) fields["video action"] = req.motion;
+  const regex = [...textProblems(req.brief), ...(req.scene ? textProblems(req.scene, "the scene", FIELD_MAX) : []), ...(req.product ? textProblems(req.product, "the product", FIELD_MAX) : []), ...(req.motion ? textProblems(req.motion, "the video action", FIELD_MAX) : [])];
   const first = regex.length ? { allowed: false, reasons: regex, by: "keywords" } : await screen(scope, req.use, fields);
   if (!first.allowed) {
     await note({ kind: "blocked", summary: `campaign refused before anything was asked (${first.by}): ${first.reasons.join("; ")}` });

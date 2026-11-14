@@ -15,7 +15,7 @@ import { isSelfLicence, SELF_LICENCE_NOTE } from "./SelfLicence";
 import { SyntheticNote } from "./Synthetic";
 import { api, NotConnectedError } from "@/lib/api";
 import { sha256OfBytes } from "@/lib/capture";
-import { VIDEO_LABEL } from "@/lib/video/config";
+import { VIDEO_DISCLOSURE, VIDEO_LABEL } from "@/lib/video/config";
 import { isVideo, LabelledVideo } from "./LabelledVideo";
 import { calls } from "@/lib/near/methods";
 import { useWallet } from "@/lib/near/wallet";
@@ -84,7 +84,7 @@ export function RequestPage({ sha256 }: { sha256: string }) {
             </div>
             <p className="m-0 text-[13px] text-grey">
               {isVideo(item.mime)
-                ? `${VIDEO_LABEL}: a video made from your consented photo by a third-party video model (not NEAR AI). Only you can confirm it's you: watch it and decide.`
+                ? `${VIDEO_LABEL}. ${VIDEO_DISCLOSURE} Only you can confirm it's you: watch it and decide.`
                 : "AI-edited from the creator's consented photo."}
             </p>
             <p className="m-0 break-all text-[13px]">

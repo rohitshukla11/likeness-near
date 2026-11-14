@@ -24,6 +24,7 @@ import { useWallet } from "@/lib/near/wallet";
 import { formatNear, USE_LABELS } from "@/lib/rules";
 import { displayName, profileOf } from "@/lib/profiles";
 import type { CreatorInbox, CreatorView, LicenceStatus, LicenceView, RenderItem, ReceiptStatus } from "@/lib/types";
+import { VIDEO_DISCLOSURE } from "@/lib/video/config";
 
 const LICENCE_PILL: Record<LicenceStatus, PillKind> = { Pending: "waiting", Declined: "neutral", Active: "licensed", Exhausted: "expired", Expired: "expired", Revoked: "revoked" };
 const AD_PILL: Record<ReceiptStatus, PillKind> = { Reserved: "waiting", Approved: "licensed", Rejected: "revoked", Released: "expired" };
@@ -295,6 +296,8 @@ export function CreatorDashboardView({
           </div>
         </section>
       </div>
+
+      <p className={`m-0 rounded-[16px] bg-violet-soft px-4 py-3 text-[13px] text-wait`}>{VIDEO_DISCLOSURE}</p>
 
       {licences.length > 0 && (
         <details className={`${SURFACE} group px-5 py-4`} open={licences.some((l) => l.status === "Active")}>

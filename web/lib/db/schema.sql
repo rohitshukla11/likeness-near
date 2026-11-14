@@ -127,6 +127,8 @@ create table if not exists creator_settings (
 
 -- Whether a campaign wants video too (its shortlist then keeps only creators who allow video).
 alter table campaigns add column if not exists media text not null default 'image';
+-- A video campaign's action (what the person does in the clip); empty → the brief. Screened with the brief.
+alter table campaigns add column if not exists motion text;
 
 -- One video job: started from a creator-approved ad image, polled until the clip is stored and submitted.
 create table if not exists video_jobs (

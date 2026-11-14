@@ -12,7 +12,7 @@
  */
 import "server-only";
 import { addRender, campaignByLicence, log, renderBySha, renderCountForCreator, updateRender } from "../db/records";
-import { captureOf, mediaBytes, mediaMeta, putMedia, sniffMime } from "../db/media";
+import { captureOf, mediaBytes, mediaMeta, putMedia } from "../db/media";
 import { HttpError } from "../http";
 import { agentCall } from "../near/agent";
 import { views } from "../near/view";
@@ -83,36 +83,6 @@ export async function makeAd(brand: string, licenceId: string, retryOf?: string)
   });
   await log(brand, { kind: "render", summary: `made ad ${n + 1} for licence ${licenceId}${self(l.creator, brand)} in ${(edited.ms / 1000).toFixed(1)} s; not submitted until the safety screen`, licenceId, sha256: f.sha256 });
   return { sha256: f.sha256, prompt, attempt: n, status: "generated" as const, wrote: plan.wrote ? { scene: plan.scene, product: plan.product } : null };
-}
-
-/**
- * A video's own opening still (direct video): one image edit of the creator's reference photo with their next prompt,
- * stored privately, then the same safety screen as an ad (blocked → no video; other people → one more still, then no
- * video; no valid answer → no video, fail closed). It is never submitted on its own: the creator reviews the video
- * made from it. Returns the still's sha256 and mime, or the reason there is none.
- */
-export async function openingStill(
-  brand: string,
-  creator: string,
-  scene: string,
-  product: string,
-  licenceId: string,
-): Promise<{ ok: true; sha256: string; mime: string; bytes: Uint8Array } | { ok: false; reason: string }> {
-  const reference = await referenceOf(creator);
-  const start = await renderCountForCreator(creator);
-  for (let round = 0; round < 2; round++) {
-    const edited = await editImage(brand, reference, buildPrompt(scene, product, start + round));
-    const mime = sniffMime(edited.bytes) ?? "image/jpeg";
-    const sha256 = await putMedia(edited.bytes, { kind: "ad", creator, brand });
-    const sc = await safetyCheck(brand, edited.bytes, mime, round > 0);
-    const why = sc.answer?.reason ?? sc.error ?? "";
-    await log(brand, { kind: "check", summary: `safety screen on the video's opening still ${sha256.slice(0, 12)}…: ${sc.verdict}${why ? ` (${why})` : ""}`, licenceId, sha256 });
-    if (sc.verdict === "passed") return { ok: true, sha256, mime, bytes: edited.bytes };
-    if (sc.verdict !== "regenerate") {
-      return { ok: false, reason: sc.verdict === "blocked" ? "the safety screen blocked the opening still (a minor or sexualised content)" : sc.answer ? "other people were in the opening still twice" : "the safety screen gave no valid answer, twice (fail closed)" };
-    }
-  }
-  return { ok: false, reason: "other people were in the opening still twice" };
 }
 
 export async function checkAd(brand: string, sha256: string) {

@@ -109,3 +109,71 @@ test("Verify's in-browser hash of a video file matches the stored sha256", async
   const v = mp4(5000);
   assert.equal(await sha256OfBytes(v), sha(v));
 });
+
+import { stillPrompt, videoBrief, videoPrompt } from "../lib/video/prompt.ts";
+
+test("the video prompts follow likeness-paypal: start frame from the reference photo, continuous action, face kept", () => {
+  const brief = videoBrief("Running shoe campaign: a confident runner.", "a city park at sunrise", "white running shoes held in one hand");
+  const s = stillPrompt(brief);
+  assert.ok(s.includes("faithful to the reference photo") && s.includes("opening frame of a short video ad: landscape 16:9"));
+  assert.ok(s.includes("Never copy the clothing from the reference photo") && s.includes("no earbuds, headphones, hats, bags, badges, microphones"));
+  assert.ok(s.endsWith(`Brief: ${brief}`) && brief.includes("Scene: a city park at sunrise.") && brief.includes("Product: white running shoes held in one hand."));
+  const v = videoPrompt("The runner jogs slowly toward the camera, then smiles. Keep the face unchanged.", "a city park at sunrise", "white running shoes");
+  assert.ok(v.startsWith("Use this image as the exact first frame of the video"));
+  assert.ok(v.includes("Action: The runner jogs slowly toward the camera, then smiles. Keep the face unchanged."));
+  assert.ok(v.includes("their face stays visible and recognisable throughout") && v.includes("No text, captions, logos or watermarks."));
+  assert.ok(v.endsWith("Scene: a city park at sunrise. Product: white running shoes."));
+});
+
+import { OWNER } from "../lib/profiles.ts";
+
+test("the owner's video reference is the 800x800 original committed as the card photo; the on-chain reference is a different file (its crop)", () => {
+  const original = readFileSync(new URL("../public/creators/rohit-card.jpg", import.meta.url));
+  assert.equal(createHash("sha256").update(original).digest("hex"), OWNER.videoReferenceSha256);
+  const crop = readFileSync(new URL("../public/creators/rohit.jpg", import.meta.url));
+  assert.equal(createHash("sha256").update(crop).digest("hex"), OWNER.faceSha256);
+  assert.notEqual(OWNER.videoReferenceSha256, OWNER.faceSha256);
+});
+
+import { faceMatchFrom, MAX_START_FRAMES, runStartFrame, type StartFrameSteps } from "../lib/video/startframe.ts";
+
+function steps(face: boolean[], safety: ("passed" | "blocked" | "regenerate" | "dropped")[]) {
+  const n = { generate: 0, face: 0, store: 0, safety: 0 };
+  const s: StartFrameSteps = {
+    generate: async () => ({ bytes: new Uint8Array([++n.generate]), mime: "image/png" }),
+    faceMatch: async () => ({ match: face[n.face++] ?? false }),
+    store: async () => `sha${++n.store}`,
+    safety: async () => safety[n.safety++] ?? "dropped",
+  };
+  return { s, n };
+}
+
+test("start frame: two face-match failures drop the job before anything is stored, screened or animated", async () => {
+  const { s, n } = steps([false, false], []);
+  const r = await runStartFrame(s);
+  assert.equal(r.ok, false);
+  assert.deepEqual(n, { generate: MAX_START_FRAMES, face: 2, store: 0, safety: 0 });
+  // runStartFrame has no video step at all: startVideo calls the video model only with an ok start frame.
+  assert.ok(!("video" in s));
+});
+
+test("start frame: one face-match failure regenerates once; then the safety screen decides", async () => {
+  const ok = steps([false, true], ["passed"]);
+  const r = await runStartFrame(ok.s);
+  assert.ok(r.ok && r.frames === 2 && r.sha256 === "sha1");
+  assert.deepEqual(ok.n, { generate: 2, face: 2, store: 1, safety: 1 });
+  const blocked = await runStartFrame(steps([true], ["blocked"]).s);
+  assert.ok(!blocked.ok && /blocked/.test(blocked.reason));
+  const failClosed = await runStartFrame(steps([true], ["dropped"]).s);
+  assert.ok(!failClosed.ok && /fail closed/.test(failClosed.reason));
+  const others = steps([true, true], ["regenerate", "passed"]);
+  assert.ok((await runStartFrame(others.s)).ok && others.n.generate === 2);
+});
+
+test("face match as paypal: one person who is the reference person; a check that can't run counts as a pass", async () => {
+  assert.deepEqual(await faceMatchFrom(async () => '{"people":1,"sameAsReference":true,"reason":"same"}'), { ran: true, match: true });
+  assert.deepEqual(await faceMatchFrom(async () => '{"people":2,"sameAsReference":true,"reason":"two"}'), { ran: true, match: false });
+  assert.deepEqual(await faceMatchFrom(async () => '{"people":1,"sameAsReference":false,"reason":"other"}'), { ran: true, match: false });
+  assert.deepEqual(await faceMatchFrom(async () => { throw new Error("HTTP 503"); }), { ran: false, match: true });
+  assert.deepEqual(await faceMatchFrom(async () => "not json"), { ran: false, match: true });
+});

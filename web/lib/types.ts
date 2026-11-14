@@ -166,6 +166,8 @@ export interface CampaignRequest {
   product?: string;
   /** "video": the brand wants a video too, so only creators who allow video are eligible. Default "image". */
   media?: "image" | "video";
+  /** A video's action: what the person does in the clip (optional; the brief otherwise). */
+  motion?: string;
 }
 
 /** One of the agent's top 3: public profile and terms only. */

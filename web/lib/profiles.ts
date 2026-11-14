@@ -15,8 +15,13 @@ export const OWNER = {
   face: "/creators/rohit.jpg",
   /** A wider crop of the same photo (jacket and mic in frame), for the creator cards only; never the reference. */
   card: "/creators/rohit-card.jpg",
+  /**
+   * The video start frame's reference (as in likeness-paypal): the 800x800 ORIGINAL stage photo, stored privately in the
+   * database by scripts/video-reference.ts. The registered on-chain reference (faceSha256, 89a4…) is a crop of it.
+   */
+  videoReferenceSha256: "0f03b10c88939f283ea2f9d61fba956abd5d136757e78616290567be51b9f76a",
   faceSha256: "89a4d9973341de96b3342ec2c678ea8e7975b219af30a2b676cfe18883c172af",
-  terms: { pricePerRenderNear: "0.04", allowedUses: ["FoodDrink", "Travel", "Fashion", "Beauty"] as Use[], maxDays: 30, renderCap: 10 },
+  terms: { pricePerRenderNear: "0.04", allowedUses: ["FoodDrink", "Travel", "Fashion", "Beauty", "Fitness"] as Use[], maxDays: 30, renderCap: 10 },
 };
 
 /** The one account that has a creator side (and the Creator | Brand switch). */
