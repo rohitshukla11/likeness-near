@@ -1,6 +1,7 @@
 /**
  * Video ads (Google Gemini Omni Flash on the Gemini API, not NEAR AI; lib/video).
- *   GET  → whether video is on, today's count and cap, the estimate per clip, and the brand's recent jobs.
+ *   GET  → whether video is on, today's count and cap, the estimate per clip, and the brand's recent jobs (running jobs
+ *          are moved on first, so a closed page never strands a paid clip).
  *   POST {licenceId, fromSha256?} → starts a background job: direct (its own safety-screened opening still from the
  *        creator's reference photo) or, with fromSha256, from an ad image the creator approved; returns the job.
  * Only the brand whose function-call key this server holds can start one; each call is short (the page polls).
@@ -10,13 +11,14 @@ import { rateLimit } from "@/lib/ratelimit";
 import { requireAccount, requireSameOrigin } from "@/lib/session";
 import { agentAccountId, agentConfigured } from "@/lib/near/agent";
 import { estimateUsd, VIDEO_SECONDS, videoEnabled, videoMaxPerDay, videoUsdCap } from "@/lib/video/config";
-import { startVideo, videoJobs, videosToday } from "@/lib/video/jobs";
+import { resumeRunning, startVideo, videoJobs, videosToday } from "@/lib/video/jobs";
 
 export const maxDuration = 300;
 
 export const GET = route(async () => {
   const brand = await requireAccount();
   const enabled = videoEnabled();
+  if (enabled) await resumeRunning(brand);
   return json({
     enabled,
     seconds: VIDEO_SECONDS,

@@ -166,10 +166,16 @@ export async function startVideo(brand: string, licenceId: string, fromSha?: str
     `insert into video_jobs (brand, licence_id, creator, from_sha256, status, prompt, model, est_usd)
        select $1, $2, $3, $4, 'starting', $5, $6, $7
        where (select count(*) from video_jobs where ${COUNTED} and created_at >= date_trunc('day', now() at time zone 'utc') at time zone 'utc') < $8
+         and not exists (select 1 from video_jobs where licence_id = $2 and status in ('starting', 'running', 'storing') and created_at > now() - interval '15 minutes')
      returning *`,
     [brand, licenceId, l.creator, fromSha ?? "", prompt, videoModel(), est.toFixed(4), max],
   );
-  if (!ins[0]) throw new HttpError(429, `today's video cap is reached (${max} per day)`);
+  if (!ins[0]) {
+    // One video at a time per licence (a double click must not pay for two); otherwise it was today's cap.
+    const busy = await q<{ id: string }>(`select id from video_jobs where licence_id = $1 and status in ('starting', 'running', 'storing') and created_at > now() - interval '15 minutes' limit 1`, [licenceId]);
+    if (busy[0]) throw new HttpError(409, `a video for this licence is already being made (job #${busy[0].id}); nothing new was started`);
+    throw new HttpError(429, `today's video cap is reached (${max} per day)`);
+  }
   const job = ins[0];
 
   let startSha = fromSha ?? "";
@@ -283,6 +289,15 @@ export async function pollVideo(brand: string, id: number): Promise<VideoJob> {
     await log(brand, { kind: "error", summary: `video stored or submitted failed: ${msg}`, licenceId: job.licence_id });
     throw new HttpError(502, `video failed: ${msg}`);
   }
+}
+
+/**
+ * Moves the brand's running jobs on (one short check each, at most 3): a job whose page was closed or lost its poll
+ * still gets its clip stored and submitted the next time the brand's dashboard loads. Errors are left to the job.
+ */
+export async function resumeRunning(brand: string): Promise<void> {
+  const rows = await q<{ id: string }>(`select id from video_jobs where brand = $1 and status = 'running' order by created_at limit 3`, [brand]);
+  for (const r of rows) await pollVideo(brand, Number(r.id)).catch(() => undefined);
 }
 
 /** The brand's recent video jobs (newest first), for its page. */

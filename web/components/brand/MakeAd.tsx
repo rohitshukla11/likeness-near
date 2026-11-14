@@ -5,7 +5,7 @@
  * on-chain submission for the creator's approval. Shows each step as it happens; the price is only reserved, never
  * paid, until the creator approves.
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { btnClass } from "@/components/ds";
 import { makeOneAd, type Step } from "./runAd";
 
@@ -13,7 +13,11 @@ export function MakeAd({ licenceId, onDone }: { licenceId: string; onDone: () =>
   const [steps, setSteps] = useState<Step[]>([]);
   const [busy, setBusy] = useState(false);
 
+  const running = useRef(false);
+
   async function run() {
+    if (running.current) return;
+    running.current = true;
     setBusy(true);
     setSteps([]);
     try {
@@ -21,6 +25,7 @@ export function MakeAd({ licenceId, onDone }: { licenceId: string; onDone: () =>
     } catch (e) {
       setSteps((x) => [...x, { text: (e as Error).message, tone: "bad" }]);
     } finally {
+      running.current = false;
       setBusy(false);
       onDone();
     }

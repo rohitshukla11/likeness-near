@@ -14,6 +14,7 @@ export function MakeVideo({ licenceId, fromSha, seconds, estUsd, onDone }: { lic
   const [steps, setSteps] = useState<Step[]>([]);
   const [busy, setBusy] = useState(false);
   const alive = useRef(true);
+  const running = useRef(false);
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -22,6 +23,8 @@ export function MakeVideo({ licenceId, fromSha, seconds, estUsd, onDone }: { lic
   }, []);
 
   async function run() {
+    if (running.current) return;
+    running.current = true;
     setBusy(true);
     setSteps([]);
     try {
@@ -29,6 +32,7 @@ export function MakeVideo({ licenceId, fromSha, seconds, estUsd, onDone }: { lic
     } catch (e) {
       setSteps((x) => [...x, { text: (e as Error).message, tone: "bad" }]);
     } finally {
+      running.current = false;
       if (alive.current) setBusy(false);
       onDone();
     }
