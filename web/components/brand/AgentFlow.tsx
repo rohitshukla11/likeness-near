@@ -31,14 +31,14 @@ import { makeOneVideo } from "./runVideo";
 
 /** The brief form loads with this café example, editable (1 render, so a first live run costs one image edit). */
 const EXAMPLE = {
-  brief: "Running shoe campaign: a confident runner after a morning run, standing in a city park at sunrise, holding the shoes.",
+  brief: "A runner at sunrise on a mountain trail, wearing our new trail shoes.",
   use: "Fitness" as Use,
   durationDays: 14,
-  renderCap: 1,
-  scene: "a city park at sunrise, soft golden light",
-  product: "white running shoes held in one hand",
+  renderCap: 3,
+  scene: "a mountain trail at sunrise, golden light, hills in the distance",
+  product: "trail running shoes, worn on the feet",
   /** What the runner does in a video (used only when Media is Video). */
-  motion: "The runner jogs slowly toward the camera, then smiles. Keep the face unchanged.",
+  motion: "The runner runs along the trail toward the camera, steady pace, then looks into the lens. Keep the face unchanged.",
 };
 
 export function AgentFlow({ onChanged, preview, video }: { onChanged: () => void; preview?: { find: FindResponse | null; renders: number }; video?: VideoStatus | null }) {

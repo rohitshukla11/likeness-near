@@ -34,8 +34,8 @@ faces, badged "Demo creator · synthetic face" on every card, shortlist entry an
 | Asha | `likeness-synth-asha.testnet` | Lifestyle & food | 0.04 NEAR per render; Food & drink, Travel, Fashion, Beauty; up to 10 renders, 30 days |
 | Maya Lindqvist | `likeness-synth-maya.testnet` | Fitness | 0.05 NEAR per render; Fitness, Fashion, Beauty; up to 8 renders, 21 days |
 
-As a brand, the brief form starts with an example (a morning-coffee campaign for a café, Food & drink, 30 days,
-1 render), ready to edit; **Find creators** screens it, filters and ranks the creators, and shows the agent's top 3.
+As a brand, the brief form starts with an example (a trail runner at sunrise for new trail shoes, Fitness, 14 days,
+3 renders), ready to edit; **Find creators** screens it, filters and ranks the creators, and shows the agent's top 3.
 
 Decisions for the synthetic creators (approving a licence or an ad) are made by the operator with their own testnet keys
 (`pnpm -C web seed:synthetic approve-licence|approve-render …`), and labelled as such: there is no person to consent. Anyone else who signs in with a NEAR wallet is a **brand**: fund an escrow, set limits,
