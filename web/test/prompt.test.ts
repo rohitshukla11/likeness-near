@@ -9,7 +9,7 @@ const product = "a white ceramic coffee cup with no logo";
 test("the template is the only prompt shape", () => {
   const p = buildPrompt(scene, product);
   assert.equal(p, TEMPLATE.replace("{scene}", scene).replace("{product}", product));
-  assert.ok(p.startsWith("Head-and-shoulders or waist-up advertisement photo, front-facing, face large in frame."));
+  assert.ok(p.startsWith("Full-body advertisement photo of the person running mid-stride toward the camera, front-facing, face clearly visible."));
   assert.ok(p.endsWith("No other people. No text or logos."));
 });
 

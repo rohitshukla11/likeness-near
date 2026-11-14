@@ -10,7 +10,7 @@
 export const FIELD_MAX = 200;
 
 export const TEMPLATE =
-  "Head-and-shoulders or waist-up advertisement photo, front-facing, face large in frame. Keep the person's face, facial features, identity, age and hairstyle exactly unchanged. Scene: {scene}. Product: {product}. No other people. No text or logos.";
+  "Full-body advertisement photo of the person running mid-stride toward the camera, front-facing, face clearly visible. Keep the person's face, facial features, identity, age and hairstyle exactly unchanged. Scene: {scene}. Product: {product}. No other people. No text or logos.";
 
 export const VARIATIONS = [
   "slightly different camera angle",
