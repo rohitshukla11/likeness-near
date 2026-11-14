@@ -9,8 +9,16 @@
 /** Same value as rules.FIELD_MAX (this module has no imports so `node --test` can load it directly). */
 export const FIELD_MAX = 200;
 
+/**
+ * The framing sentence, a fixed lookup by the licence's category (no agent choice, no user input): Fitness ads show the
+ * person running, full body; every other category keeps the head-and-shoulders / waist-up portrait.
+ */
+export const FRAMING_RUNNING = "Full-body advertisement photo of the person running mid-stride toward the camera, front-facing, face clearly visible.";
+export const FRAMING_PORTRAIT = "Head-and-shoulders or waist-up advertisement photo, front-facing, face large in frame.";
+export const framingFor = (use: string): string => (use === "Fitness" ? FRAMING_RUNNING : FRAMING_PORTRAIT);
+
 export const TEMPLATE =
-  "Full-body advertisement photo of the person running mid-stride toward the camera, front-facing, face clearly visible. Keep the person's face, facial features, identity, age and hairstyle exactly unchanged. Scene: {scene}. Product: {product}. No other people. No text or logos.";
+  "{framing} Keep the person's face, facial features, identity, age and hairstyle exactly unchanged. Scene: {scene}. Product: {product}. No other people. No text or logos.";
 
 export const VARIATIONS = [
   "slightly different camera angle",
@@ -45,11 +53,11 @@ export function variation(k: number): string {
  * The prompt for a creator's render `k` (0 = their first ever). k ≥ 1 adds variation k, so prompts never repeat for
  * the same creator. Throws if scene or product is empty after cleaning.
  */
-export function buildPrompt(scene: string, product: string, k = 0): string {
+export function buildPrompt(use: string, scene: string, product: string, k = 0): string {
   const s = clean(scene);
   const p = clean(product);
   if (!s || !p) throw new Error("scene and product are required");
   if (!Number.isInteger(k) || k < 0) throw new Error(`no render ${k}`);
-  const base = TEMPLATE.replace("{scene}", s).replace("{product}", p);
+  const base = TEMPLATE.replace("{framing}", framingFor(use)).replace("{scene}", s).replace("{product}", p);
   return k === 0 ? base : `${base} Variation: ${variation(k)}.`;
 }

@@ -48,7 +48,7 @@ const render = (n: number, l: LicenceView, status: RenderItem["receipt"]["status
   mediaUrl: face,
   mime: "image/jpeg",
   faceCheck: { verdict: "needs_creator_review", safety: "passed", facesInAd: 1, reason: verdict === "likely_match" ? "One adult, nothing unsafe." : null },
-  prompt: "Full-body advertisement photo of the person running mid-stride toward the camera, front-facing, face clearly visible. … Scene: a sunny running track at dawn. Product: plain white running shoes. No other people. No text or logos.",
+  prompt: "Head-and-shoulders or waist-up advertisement photo, front-facing, face large in frame. … Scene: a sunny running track at dawn. Product: plain white running shoes. No other people. No text or logos.",
   decisionTx: status === "Approved" ? "9xPreviewTxHashNotOnChain" : null,
 });
 

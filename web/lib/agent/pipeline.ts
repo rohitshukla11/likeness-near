@@ -51,14 +51,14 @@ export async function makeAd(brand: string, licenceId: string, retryOf?: string)
   const reference = await referenceOf(l.creator);
   const start = await renderCountForCreator(l.creator);
   let n = start;
-  let prompt = buildPrompt(plan.scene, plan.product, n);
+  let prompt = buildPrompt(campaign.usage, plan.scene, plan.product, n);
   let edited = await editImage(brand, reference, prompt);
   let f = await finalize(edited.bytes);
   let existing = await renderBySha(f.sha256);
   while (existing && n < start + COLLISION_TRIES) {
     await log(brand, { kind: "render", summary: `prompt ${n + 1} gave an image already made for licence ${existing.licence_id}; trying the next variation`, licenceId, sha256: f.sha256 });
     n += 1;
-    prompt = buildPrompt(plan.scene, plan.product, n);
+    prompt = buildPrompt(campaign.usage, plan.scene, plan.product, n);
     edited = await editImage(brand, reference, prompt);
     f = await finalize(edited.bytes);
     existing = await renderBySha(f.sha256);
