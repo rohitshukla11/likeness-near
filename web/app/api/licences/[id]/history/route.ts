@@ -23,5 +23,14 @@ export const GET = route(async (req: Request, ctx: { params: Promise<{ id: strin
      ) h order by at desc limit 50`,
     [id],
   );
-  return json({ items: rows });
+  // Per ad: were both the image model and the safety screen TEE-verified when it was made?
+  const shas = [...new Set(rows.map((r) => r.sha256).filter((s): s is string => !!s))];
+  const tee = shas.length
+    ? await q<{ sha256: string; ok: boolean }>(
+        `select sha256, (provenance->'tee'->>'verified' = 'true' and face_check->'tee'->>'verified' = 'true') as ok from renders where sha256 = any($1)`,
+        [shas],
+      )
+    : [];
+  const ok = new Map(tee.map((t) => [t.sha256, t.ok === true]));
+  return json({ items: rows.map((r) => (r.sha256 && r.kind === "submit" ? { ...r, tee: ok.get(r.sha256) ?? false } : r)) });
 });

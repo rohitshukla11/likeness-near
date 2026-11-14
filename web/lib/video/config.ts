@@ -38,6 +38,11 @@ export const videoFaceModel = (env: Env = process.env) => env.VIDEO_FACE_MODEL |
 /** One start frame at 1K (Gemini API list price, 2026-11); a regeneration costs one more. */
 export const STILL_USD = 0.0336;
 
+/** Where a video is processed, for the TEE panel, the Verify line and /trust (videos are never in a TEE). */
+export const VIDEO_TEE_NOTE = "Video: made outside any TEE (Google's models, not NEAR AI).";
+export const VIDEO_TEE_SHORT = "Video: outside TEE (Google)";
+export const VIDEO_TRUST_NOTE = "Video: made with Google's models, outside any TEE.";
+
 /** Shown to creators and brands wherever a video is made or reviewed. */
 export const VIDEO_DISCLOSURE = "Video: start frame and clip made with Google's models from the creator's reference photo (outside NEAR AI); the creator approves every video. On by default for this demo; a per-creator opt-in is on the roadmap.";
 export const videoMaxPerDay = (env: Env = process.env) => Math.floor(num(env.VIDEO_MAX_PER_DAY, 3));

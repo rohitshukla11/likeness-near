@@ -6,6 +6,7 @@
  */
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { TeeLine, TeePanel } from "@/components/likeness/TeePanel";
 import { AppPage } from "@/components/ds";
 import { BrandDashboardView } from "@/components/brand/BrandWorkspace";
 import { AgentFlow } from "@/components/brand/AgentFlow";
@@ -41,6 +42,18 @@ export function Preview() {
           ))}
         </span>
       </div>
+      {q.get("tee") === "1" && (
+        <section className="flex flex-col gap-3 rounded-[20px] bg-white p-5" aria-label="TEE panels (test data)">
+          <b>Review page TEE panel (test data): a verified ad, then one whose GPU check failed</b>
+          <TeePanel tee={creatorDemo.inbox.pending[0]?.tee} video={false} />
+          <TeePanel tee={creatorDemo.inbox.decided[0]?.tee ?? { image: null, screen: null }} video={false} />
+          <b>Verify line (test data): verified image, unverified image, no record, video</b>
+          <TeeLine kind="image" image={creatorDemo.inbox.pending[0]?.tee.image ?? null} screen={creatorDemo.inbox.pending[0]?.tee.screen ?? null} />
+          <TeeLine kind="image" image={creatorDemo.inbox.decided[0]?.tee.image ?? null} screen={creatorDemo.inbox.decided[0]?.tee.screen ?? null} />
+          <TeeLine kind="image" image={null} screen={null} />
+          <TeeLine kind="video" image={null} screen={null} />
+        </section>
+      )}
       {side === "creator" ? (
         <CreatorDashboardView
           creator={(demo ? creatorDemo : creatorEmpty).creator}

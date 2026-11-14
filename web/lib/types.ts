@@ -131,6 +131,26 @@ export interface RenderItem {
   prompt: string;
   /** Approve/reject transaction, once decided. */
   decisionTx: string | null;
+  /** TEE attestations recorded when the ad was made (image model) and screened (chat model); null if none. */
+  tee: RenderTee;
+}
+
+/** The TEE attestation summaries recorded with one ad (lib/tee/verify.ts TeeSummary). */
+export interface RenderTee {
+  image: TeeSummaryView | null;
+  screen: TeeSummaryView | null;
+}
+export interface TeeSummaryView {
+  model: string;
+  verifiedAt: string;
+  verified: boolean;
+  failed: string[];
+  nonceOk: boolean;
+  tdxOk: boolean;
+  bindingOk: boolean;
+  gpuOk: boolean;
+  signingAddress: string | null;
+  reportSha256: string;
 }
 
 /** GET /api/creator/inbox: the signed-in creator's licence requests, licences and ads. */
@@ -242,4 +262,6 @@ export interface LicenceHistoryItem {
   kind: "request" | "submit" | "decision";
   tx: string;
   sha256: string | null;
+  /** For an ad: both the image model and the safety screen were TEE-verified when it was made. */
+  tee?: boolean;
 }

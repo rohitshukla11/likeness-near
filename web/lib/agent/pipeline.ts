@@ -20,6 +20,8 @@ import { buildPrompt } from "../ai/prompt";
 import { editImage } from "../ai/image";
 import { safetyCheck } from "../ai/faceCheck";
 import { finalize } from "../ai/finalize";
+import { CHAT_MODEL, IMAGE_MODEL } from "../ai/nearai";
+import { attestForRender } from "../tee/attestation";
 import { ensureScene } from "./scene";
 import type { FaceCheckDetail } from "../types";
 
@@ -49,6 +51,8 @@ export async function makeAd(brand: string, licenceId: string, retryOf?: string)
   if (!campaign) throw new HttpError(409, "no campaign for this licence");
   const plan = await ensureScene(brand, campaign);
   const reference = await referenceOf(l.creator);
+  // A current TEE attestation of the image model (cached 10 min; never blocks: a failure is recorded as not verified).
+  const teeImage = await attestForRender(IMAGE_MODEL);
   const start = await renderCountForCreator(l.creator);
   let n = start;
   let prompt = buildPrompt(campaign.usage, plan.scene, plan.product, n);
@@ -75,7 +79,7 @@ export async function makeAd(brand: string, licenceId: string, retryOf?: string)
     creator: l.creator,
     campaign_id: Number(campaign.id),
     prompt,
-    provenance: { provider: "NEAR AI Cloud", model: edited.model, requestId: edited.requestId, ms: edited.ms, attempt: n, labelled: f.labelled },
+    provenance: { provider: "NEAR AI Cloud", model: edited.model, requestId: edited.requestId, ms: edited.ms, attempt: n, labelled: f.labelled, ...(teeImage ? { tee: teeImage } : {}) },
     submit_tx: null,
     status: "generated",
     attempt: n,
@@ -92,6 +96,7 @@ export async function checkAd(brand: string, sha256: string) {
   const [ad, meta] = await Promise.all([mediaBytes(sha256), mediaMeta(sha256)]);
   if (!ad || !meta) throw new HttpError(409, "the ad's file is missing");
 
+  const teeScreen = await attestForRender(CHAT_MODEL);
   const sc = await safetyCheck(brand, ad, meta.mime, !!row.retry_of);
   const reason = sc.answer?.reason ?? sc.error;
   const detail: FaceCheckDetail = {
@@ -100,7 +105,7 @@ export async function checkAd(brand: string, sha256: string) {
     ...(sc.answer ? { facesInAd: sc.answer.faces_in_ad } : {}),
     reason,
   };
-  const raw = { ...detail, outcome: sc.verdict, answer: sc.answer, error: sc.error, ms: sc.ms };
+  const raw = { ...detail, outcome: sc.verdict, answer: sc.answer, error: sc.error, ms: sc.ms, ...(teeScreen ? { tee: teeScreen } : {}) };
 
   if (sc.verdict === "blocked" || sc.verdict === "dropped" || sc.verdict === "regenerate") {
     await updateRender(sha256, { status: sc.verdict, face_check: raw });

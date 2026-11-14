@@ -50,7 +50,13 @@ const render = (n: number, l: LicenceView, status: RenderItem["receipt"]["status
   faceCheck: { verdict: "needs_creator_review", safety: "passed", facesInAd: 1, reason: verdict === "likely_match" ? "One adult, nothing unsafe." : null },
   prompt: "Head-and-shoulders or waist-up advertisement photo, front-facing, face large in frame. … Scene: a sunny running track at dawn. Product: plain white running shoes. No other people. No text or logos.",
   decisionTx: status === "Approved" ? "9xPreviewTxHashNotOnChain" : null,
+  // Preview only (not a real attestation): odd ads show the verified panel, even ones a failed GPU check.
+  tee: { image: previewTee("black-forest-labs/FLUX.2-klein-4B", n % 2 === 1), screen: previewTee("Qwen/Qwen3.8-27B", n % 2 === 1) },
 });
+
+function previewTee(model: string, ok: boolean) {
+  return { model, verifiedAt: new Date(T).toISOString(), verified: ok, failed: ok ? [] : ["gpu"], nonceOk: true, tdxOk: true, bindingOk: true, gpuOk: ok, signingAddress: "0xpreview", reportSha256: "preview" };
+}
 
 // ---------------------------------------------------------------- creator side (the owner, the demo's one real creator)
 

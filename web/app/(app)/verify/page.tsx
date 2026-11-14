@@ -10,7 +10,7 @@ import { Suspense, useEffect, useState } from "react";
 import { AppPage, btnClass, Card, ErrorCard, Skeleton } from "@/components/ds";
 import { NotConnected } from "@/components/ds/NotConnected";
 import { inputClass } from "@/components/ui";
-import { Verdict } from "@/components/likeness/Verdict";
+import { Verdict, type AiRecord } from "@/components/likeness/Verdict";
 import { sha256Hex } from "@/lib/api";
 import { contractConfigured, DEMO_RECEIPT_LICENSED_SHA, DEMO_RECEIPT_SHA } from "@/lib/near/config";
 import { views } from "@/lib/near/view";
@@ -23,6 +23,7 @@ function VerifyInner() {
   const initial = (params.get("sha256") ?? "").toLowerCase().replace(/^0x/, "");
   const [sha, setSha] = useState(initial);
   const [result, setResult] = useState<VerifyResult | null>(null);
+  const [ai, setAi] = useState<AiRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -32,7 +33,13 @@ function VerifyInner() {
     if (!HEX64.test(h)) return setError("A sha256 is 64 hex characters.");
     setBusy(true);
     try {
+      setAi(null);
       setResult(await views.verify(h));
+      // The app's own record of how this file was made (public summary; none for files made elsewhere).
+      fetch(`/api/tee/render/${h}`)
+        .then((x) => (x.ok ? x.json() : null))
+        .then((j: AiRecord | null) => setAi(j))
+        .catch(() => setAi(null));
     } catch (e) {
       setError(`The contract couldn't be read: ${(e as Error).message}`);
     } finally {
@@ -90,7 +97,7 @@ function VerifyInner() {
         </form>
       </Card>
       {error && <ErrorCard>{error}</ErrorCard>}
-      {result && <Verdict r={result} />}
+      {result && <Verdict r={result} ai={ai} />}
       <div className="flex flex-col gap-1 text-[14px]">
         <span className="font-semibold">Try with a real receipt:</span>
         {DEMO_RECEIPT_LICENSED_SHA && (

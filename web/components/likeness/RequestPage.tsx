@@ -16,6 +16,7 @@ import { SyntheticNote } from "./Synthetic";
 import { api, NotConnectedError } from "@/lib/api";
 import { sha256OfBytes } from "@/lib/capture";
 import { VIDEO_DISCLOSURE, VIDEO_LABEL } from "@/lib/video/config";
+import { TeePanel } from "./TeePanel";
 import { isVideo, LabelledVideo } from "./LabelledVideo";
 import { calls } from "@/lib/near/methods";
 import { useWallet } from "@/lib/near/wallet";
@@ -87,6 +88,7 @@ export function RequestPage({ sha256 }: { sha256: string }) {
                 ? `${VIDEO_LABEL}. ${VIDEO_DISCLOSURE} Only you can confirm it's you: watch it and decide.`
                 : "AI-edited from the creator's consented photo."}
             </p>
+            <TeePanel tee={item.tee} video={isVideo(item.mime)} />
             <p className="m-0 break-all text-[13px]">
               sha256 <code>{sha256}</code>{" "}
               {shown && (matches ? <span className="text-ok">matches the file shown</span> : <span className="text-bad">does NOT match the file shown</span>)}

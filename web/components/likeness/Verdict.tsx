@@ -9,6 +9,8 @@ import { formatNear, USE_LABELS } from "@/lib/rules";
 import type { Verdict as V, VerifyResult } from "@/lib/types";
 import { isSelfLicence, SELF_LICENCE_NOTE } from "./SelfLicence";
 import { LicenceNftThumb } from "./LicenceNft";
+import { TeeLine } from "./TeePanel";
+import type { TeeSummaryView } from "@/lib/types";
 import { SyntheticNote } from "./Synthetic";
 import { displayName } from "@/lib/profiles";
 
@@ -20,7 +22,9 @@ const LOOK: Record<V, { pill: PillKind; title: string; body: string }> = {
 };
 const day = (ms: number | null | undefined) => (ms ? new Date(ms).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—");
 
-export function Verdict({ r }: { r: VerifyResult }) {
+export type AiRecord = { kind: "image" | "video"; image: TeeSummaryView | null; screen: TeeSummaryView | null };
+
+export function Verdict({ r, ai }: { r: VerifyResult; ai?: AiRecord | null }) {
   const look = LOOK[r.verdict];
   const l = r.licence;
   const rc = r.receipt;
@@ -36,6 +40,7 @@ export function Verdict({ r }: { r: VerifyResult }) {
       </span>
       {r.tokenId && <LicenceNftThumb id={r.tokenId} stamp={`${l?.status ?? ""}:${l?.rendersUsed ?? ""}`} width={180} />}
       <p className="m-0">{look.body}</p>
+      {ai && <TeeLine kind={ai.kind} image={ai.image} screen={ai.screen} />}
       {l && isSelfLicence(l) && <p className="m-0 text-[14px] font-semibold text-wait">{SELF_LICENCE_NOTE}</p>}
       {l && <SyntheticNote accountId={l.creator} />}
       <p className="m-0 break-all text-[13px] text-grey">

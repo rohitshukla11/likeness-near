@@ -136,6 +136,7 @@ export default function LicencePage({ params }: { params: Promise<{ id: string }
                             verify ad {h.sha256.slice(0, 10)}… →
                           </Link>
                         )}
+                        {h.tee && <span className="font-semibold text-ok">🔒 TEE verified</span>}
                       </span>
                     </li>
                   ))}
