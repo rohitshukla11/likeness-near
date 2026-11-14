@@ -42,9 +42,10 @@ server's agent key: see the demo video and [Proof it's live](#proof-its-live).
 | | |
 |---|---|
 | ![Verify Licensed](docs/screenshots/verify-licensed-tee.webp) **Licensed** + licence NFT + AI processing **verified in a TEE** | ![Verify Revoked](docs/screenshots/verify-revoked.webp) After the creator revoked: **Revoked**, token kept as history |
+| ![Creator review with TEE panels](docs/screenshots/creator-review-tee.webp) The creator's review page: both models **🔒 verified in a TEE**; nothing is paid until the creator approves | ![Trust](docs/screenshots/trust-tee-attestation.webp) `/trust`: FLUX.2-klein and Qwen **TEE verified** |
 | ![Licence NFT 5](docs/screenshots/licence-5-active.webp) The NFT drawn on-chain from live state: **ACTIVE**, 0.08 NEAR paid, 🔒 TEE verified ad | ![Licence NFT 0](docs/screenshots/licence-0-revoked.webp) The same contract redraws a revoked licence: **REVOKED** |
-| ![Trust](docs/screenshots/trust-tee-attestation.webp) `/trust`: FLUX.2-klein and Qwen **TEE verified** | ![Set up once](docs/screenshots/brand-setup-once.webp) Escrow, limits, and an agent key that **can't move NEAR** |
-| ![Shortlist](docs/screenshots/brand-shortlist.webp) The agent's shortlist with reasons, and who isn't eligible | ![Landing](docs/screenshots/landing.webp) The hosted app |
+| ![Set up once](docs/screenshots/brand-setup-once.webp) Escrow, limits, and an agent key that **can't move NEAR** | ![Shortlist](docs/screenshots/brand-shortlist.webp) The agent's shortlist with reasons, and who isn't eligible |
+| ![Landing](docs/screenshots/landing.webp) The hosted app | |
 
 ## Problem
 
