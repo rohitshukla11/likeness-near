@@ -18,6 +18,12 @@ import type { VerifyResult } from "@/lib/types";
 
 const HEX64 = /^[0-9a-f]{64}$/;
 
+/** The app's own record of how a file was made (public summary; null for files made elsewhere or without a record). */
+const loadAi = (h: string): Promise<AiRecord | null> =>
+  fetch(`/api/tee/render/${h}`)
+    .then((x) => (x.ok ? (x.json() as Promise<AiRecord>) : null))
+    .catch(() => null);
+
 function VerifyInner() {
   const params = useSearchParams();
   const initial = (params.get("sha256") ?? "").toLowerCase().replace(/^0x/, "");
@@ -35,11 +41,7 @@ function VerifyInner() {
     try {
       setAi(null);
       setResult(await views.verify(h));
-      // The app's own record of how this file was made (public summary; none for files made elsewhere).
-      fetch(`/api/tee/render/${h}`)
-        .then((x) => (x.ok ? x.json() : null))
-        .then((j: AiRecord | null) => setAi(j))
-        .catch(() => setAi(null));
+      void loadAi(h).then(setAi);
     } catch (e) {
       setError(`The contract couldn't be read: ${(e as Error).message}`);
     } finally {
@@ -52,8 +54,11 @@ function VerifyInner() {
     let cancelled = false;
     (async () => {
       try {
-        const r = await views.verify(initial);
-        if (!cancelled) setResult(r);
+        const [r, rec] = await Promise.all([views.verify(initial), loadAi(initial)]);
+        if (!cancelled) {
+          setResult(r);
+          setAi(rec);
+        }
       } catch (e) {
         if (!cancelled) setError(`The contract couldn't be read: ${(e as Error).message}`);
       }
