@@ -5,10 +5,29 @@ approve every licence and every ad, are paid per render from the brand's escrow 
 A brand's AI agent proposes the renders; every ad has a receipt anyone can verify as Licensed, Expired, Revoked or
 Unknown.
 
-**Live demo (NEAR testnet):** https://likenesss.onrender.com · Video is disabled on the hosted demo to cap costs; see the
-demo video.
+**Live demo (NEAR testnet):** https://likenesss.onrender.com · Verify works without a wallet. Video is on for this demo,
+capped at 3 clips a day site-wide.
 
-Built for NEAR HACKATHON 2026, from FaceVisa (GitHub: rohitshukla11/eth_mumbai @ b1976e4).
+**Tracks:** `nfts`, `security`, `agents`, `open`, `privacy`.
+
+**Contract:** `likeness-near-rohit.testnet`
+([explorer](https://testnet.nearblocks.io/address/likeness-near-rohit.testnet)).
+
+**Origin:** built from FaceVisa (GitHub: rohitshukla11/eth_mumbai @ b1976e4), made at ETHGlobal Mumbai, 5–7 Nov 2026,
+inside the NEAR HACKATHON 2026 window; the organisers confirmed a fresh repo with fresh commits (see
+`docs/HACKATHON.md`).
+
+## NEAR features, with code pointers
+
+| Feature | What it does | Code |
+|---|---|---|
+| Dynamic licence NFT (NEP-171 / 177 / 181) | Each approved licence is a non-transferable token owned by the brand. Its metadata is computed on every read: an on-chain SVG (status badge, renders, NEAR paid, expiry), the status (Active / Revoked / Expired / Exhausted, flipping with no write) and the money in `extra` / `licence_summary`. Revoked tokens stay as history. | `contract/src/nft.rs:84` (`licence_svg`), `:133` (`token_of`), `:189` (`nft_token`), `:195` (transfer refused), `:226` (metadata), `:244` (enumeration); `contract/src/types.rs:250` (`status_at`); `contract/src/views.rs:129` (`licence_summary`) |
+| NFT events | `nft_mint` on approval; NEP-171 v1.2.0 `nft_metadata_update` on approve_licence, approve_render, revoke_licence, release_expired | `contract/src/events.rs:8`, `:14` |
+| Function-call agent key + kill switch | The brand's agent signs with a function-call key on the brand's own account: receiver = the contract, methods `request_licence` and `submit_render` only, 0.25 NEAR gas allowance, no deposits, so it can't move funds. Deleting the key (one DeleteKey in the wallet) stops the agent. | `web/lib/near/methods.ts:60-62`; `web/components/brand/AgentKeyCard.tsx:69` |
+| Escrow released only on the creator's approval of the exact file | `submit_render` reserves the price under an active licence (caps per licence, the brand's limits); only the creator's `approve_render(sha256)` pays, from that reservation. | `contract/src/render.rs:12` (`submit_render`), `:52` (`approve_render`), `:80` (payout); `contract/src/licence.rs:66` (`approve_licence`), `:105` (`revoke_licence`) |
+| Public verify | `verify(sha256)` → Licensed / Expired / Revoked / Unknown, from the same status function as the token | `contract/src/views.rs:72` |
+| NEP-413 sign-in | One-time 32-byte nonce, signature checked against the account's full-access keys, HttpOnly session | `web/lib/session.ts:65` |
+| NEAR AI Cloud | FLUX.2-klein edits of the creator's reference photo (ads); Qwen for the brief screen, the ranking and the safety screen | `web/lib/ai/image.ts:17`, `web/lib/ai/nearai.ts:35`, `web/lib/ai/faceCheck.ts:20`, `web/lib/agent/rank.ts:81` |
 
 ## Try it on the hosted demo (no install)
 
@@ -62,8 +81,7 @@ agent's function-call key can only call `request_licence` and `submit_render`, n
   ad (fail closed). **No AI judges whether the ad shows the creator** (an identity check was removed on
   13 Nov after a false positive in our live run): only the creator can confirm it's them, by approving that exact file.
   Every receipt records `needs_creator_review`. The brief, the creator ranking and the banned-use screen also run
-  there. These are plain API calls to NEAR AI Cloud (`cloud-api.near.ai`). This project makes **no privacy or TEE claim**: it
-  doesn't fetch or verify NEAR AI's attestation.
+  there, on NEAR AI Cloud (`cloud-api.near.ai`). See "Privacy" below for exactly what is and isn't claimed.
 - **Video (optional, off unless `VIDEO_ENABLED=true`):** Video: start frame and clip made with Google's models from the creator's reference photo (outside NEAR AI); the creator approves every video. On by default for this demo; a per-creator opt-in is on the roadmap.
   Exactly as in the author's earlier likeness-paypal project: an image model makes a new 16:9 start frame (1K) of the
   person from their real reference photo (for the author, the 800x800 original; the registered on-chain reference is a
@@ -78,6 +96,20 @@ agent's function-call key can only call `request_licence` and `submit_render`, n
   without calling anything. The key goes in `web/.env.local` under the variable named in `web/lib/video/config.ts`.
 - **On-chain (NEAR testnet):** terms, licences (non-transferable tokens), escrow, receipts by sha256, payments.
 - **Verify** hashes an image or video file in your browser (it's never uploaded) and asks the contract.
+
+## Privacy
+
+Face images are processed only by NEAR AI Cloud models that NEAR AI's catalog lists as running in a Trusted Execution Environment (FLUX.2-klein for images; Qwen for the agent and the safety screen). Requests go through NEAR AI's API gateway. This app does not yet fetch or verify TEE attestation itself (on the roadmap, in progress). Video is made with Google's models, outside any TEE. The app server and database are not TEEs; reference photos and unapproved ads are stored privately.
+
+Source: NEAR AI's model catalog, https://near.ai/models (checked 14 Nov 2026): `black-forest-labs/FLUX.2-klein-4B` and `Qwen/Qwen3.8-27B` are both listed with "Privacy tier: Private TEE".
+
+| Where | Who can see the face | TEE |
+|---|---|---|
+| Browser | The signed-in creator (their photo and every ad of them) and the brand (its own ads); Verify only hashes files locally | No |
+| App server (Render) | The server process handling a request (it forwards photos to the models and stores the results) | No |
+| Database (Neon Postgres) | Stored privately: reference photos and ads not yet approved are served only to their creator and brand; an ad the contract verifies as Licensed becomes public | No |
+| NEAR AI Cloud (FLUX.2-klein, Qwen) | The model inside NEAR AI's enclave; requests pass NEAR AI's API gateway | Yes, per NEAR AI's catalog ("Private TEE"); attestation not verified by this app |
+| Video provider (video only) | Google Gemini Omni Flash and the start-frame image model see the reference photo and the start frame | No |
 
 ## The licence NFT
 
@@ -107,6 +139,24 @@ Every approved licence is a token (NEP-171 core, NEP-177 metadata, NEP-181 enume
   The tests load the contract's real pre-upgrade testnet storage and read it with the new code
   (`contract/src/tests/onchain.rs`).
 - **Roadmap (not built):** a NEAR sub-account per licence, so the licence is a real account that holds its own escrow.
+
+## Known limitations
+
+- **Testnet only.** The contract, payments and licence tokens are on NEAR testnet.
+- **FLUX likeness drift** (details below): an ad may not look exactly like the creator, so the creator, not an AI,
+  confirms each ad.
+- **Video:** Video: start frame and clip made with Google's models from the creator's reference photo (outside NEAR AI); the creator approves every video. On by default for this demo; a per-creator opt-in is on the roadmap.
+  Clips may include AI-generated ambient audio.
+- **One agent key on the hosted demo:** only the brand that holds the server's agent key (the author's account) can
+  run the full agent (licence requests and renders on-chain); every other signed-in brand gets demo mode.
+
+## Roadmap
+
+- TEE attestation verification of NEAR AI's models, in the app (fetch with a fresh nonce, verify, record per render).
+- Payouts through NEAR Intents.
+- Consent-gated transfer of a licence token (the creator approves the new holder).
+- A NEAR sub-account per licence, holding its own escrow.
+- A per-creator video opt-in.
 
 ## Known limitation: likeness on FLUX.2-klein
 
@@ -150,7 +200,7 @@ Needs Node 22 and pnpm 12 (`corepack enable`), and Rust (the version in `contrac
 ```sh
 git clone https://github.com/rohitshukla11/likeness-near && cd likeness-near
 pnpm -C web install --frozen-lockfile
-pnpm -C web test                 # 33 tests (agent rules, prompts, video caps, safety rule, origins, ...)
+pnpm -C web test                 # 39 tests (agent rules, prompts, video pipeline and caps, safety rule, origins, ...)
 pnpm -C web build
 (cd contract && cargo test)      # 70 tests, incl. reading the real pre-upgrade testnet state with the new code
 ```
@@ -179,5 +229,14 @@ the screen) and prints only the agent's public key, which the brand adds from th
 
 Keys live only in `web/.env.local` and `~/.near-credentials`, both outside git. Or skip all of it and use the hosted
 demo: https://likenesss.onrender.com
+
+## Third-party libraries
+
+- **Web app** (`web/package.json`): `next` 16.3.8, `react` / `react-dom` 19.2.8, `@hot-labs/near-connect` 0.12.0,
+  `near-api-js` 7.4.0, `@neondatabase/serverless` 1.2.0; dev: `typescript` 5.9.3, `tailwindcss` / `@tailwindcss/postcss`
+  4.3.3, `eslint` 9.39.5, `eslint-config-next` 16.3.8, `@types/node` 22.20.5, `@types/react` 19.3.0,
+  `@types/react-dom` 19.3.0.
+- **Contract** (`contract/Cargo.toml`): `near-sdk` 5.30.1, `near-contract-standards` 5.30.1.
+- **Services:** NEAR testnet RPC (FastNEAR), NEAR AI Cloud, Neon Postgres, Render; video only: Google Gemini Omni Flash.
 
 Licence: MIT.

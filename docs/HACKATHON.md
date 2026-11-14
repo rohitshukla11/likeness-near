@@ -47,8 +47,7 @@ for them are edits of the synthetic face.
 
 Video: start frame and clip made with Google's models from the creator's reference photo (outside NEAR AI); the creator approves every video. On by default for this demo; a per-creator opt-in is on the roadmap.
 The pipeline follows the author's likeness-paypal project; the clip is made by Google Gemini Omni Flash, only when the
-server has video turned on, and is paid only on the creator's approval. The project makes no privacy or TEE claim for
-images or video. Code: `web/lib/video/`.
+server has video turned on, and is paid only on the creator's approval. Clips may include AI-generated ambient audio. Code: `web/lib/video/`.
 
 ## Landing page images
 
@@ -57,4 +56,18 @@ for FaceVisa's landing page, copied unchanged from rohitshukla11/eth_mumbai @ b1
 `f2a69e0`). They show no real person; the example cards are labelled "EXAMPLE · AI-GENERATED", and none of them is a
 creator. List of files: `web/public/landing/PROVENANCE.md`.
 
-## TODO(Rohit): AI-assistance disclosure wording
+## Tracks
+
+`nfts`, `security`, `agents`, `open`, `privacy`.
+
+## Privacy scope
+
+Face images are processed only by NEAR AI Cloud models that NEAR AI's catalog lists as running in a Trusted Execution Environment (FLUX.2-klein for images; Qwen for the agent and the safety screen). Requests go through NEAR AI's API gateway. This app does not yet fetch or verify TEE attestation itself (on the roadmap, in progress). Video is made with Google's models, outside any TEE. The app server and database are not TEEs; reference photos and unapproved ads are stored privately.
+
+Source: NEAR AI's model catalog, https://near.ai/models (checked 14 Nov 2026): `black-forest-labs/FLUX.2-klein-4B` and `Qwen/Qwen3.8-27B` are both listed with "Privacy tier: Private TEE". The README's "Privacy" section has the full table (browser, app server, database, NEAR AI, the video provider).
+
+## Known limitations
+
+Testnet only; FLUX likeness drift (the creator confirms each ad); video made outside NEAR AI (see the video disclosure above), on
+by default for this demo, clips may include AI audio; on the hosted demo only the brand that holds the server's agent key
+runs the full agent. Details and the roadmap are in the README.
