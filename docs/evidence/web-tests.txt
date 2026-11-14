@@ -1,0 +1,323 @@
+# Web tests (pnpm -C web test)
+# Commit: 83468bd218b65d69381caad61d3cde6d07a338fa (code under test; uncommitted changes at run time: README.md, docs only)
+# Date:   2026-11-14 22:03 UTC · rustc 1.99.1 (58cf8f9c3 2026-10-13) · node v22.23.3
+# Command: pnpm -C web test
+# Exit code: 0
+
+$ node --test "test/**/*.test.ts"
+TAP version 13
+# Subtest: the filter gives one plain reason per creator who isn't eligible, and leaves paused creators out
+ok 1 - the filter gives one plain reason per creator who isn't eligible, and leaves paused creators out
+  ---
+  duration_ms: 2.329125
+  type: 'test'
+  ...
+# Subtest: finding works before the brand has set anything up: every fit is shown, none can be requested
+ok 2 - finding works before the brand has set anything up: every fit is shown, none can be requested
+  ---
+  duration_ms: 0.50475
+  type: 'test'
+  ...
+# Subtest: the ranking model receives text only: public profile and terms, never an image, face file or hash
+ok 3 - the ranking model receives text only: public profile and terms, never an image, face file or hash
+  ---
+  duration_ms: 1.424792
+  type: 'test'
+  ...
+# Subtest: over-budget cards can't be requested, and the agent never chooses one
+ok 4 - over-budget cards can't be requested, and the agent never chooses one
+  ---
+  duration_ms: 0.254584
+  type: 'test'
+  ...
+# Subtest: "Let the agent choose" picks \#1
+ok 5 - "Let the agent choose" picks \#1
+  ---
+  duration_ms: 0.119125
+  type: 'test'
+  ...
+# Subtest: one adult, nothing unsafe → passed; no valid answer → dropped (fail closed)
+ok 6 - one adult, nothing unsafe → passed; no valid answer → dropped (fail closed)
+  ---
+  duration_ms: 0.603458
+  type: 'test'
+  ...
+# Subtest: the screen is asked once more on no valid answer, and only once
+ok 7 - the screen is asked once more on no valid answer, and only once
+  ---
+  duration_ms: 0.604708
+  type: 'test'
+  ...
+# Subtest: a minor or sexualised content is blocked, whatever else
+ok 8 - a minor or sexualised content is blocked, whatever else
+  ---
+  duration_ms: 0.061041
+  type: 'test'
+  ...
+# Subtest: other people in the ad: regenerate once, then dropped
+ok 9 - other people in the ad: regenerate once, then dropped
+  ---
+  duration_ms: 0.052083
+  type: 'test'
+  ...
+# Subtest: strict validation: exact keys, known issues, sane counts
+ok 10 - strict validation: exact keys, known issues, sane counts
+  ---
+  duration_ms: 0.07325
+  type: 'test'
+  ...
+# Subtest: the screen never compares identity: one image, no reference, no same-person field
+ok 11 - the screen never compares identity: one image, no reference, no same-person field
+  ---
+  duration_ms: 0.506417
+  type: 'test'
+  ...
+# Subtest: without a label step, the hash is over the model's bytes
+ok 12 - without a label step, the hash is over the model's bytes
+  ---
+  duration_ms: 1.349958
+  type: 'test'
+  ...
+# Subtest: with a label step, the hash is over the labelled bytes, not the raw ones
+ok 13 - with a label step, the hash is over the labelled bytes, not the raw ones
+  ---
+  duration_ms: 0.213791
+  type: 'test'
+  ...
+# Subtest: only the brand holding the server's agent key, signed in, gets agent mode; everyone else gets demo
+ok 14 - only the brand holding the server's agent key, signed in, gets agent mode; everyone else gets demo
+  ---
+  duration_ms: 0.778959
+  type: 'test'
+  ...
+# Subtest: demo mode never stores or requests: the find path returns before addCampaign and logs nothing
+ok 15 - demo mode never stores or requests: the find path returns before addCampaign and logs nothing
+  ---
+  duration_ms: 0.681959
+  type: 'test'
+  ...
+# Subtest: the app URL: configured, else Render's, else localhost
+ok 16 - the app URL: configured, else Render's, else localhost
+  ---
+  duration_ms: 1.33225
+  type: 'test'
+  ...
+# Subtest: same origin: Origin host = Host, or the configured public URL; nothing else
+ok 17 - same origin: Origin host = Host, or the configured public URL; nothing else
+  ---
+  duration_ms: 0.153792
+  type: 'test'
+  ...
+# Subtest: the owner's photo hashes to the capture_sha256 he registers with
+ok 18 - the owner's photo hashes to the capture_sha256 he registers with
+  ---
+  duration_ms: 1.6725
+  type: 'test'
+  ...
+# Subtest: only the owner has a creator side; profiles are the owner and the synthetic creators
+ok 19 - only the owner has a creator side; profiles are the owner and the synthetic creators
+  ---
+  duration_ms: 0.104916
+  type: 'test'
+  ...
+# Subtest: the template is the only prompt shape
+ok 20 - the template is the only prompt shape
+  ---
+  duration_ms: 0.822667
+  type: 'test'
+  ...
+# Subtest: a creator's prompts never repeat, however many renders they have
+ok 21 - a creator's prompts never repeat, however many renders they have
+  ---
+  duration_ms: 0.293916
+  type: 'test'
+  ...
+# Subtest: scene and product can't break out of the template
+ok 22 - scene and product can't break out of the template
+  ---
+  duration_ms: 0.066625
+  type: 'test'
+  ...
+# Subtest: fields are trimmed to the limit and must not be empty
+ok 23 - fields are trimmed to the limit and must not be empty
+  ---
+  duration_ms: 0.134125
+  type: 'test'
+  ...
+# Subtest: the framing is a fixed lookup by category: Fitness runs full-body; FoodDrink (and every other) is head-and-shoulders
+ok 24 - the framing is a fixed lookup by category: Fitness runs full-body; FoodDrink (and every other) is head-and-shoulders
+  ---
+  duration_ms: 0.07725
+  type: 'test'
+  ...
+# Subtest: each face file hashes to the capture_sha256 its account registers
+ok 25 - each face file hashes to the capture_sha256 its account registers
+  ---
+  duration_ms: 2.069917
+  type: 'test'
+  ...
+# Subtest: accounts are distinct .testnet ids and terms pass the same validation as real creators
+ok 26 - accounts are distinct .testnet ids and terms pass the same validation as real creators
+  ---
+  duration_ms: 0.265375
+  type: 'test'
+  ...
+# Subtest: the synthetic demo creators each have a niche and a bio
+ok 27 - the synthetic demo creators each have a niche and a bio
+  ---
+  duration_ms: 0.434875
+  type: 'test'
+  ...
+# Subtest: labels say synthetic, and only for listed accounts
+ok 28 - labels say synthetic, and only for listed accounts
+  ---
+  duration_ms: 0.187916
+  type: 'test'
+  ...
+# Subtest: a real FLUX.2-klein attestation passes every check: fresh nonce, Intel TDX quote, key binding, NVIDIA GPUs
+ok 29 - a real FLUX.2-klein attestation passes every check: fresh nonce, Intel TDX quote, key binding, NVIDIA GPUs
+  ---
+  duration_ms: 11.378041
+  type: 'test'
+  ...
+# Subtest: a different nonce fails (replay): nonce, report_data binding and NVIDIA's eat_nonce all catch it
+ok 30 - a different nonce fails (replay): nonce, report_data binding and NVIDIA's eat_nonce all catch it
+  ---
+  duration_ms: 4.414166
+  type: 'test'
+  ...
+# Subtest: a tampered TDX quote fails (one byte of the TD report body flipped)
+ok 31 - a tampered TDX quote fails (one byte of the TD report body flipped)
+  ---
+  duration_ms: 4.18575
+  type: 'test'
+  ...
+# Subtest: the report_data binding is exactly signing address (32-byte padded) || nonce
+ok 32 - the report_data binding is exactly signing address (32-byte padded) || nonce
+  ---
+  duration_ms: 0.396541
+  type: 'test'
+  ...
+# Subtest: NVIDIA's tokens expire: the same answer an hour later no longer verifies
+ok 33 - NVIDIA's tokens expire: the same answer an hour later no longer verifies
+  ---
+  duration_ms: 4.179417
+  type: 'test'
+  ...
+# Subtest: a forged NVIDIA token fails its signature check
+ok 34 - a forged NVIDIA token fails its signature check
+  ---
+  duration_ms: 4.009667
+  type: 'test'
+  ...
+# Subtest: the cache reuses a verified result for 10 minutes, then verifies again; failures are never cached
+ok 35 - the cache reuses a verified result for 10 minutes, then verifies again; failures are never cached
+  ---
+  duration_ms: 0.178584
+  type: 'test'
+  ...
+# Subtest: simultaneous callers share one check
+ok 36 - simultaneous callers share one check
+  ---
+  duration_ms: 20.321167
+  type: 'test'
+  ...
+# Subtest: the UI never says verified unless every check passed
+ok 37 - the UI never says verified unless every check passed
+  ---
+  duration_ms: 4.387833
+  type: 'test'
+  ...
+# Subtest: TEE_ATTESTATION_ENABLED: on by default; "false" turns every call off and records nothing
+ok 38 - TEE_ATTESTATION_ENABLED: on by default; "false" turns every call off and records nothing
+  ---
+  duration_ms: 4.098708
+  type: 'test'
+  ...
+# Subtest: a hung attestation endpoint gives "not verified" at the timeout, and the ad flow goes on
+ok 39 - a hung attestation endpoint gives "not verified" at the timeout, and the ad flow goes on
+  ---
+  duration_ms: 115.956875
+  type: 'test'
+  ...
+# Subtest: job states: wait while running, done with a clip, fail on refusal, empty answer or deadline
+ok 40 - job states: wait while running, done with a clip, fail on refusal, empty answer or deadline
+  ---
+  duration_ms: 0.71225
+  type: 'test'
+  ...
+# Subtest: caps refuse before anything is called
+ok 41 - caps refuse before anything is called
+  ---
+  duration_ms: 0.151958
+  type: 'test'
+  ...
+# Subtest: a video campaign leaves out creators who opted out (everyone else is in by default)
+ok 42 - a video campaign leaves out creators who opted out (everyone else is in by default)
+  ---
+  duration_ms: 1.185375
+  type: 'test'
+  ...
+# Subtest: the sha256 is over the exact stored bytes; non-MP4 refused; blob is a stub
+ok 43 - the sha256 is over the exact stored bytes; non-MP4 refused; blob is a stub
+  ---
+  duration_ms: 0.538042
+  type: 'test'
+  ...
+# Subtest: approval before payment: the agent can only submit a video; only the creator's approve_render pays
+ok 44 - approval before payment: the agent can only submit a video; only the creator's approve_render pays
+  ---
+  duration_ms: 0.4555
+  type: 'test'
+  ...
+# Subtest: Verify's in-browser hash of a video file matches the stored sha256
+ok 45 - Verify's in-browser hash of a video file matches the stored sha256
+  ---
+  duration_ms: 2.726709
+  type: 'test'
+  ...
+# Subtest: the video prompts follow likeness-paypal: start frame from the reference photo, continuous action, face kept
+ok 46 - the video prompts follow likeness-paypal: start frame from the reference photo, continuous action, face kept
+  ---
+  duration_ms: 0.13025
+  type: 'test'
+  ...
+# Subtest: the owner's video reference is the 800x800 original committed as the card photo; the on-chain reference is a different file (its crop)
+ok 47 - the owner's video reference is the 800x800 original committed as the card photo; the on-chain reference is a different file (its crop)
+  ---
+  duration_ms: 0.549958
+  type: 'test'
+  ...
+# Subtest: start frame: two face-match failures drop the job before anything is stored, screened or animated
+ok 48 - start frame: two face-match failures drop the job before anything is stored, screened or animated
+  ---
+  duration_ms: 0.302875
+  type: 'test'
+  ...
+# Subtest: start frame: one face-match failure regenerates once; then the safety screen decides
+ok 49 - start frame: one face-match failure regenerates once; then the safety screen decides
+  ---
+  duration_ms: 0.342834
+  type: 'test'
+  ...
+# Subtest: face match: one person who is the reference person; a check that can't run or gives no valid answer is a FAIL
+ok 50 - face match: one person who is the reference person; a check that can't run or gives no valid answer is a FAIL
+  ---
+  duration_ms: 0.188125
+  type: 'test'
+  ...
+# Subtest: start frame, fail closed: a face check that errors twice drops the job; no frame is stored, screened or animated
+ok 51 - start frame, fail closed: a face check that errors twice drops the job; no frame is stored, screened or animated
+  ---
+  duration_ms: 0.263458
+  type: 'test'
+  ...
+1..51
+# tests 51
+# suites 0
+# pass 51
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 286.499041

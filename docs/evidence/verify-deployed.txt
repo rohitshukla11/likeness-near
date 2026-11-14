@@ -1,0 +1,49 @@
+# Deployed code hash = this source (contract/scripts/verify-deployed.sh)
+# Commit: 83468bd218b65d69381caad61d3cde6d07a338fa (code under test; uncommitted changes at run time: README.md, docs only)
+# Date:   2026-11-14 22:03 UTC · rustc 1.99.1 (58cf8f9c3 2026-10-13) · node v22.23.3
+# Command: contract/scripts/verify-deployed.sh
+# Exit code: 0
+
+
+running 70 tests
+......................................................................
+test result: ok. 70 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.67s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+• Collecting cargo project metadata...
+• done
+
+• Checking rustc version...
+INFO: contract's near-sdk targets protocol version 85; rustc 1.99.1 accepted (bulk-memory opcodes supported by nearcore VM)
+• done
+
+• Checking the host environment...
+• done
+
+• Building contract
+ │     Finished `release` profile [optimized] target(s) in 0.10s
+
+Modification timestamps of:
+ |    "~/code/likeness-near/contract/target/wasm32-unknown-unknown/release/likeness_contract.wasm" = SystemTime { tv_sec: 1794668130, tv_nsec: 4740299 }
+ |    "~/code/likeness-near/contract/target/near/likeness_contract.wasm" = SystemTime { tv_sec: 1794668130, tv_nsec: 402510138 }
+
+• Skipped running wasm-opt as final target exists and is newer than wasm produced by cargo
+
+✓ Contract successfully built! (in CARGO_NEAR_BUILD_ENVIRONMENT=host)
+     -                Binary: ~/code/likeness-near/contract/target/near/likeness_contract.wasm
+     -                  Size: 310.3 KB (310334 bytes)
+     - SHA-256 checksum hex : 8fe375f90b1b111aec4803776885ffa954f266a7560150483d6fe687830bba77
+     - SHA-256 checksum bs58: AggUALRhRf7kSK4c44J5ZXa74knNSrbeJtaJQxSGTnnJ
+    Finished cargo near build in 0s
+Here is the console command if you ever need to re-run it again:
+cargo near build non-reproducible-wasm --locked --no-abi
+wasm: target/near/likeness_contract.wasm (310334 bytes)
+sha256: 8fe375f90b1b111aec4803776885ffa954f266a7560150483d6fe687830bba77
+account:            likeness-near-rohit.testnet (https://rpc.testnet.fastnear.com)
+local build hash:   AggUALRhRf7kSK4c44J5ZXa74knNSrbeJtaJQxSGTnnJ
+deployed code_hash: AggUALRhRf7kSK4c44J5ZXa74knNSrbeJtaJQxSGTnnJ
+MATCH: the deployed contract is this source's build

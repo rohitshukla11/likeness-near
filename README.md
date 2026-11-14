@@ -1,6 +1,6 @@
 # Likeness
 
-[![CI](https://github.com/rohitshukla11/likeness-near/actions/workflows/ci.yml/badge.svg)](https://github.com/rohitshukla11/likeness-near/actions/workflows/ci.yml)
+[![CI](https://github.com/rohitshukla11/likeness-near/actions/workflows/ci.yml/badge.svg)](https://github.com/rohitshukla11/likeness-near/actions/workflows/ci.yml) · Evidence (real output, commit + date in each): [contract tests 70/70](docs/evidence/contract-tests.txt) · [web tests 51/51](docs/evidence/web-tests.txt) · [deployed code hash MATCH](docs/evidence/verify-deployed.txt)
 
 A brand's AI agent licenses a real creator's face for ads; the creator approves every licence and every ad and is paid
 per approved ad from the brand's escrow on NEAR. Anyone can verify an ad: Licensed, Expired, Revoked or Unknown.
@@ -83,7 +83,7 @@ Every hash below was checked on NEAR testnet (14–15 Nov 2026).
 | What | On-chain |
 |---|---|
 | Contract | [`likeness-near-rohit.testnet`](https://testnet.nearblocks.io/address/likeness-near-rohit.testnet), code hash `AggUALRhRf7kSK4c44J5ZXa74knNSrbeJtaJQxSGTnnJ` |
-| Deployed code = this source | `contract/scripts/verify-deployed.sh` builds the wasm with `scripts/build.sh`, computes NEAR's code hash (base58 of its sha256), reads `code_hash` from public testnet RPC (`view_account`) and exits 0 only on a match. Run on 15 Nov 2026: `local build hash: AggUALRhRf7k…`, `deployed code_hash: AggUALRhRf7k…`, `MATCH`. Same toolchain (`rust-toolchain.toml`) and cargo home path needed: the wasm embeds the cargo registry's paths, so it isn't a CI step. |
+| Deployed code = this source | `contract/scripts/verify-deployed.sh` builds the wasm with `scripts/build.sh`, computes NEAR's code hash (base58 of its sha256), reads `code_hash` from public testnet RPC (`view_account`) and exits 0 only on a match. Run on 15 Nov 2026: `local build hash: AggUALRhRf7k…`, `deployed code_hash: AggUALRhRf7k…`, `MATCH`. Output: [`docs/evidence/verify-deployed.txt`](docs/evidence/verify-deployed.txt). Same toolchain (`rust-toolchain.toml`) and cargo home path needed: the wasm embeds the cargo registry's paths, so it isn't a CI step. |
 | Licence-NFT upgrade (code-only, state kept) | [`9bxx1Pf6…`](https://testnet.nearblocks.io/txns/9bxx1Pf64VTXMRLSmMHv1mb4VtRa9U7BvRvm2xGxqWL5) |
 | A TEE-verified ad, approved and paid | [`7158c9be…`](https://likenesss.onrender.com/verify?sha256=7158c9bef04e232bbe72678395d7b3de013ace2a03d6f61503f3b8e3872f070f) on [`/licence/5`](https://likenesss.onrender.com/licence/5): `submit_render` [`DixBQ81Q…`](https://testnet.nearblocks.io/txns/DixBQ81QrtUkzop1rXupBKV9nHo75RNrxJYt2wCyFjAU), `approve_render` [`FwD8eaMr…`](https://testnet.nearblocks.io/txns/FwD8eaMrwzwrnstXuDqC1zxWYBpFTxqsp6BisTdbsEoZ) |
 | A paid `approve_render` (0.04 NEAR) | [`87bdJZEp…`](https://testnet.nearblocks.io/txns/87bdJZEp4gmLaW4KRYatgfsG4TTGAgEmkGmwhX5YRsrd) |
@@ -101,7 +101,7 @@ Every hash below was checked on NEAR testnet (14–15 Nov 2026).
 | Public verify | `verify(sha256)` → Licensed / Expired / Revoked / Unknown, same status function as the token | `contract/src/views.rs:72` |
 | NEP-413 sign-in | One-time 32-byte nonce, checked against the account's full-access keys | `web/lib/session.ts:65` |
 | NEAR AI Cloud | FLUX.2-klein edits of the creator's photo; Qwen for the brief screen, ranking and safety screen | `web/lib/ai/image.ts:17`, `web/lib/ai/nearai.ts:35`, `web/lib/ai/faceCheck.ts:20`, `web/lib/agent/rank.ts:81` |
-| NEAR AI TEE attestation | Before each FLUX edit and Qwen safety screen: fresh nonce, `/v1/attestation/report`, Intel TDX quote to Intel's root CA, `report_data` binding, NVIDIA NRAS; recorded per ad | `web/lib/tee/verify.ts:87` (`verifyTdxQuote`), `:135` (`reportDataBinds`), `:145` (`verifyNras`), `:191` (`verifyAttestation`), `:281` (10-min cache); `web/lib/tee/attestation.ts:29` (fetch + NRAS), `:74` (`attestForRender`); `web/lib/agent/pipeline.ts:55`, `:99` (the hooks); `web/app/api/tee/status/route.ts` (`/trust`) |
+| NEAR AI TEE attestation | Before each FLUX edit and Qwen safety screen: fresh nonce, `/v1/attestation/report`, Intel TDX quote to Intel's root CA, `report_data` binding, NVIDIA NRAS; recorded per ad | Nonce: `web/lib/tee/attestation.ts:30`, `web/lib/tee/verify.ts:209`<br>TDX quote + Intel chain: `web/lib/tee/verify.ts:87`, `:217`<br>Key binding: `web/lib/tee/verify.ts:135`, `:218`<br>NVIDIA GPUs: `web/lib/tee/attestation.ts:45`, `web/lib/tee/verify.ts:145`, `:226`<br>All checks: `web/lib/tee/verify.ts:191`; hooks: `web/lib/agent/pipeline.ts:55`, `:99`; `/trust`: `web/app/api/tee/status/route.ts` |
 
 ## How Likeness meets each track
 
@@ -200,12 +200,13 @@ screen), and **this app verifies, before using each model, that it runs in a Tru
 fresh nonce at least every 10 minutes per model, recorded with every ad, shown on the review page, in Verify, in licence
 history and on [`/trust`](https://likenesss.onrender.com/trust) (raw report downloadable).
 
-| Check (`web/lib/tee/verify.ts`) | What it proves |
-|---|---|
-| Fresh nonce | A new 32-byte nonce is echoed back by the model's attestation and NEAR AI's gateway (no replayed report). |
-| Intel TDX quote | Signed by its attestation key; the Quoting Enclave report signed by the PCK certificate and binding that key; the PCK chain up to Intel's SGX Root CA, pinned by fingerprint, valid now. |
-| Key binding | `report_data` = the model's signing address (32 bytes) + the nonce. |
-| NVIDIA GPUs | NRAS verdict true; every token ES384-signed by NVIDIA's published keys, not expired, with our nonce; every GPU's measurements and nonce match, debug off. |
+| Check | What it proves | Code |
+|---|---|---|
+| Fresh nonce | A new 32-byte nonce is echoed back by the model's attestation and NEAR AI's gateway (no replayed report). | `web/lib/tee/attestation.ts:30` (nonce), `:36` (report request); `web/lib/tee/verify.ts:209` (echo check) |
+| Intel TDX quote + Intel chain | Signed by its attestation key; the Quoting Enclave report signed by the PCK certificate and binding that key; the PCK chain up to Intel's SGX Root CA, pinned by fingerprint, valid now. | `web/lib/tee/verify.ts:87` (`verifyTdxQuote`), `:120` (quote sig), `:126` (QE report sig), `:127` (QE binds key), `:128` (chain), `:129` (root pinned, `:21`), `:130` (valid now), `:217` |
+| Key binding | `report_data` = the model's signing address (32 bytes) + the nonce. | `web/lib/tee/verify.ts:135` (`reportDataBinds`), `:218` |
+| NVIDIA GPUs | NRAS verdict true; every token ES384-signed by NVIDIA's published keys, not expired, with our nonce; every GPU's measurements and nonce match, debug off. | `web/lib/tee/attestation.ts:45` (NRAS), `:19` (JWKS); `web/lib/tee/verify.ts:145` (`verifyNras`), `:166` (ES384), `:175` (nonce), `:179` (per GPU), `:226` |
+| Before each use | Run before every FLUX edit and Qwen safety screen; the result is stored with the ad. | `web/lib/agent/pipeline.ts:55` (FLUX), `:99` (Qwen); `web/lib/tee/attestation.ts:74` (`attestForRender`) |
 
 "Processed in a verified TEE" appears only when **every** check passed for both models; otherwise "not verified" names
 the failed check. A failed check never blocks an ad, a payment or an approval (20-second limit;

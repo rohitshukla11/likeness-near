@@ -1,0 +1,89 @@
+# Contract unit tests (cargo test)
+# Commit: 83468bd218b65d69381caad61d3cde6d07a338fa (code under test; uncommitted changes at run time: README.md, docs only)
+# Date:   2026-11-14 22:03 UTC · rustc 1.99.1 (58cf8f9c3 2026-10-13) · node v22.23.3
+# Command: sh -c cd contract && cargo test --locked
+# Exit code: 0
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.44s
+     Running unittests src/lib.rs (target/debug/deps/likeness_contract-afd957a13e009434)
+
+running 70 tests
+test tests::capture::register_without_a_capture_reads_as_not_proven ... ok
+test tests::brand::limits_need_a_deposit - should panic ... ok
+test tests::capture::a_proven_capture_still_reads_as_given_at_registration ... ok
+test tests::capture::only_a_registered_creator_sets_a_capture - should panic ... ok
+test tests::brand::limits_are_consistent - should panic ... ok
+test tests::brand::cancel_releases_the_storage_reservation ... ok
+test tests::brand::deposit_pays_the_brand_record_storage_once ... ok
+test tests::capture::set_capture_proves_the_likeness_later ... ok
+test tests::brand::withdraw_and_failed_transfer_restores_escrow ... ok
+test tests::brand::only_the_brand_cancels - should panic ... ok
+test tests::brand::withdraw_never_touches_reserved_escrow - should panic ... ok
+test tests::capture::set_capture_refuses_all_zeros - should panic ... ok
+test tests::licence::approve_spends_licence_storage_and_releases_the_unused_mint_reserve ... ok
+test tests::licence::decline_removes_the_request_and_releases_storage ... ok
+test tests::licence::request_panics_when_escrow_is_short - should panic ... ok
+test tests::licence::only_the_creator_approves_a_licence - should panic ... ok
+test tests::licence::request_over_per_render_limit - should panic ... ok
+test tests::licence::request_reserves_licence_and_mint_storage ... ok
+test tests::licence::release_expired_refuses_a_live_licence - should panic ... ok
+test tests::licence::request_too_long - should panic ... ok
+test tests::licence::release_expired_returns_reservations ... ok
+test tests::licence::request_paused_creator - should panic ... ok
+test tests::licence::request_unknown_creator - should panic ... ok
+test tests::metadata::near_amounts_read_well ... ok
+test tests::licence::request_too_many_renders - should panic ... ok
+test tests::licence::request_use_not_allowed - should panic ... ok
+test tests::licence::status_active_then_revoked ... ok
+test tests::metadata::a_pending_licence_has_a_summary_but_no_token ... ok
+test tests::licence::status_expires_as_time_passes_without_any_write ... ok
+test tests::licence::status_exhausted_when_every_render_is_used ... ok
+test tests::licence::revoke_releases_every_pending_render_in_the_same_call ... ok
+test tests::metadata::media_hash_is_base64_sha256_in_json_per_nep177 ... ok
+test tests::metadata::the_svg_is_small_plain_and_shows_the_licence ... ok
+test tests::nft::contract_metadata ... ok
+test tests::metadata::the_summary_and_extra_add_up ... ok
+test tests::metadata::the_svg_flips_to_revoked_and_to_expired_with_no_write ... ok
+test tests::nft::approve_mints_to_the_brand_with_the_standard_event ... ok
+test tests::metadata::the_svg_says_exhausted_when_every_render_is_used ... ok
+test tests::onchain::the_new_code_reads_every_record_the_old_code_wrote ... ok
+test tests::nft::nft_resolve_transfer_panics - should panic ... ok
+test tests::onchain::an_old_active_token_flips_to_expired_on_read ... ok
+test tests::metadata::every_change_logs_nft_metadata_update ... ok
+test tests::nft::no_token_before_the_creator_approves ... ok
+test tests::nft::measured_storage ... ok
+test tests::onchain::the_old_records_round_trip_byte_for_byte ... ok
+test tests::nft::nft_transfer_call_panics - should panic ... ok
+test tests::nft::nft_transfer_panics - should panic ... ok
+test tests::render::a_failed_payout_is_kept_for_the_creator ... ok
+test tests::render::approve_render_pays_from_the_reservation ... ok
+test tests::render::approve_after_expiry_is_refused - should panic ... ok
+test tests::render::a_rejected_render_does_not_count_toward_the_cap ... ok
+test tests::render::approve_after_revoke_is_refused - should panic ... ok
+test tests::render::only_the_creator_approves_an_ad - should panic ... ok
+test tests::render::submit_after_expiry - should panic ... ok
+test tests::render::submit_after_revoke - should panic ... ok
+test tests::nft::token_status_always_equals_verify_status ... ok
+test tests::render::submit_before_approval - should panic ... ok
+test tests::render::submit_by_someone_else - should panic ... ok
+test tests::render::submit_rejects_a_malformed_hash - should panic ... ok
+test tests::render::submit_counts_reserved_renders_toward_the_cap - should panic ... ok
+test tests::render::submit_at_most_five_pending - should panic ... ok
+test tests::render::submit_reserves_the_price_and_charges_the_receipt_storage ... ok
+test tests::render::submit_same_file_twice - should panic ... ok
+test tests::render::submit_over_total_budget - should panic ... ok
+test tests::render::submit_over_per_render_limit_set_later - should panic ... ok
+test tests::render::submit_without_enough_escrow - should panic ... ok
+test tests::render::verify_reads_revoked_and_rejected ... ok
+test tests::self_licence::one_account_can_license_itself_end_to_end ... ok
+test tests::render::verify_reads_unknown_licensed_expired ... ok
+test tests::nft::enumeration_is_capped_at_fifty ... ok
+
+test result: ok. 70 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.65s
+
+   Doc-tests likeness_contract
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
