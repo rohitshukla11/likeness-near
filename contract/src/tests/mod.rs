@@ -3,7 +3,10 @@
 mod brand;
 mod capture;
 mod licence;
+mod metadata;
 mod nft;
+mod onchain;
+mod onchain_state;
 mod render;
 mod self_licence;
 

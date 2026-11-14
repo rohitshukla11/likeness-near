@@ -43,7 +43,7 @@ agent's function-call key can only call `request_licence` and `submit_render`, n
   and paid on testnet, then its licence was revoked) and, once one exists, a **Licensed** one
   (`NEXT_PUBLIC_DEMO_RECEIPT_LICENSED_SHA`).
 
-## What runs where (and what's private)
+## What runs where
 
 - **Images:** every ad image is an edit of the creator's reference photo made on **NEAR AI Cloud** (FLUX.2-klein-4B).
   Qwen on NEAR AI Cloud then screens the ad alone for safety: a minor or sexualised content blocks it; other people in it
@@ -51,12 +51,13 @@ agent's function-call key can only call `request_licence` and `submit_render`, n
   ad (fail closed). **No AI judges whether the ad shows the creator** (an identity check was removed on
   13 Nov after a false positive in our live run): only the creator can confirm it's them, by approving that exact file.
   Every receipt records `needs_creator_review`. The brief, the creator ranking and the banned-use screen also run
-  there. These calls run in NEAR AI's private (TEE) inference; the privacy claim of this project covers **images only**.
+  there. These are plain API calls to NEAR AI Cloud (`cloud-api.near.ai`). This project makes **no privacy or TEE claim**: it
+  doesn't fetch or verify NEAR AI's attestation.
 - **Video (optional, off unless `VIDEO_ENABLED=true`):** a short clip (4 s, 720p, 16:9, no audio) made by
-  **Google Gemini Omni Flash** on its public API, **outside NEAR AI's TEE**. It is made directly: the server makes its own opening
+  **Google Gemini Omni Flash** on its public API, **not NEAR AI**. It is made directly: the server makes its own opening
   still from the creator's consented photo (one NEAR AI image edit, safety-screened like an ad and never submitted on
   its own), and Omni Flash animates that still. A brand can also animate an ad image the creator already approved. Video is on by default for every creator: there is no opt-in
-  setting; this README and the review page disclose that videos are made outside NEAR AI's TEE. The clip is stored as uploaded (sha256 over the stored bytes), submitted with `submit_render`
+  setting; this README and the review page disclose that videos are made by Google's model, not NEAR AI. The clip is stored as uploaded (sha256 over the stored bytes), submitted with `submit_render`
   (`needs_creator_review`: no frames are compared), counts toward the licence's render cap, and is paid only when the
   creator approves it, like any ad. It carries the label "AI-generated video · licensed likeness" over the player and in
   its record; the pixels aren't re-encoded. Caps: about $0.41 estimated per clip, refused over $0.50; 3 clips a day
@@ -65,6 +66,35 @@ agent's function-call key can only call `request_licence` and `submit_render`, n
   `web/lib/video/config.ts`.
 - **On-chain (NEAR testnet):** terms, licences (non-transferable tokens), escrow, receipts by sha256, payments.
 - **Verify** hashes an image or video file in your browser (it's never uploaded) and asks the contract.
+
+## The licence NFT
+
+Every approved licence is a token (NEP-171 core, NEP-177 metadata, NEP-181 enumeration; `contract/src/nft.rs`):
+`token_id` = the licence id, owned by the brand, non-transferable. See one at `/licence/<id>` in the app.
+
+- **An on-chain dynamic image.** `nft_token(id).metadata.media` is an SVG (a data URI) the contract draws on every
+  read from the stored licence (`licence_svg`, `contract/src/nft.rs:84`): a big status badge (ACTIVE green, REVOKED
+  red, EXPIRED / EXHAUSTED grey), creator, brand, use, renders used of the cap, NEAR paid to the creator and the expiry
+  date. Under 2 KB, plain shapes and text, no external files. `media_hash` is base64(sha256) of exactly that SVG
+  (NEP-177). Nothing extra is stored: when the licence expires, the image says EXPIRED on the next read, with no
+  transaction.
+- **The money it holds and pays.** `extra` and the view `licence_summary(id)` (`contract/src/views.rs:129`) give the
+  price, renders used / waiting / left, NEAR paid to the creator, the amount reserved now (ads waiting for the creator,
+  held in the brand's escrow) and what goes back to the brand if the licence ends now. Payment happens only in the
+  creator's `approve_render` (`contract/src/render.rs:52`), from that reservation.
+- **Checked on every submission.** `submit_render` (`contract/src/render.rs:12`) refuses unless the caller is the
+  token's owner (the brand), the licence is Active and unexpired, and a render is left under the cap;
+  `approve_render` refuses once it's revoked or expired.
+- **Revoked tokens are kept as history (a design choice).** Revoking never burns the token: it reads REVOKED from then
+  on, so `verify(sha256)` can still prove an ad was approved under a licence that was later revoked (the Verify page's
+  example). The cost: a wallet keeps showing it, marked Revoked.
+- **Events.** `nft_mint` when the creator approves the licence, and NEP-171 (version 1.2.0) `nft_metadata_update` in
+  `approve_licence`, `approve_render`, `revoke_licence` and `release_expired` (`contract/src/events.rs:14`), so
+  wallets and indexers re-read the token. Expiry itself has no transaction; `release_expired` logs it when called.
+- **Added in place.** These are views and logs only, deployed on 14 Nov 2026 as a code-only redeploy (no migration).
+  The tests load the contract's real pre-upgrade testnet storage and read it with the new code
+  (`contract/src/tests/onchain.rs`).
+- **Roadmap (not built):** a NEAR sub-account per licence, so the licence is a real account that holds its own escrow.
 
 ## Known limitation: likeness on FLUX.2-klein
 

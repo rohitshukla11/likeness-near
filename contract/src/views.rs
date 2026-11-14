@@ -3,6 +3,32 @@
 use crate::*;
 use near_sdk::json_types::{U128, U64};
 
+/// What a licence's money looks like now, computed on read (view-only JSON; nothing here is stored).
+#[near(serializers = [json])]
+#[derive(Clone, Debug)]
+pub struct LicenceSummaryJson {
+    pub licence_id: String,
+    pub token_id: Option<String>,
+    pub status: LicenceStatus,
+    pub price_per_render: U128,
+    pub render_cap: u32,
+    pub renders_used: u32,
+    pub renders_reserved: u32,
+    pub renders_left: u32,
+    /// Every approved render's price, paid to the creator.
+    pub paid_to_creator: U128,
+    /// The prices of ads waiting for the creator, held in the brand's escrow now.
+    pub reserved: U128,
+    /// Goes back to the brand's free escrow if the licence ends now (revoke, or release_expired after expiry).
+    pub refundable_on_end: U128,
+    pub expires_at_ms: Option<u64>,
+}
+
+/// (paid to the creator, reserved now) for a licence: price × approved renders, price × renders waiting.
+pub(crate) fn money(l: &Licence) -> (u128, u128) {
+    (l.price * l.renders_used as u128, l.price * l.renders_reserved as u128)
+}
+
 impl Contract {
     pub(crate) fn licence_json(&self, id: u64) -> Option<LicenceJson> {
         let l = self.licences.get(&id)?;
@@ -97,6 +123,27 @@ impl Contract {
 
     pub fn get_licence(&self, licence_id: U64) -> Option<LicenceJson> {
         self.licence_json(licence_id.0)
+    }
+
+    /// The licence's money and render counts, computed now (the token's `extra` carries the same numbers).
+    pub fn licence_summary(&self, licence_id: U64) -> Option<LicenceSummaryJson> {
+        let id = licence_id.0;
+        let l = self.licences.get(&id)?;
+        let (paid, reserved) = money(l);
+        Some(LicenceSummaryJson {
+            licence_id: id.to_string(),
+            token_id: l.issued_at.map(|_| id.to_string()),
+            status: status_at(l, now()),
+            price_per_render: U128(l.price),
+            render_cap: l.render_cap,
+            renders_used: l.renders_used,
+            renders_reserved: l.renders_reserved,
+            renders_left: l.render_cap.saturating_sub(l.renders_used + l.renders_reserved),
+            paid_to_creator: U128(paid),
+            reserved: U128(reserved),
+            refundable_on_end: U128(reserved),
+            expires_at_ms: l.expires_at.map(ms),
+        })
     }
 
     pub fn get_receipt(&self, sha256: String) -> Option<ReceiptJson> {

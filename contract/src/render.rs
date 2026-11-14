@@ -75,6 +75,7 @@ impl Contract {
             b.escrow -= r.amount;
             b.spent += r.amount;
         }
+        events::emit_metadata_update(&r.licence_id.to_string());
         log!("render {} approved: {} yoctoNEAR to {}", sha256, r.amount, l.creator);
         Promise::new(l.creator.clone())
             .transfer(NearToken::from_yoctonear(r.amount))

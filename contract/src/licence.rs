@@ -88,6 +88,7 @@ impl Contract {
         b.spent += spend;
         self.licences.get_mut(&id).unwrap().storage_reserved = 0;
         events::emit_mint(&brand_id, &id.to_string());
+        events::emit_metadata_update(&id.to_string());
         log!("licence {} approved; token minted to {} ({} bytes)", id, brand_id, mint_bytes);
     }
 
@@ -107,6 +108,7 @@ impl Contract {
         require!(l.state == LicenceState::Active, "only an active licence can be revoked");
         self.release_pending(licence_id.0);
         self.licences.get_mut(&licence_id.0).unwrap().state = LicenceState::Revoked;
+        events::emit_metadata_update(&licence_id.0.to_string());
         log!("licence {} revoked", licence_id.0);
     }
 
@@ -115,7 +117,9 @@ impl Contract {
         let l = self.licences.get(&licence_id.0).unwrap_or_else(|| env::panic_str("no such licence"));
         require!(l.state == LicenceState::Active, "only an active licence can expire");
         require!(now() >= l.expires_at.unwrap_or(u64::MAX), "this licence hasn't expired");
-        self.release_pending(licence_id.0)
+        let released = self.release_pending(licence_id.0);
+        events::emit_metadata_update(&licence_id.0.to_string());
+        released
     }
 }
 
