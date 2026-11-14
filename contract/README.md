@@ -6,7 +6,7 @@ Face licences, escrow and per-render receipts, with non-transferable NEP-171 lic
 
 ```sh
 cd contract
-cargo test                       # 59 unit tests
+cargo test                       # 70 unit tests (incl. the real pre-upgrade testnet state, read by the new code)
 scripts/build.sh                 # tests, then cargo near build non-reproducible-wasm --no-abi --locked
 ```
 
@@ -18,6 +18,7 @@ works on testnet, but the binary isn't byte-for-byte reproducible from source. T
 ```sh
 scripts/deploy-testnet.sh             # dry run: prints the near-cli-rs command, the wasm sha256 and the storage cost
 scripts/deploy-testnet.sh --confirm   # deploys to likeness-near-rohit.testnet and calls new(owner_id)
+scripts/deploy-testnet.sh --confirm --no-init   # code-only redeploy (state kept; only when the stored types are unchanged)
 scripts/smoke.sh                      # read-only views against the deployed contract
 ```
 

@@ -10,7 +10,18 @@ demo video.
 
 Built for NEAR HACKATHON 2026, from FaceVisa (GitHub: rohitshukla11/eth_mumbai @ b1976e4).
 
-> Work in progress. The full README (try it, run it, what's on-chain) lands with the docs commit.
+## Try it on the hosted demo (no install)
+
+1. Open **/verify** and click the **Revoked** example → the contract answers **Revoked**: the ad was approved and paid
+   on testnet, then its licence was revoked. Click **Licence token #0 →**.
+2. **/licence/0** → the token's own image, drawn by the contract: a red **REVOKED** card, "1 used of 1",
+   "Paid to creator: 0.04 NEAR", plus the money summary and the licence's transactions with explorer links.
+   **/licence/1** → a green **ACTIVE** card.
+3. **/creators** → the creators and their on-chain terms (price per render, uses, render cap, longest licence).
+4. Drop any image on **/verify** → it's hashed in your browser (never uploaded) → **Unknown**: no licence covers it.
+5. Sign in with a NEAR **testnet** wallet (e.g. Meteor) → you're a brand → **Dashboard** → brief the agent →
+   **Find creators** → the banned-use screen, then the agent's top 3 with reasons and who wasn't eligible (demo mode:
+   nothing is requested on-chain unless you're the brand that holds the server's agent key).
 
 ## Who is who
 
@@ -126,15 +137,46 @@ background), kept as a documented fallback.
 
 ## Layout
 
-- `web/`: the Next.js app (pages and API routes), deployed on Vercel.
-- `contract/`: the Rust NEAR contract (testnet).
+- `web/`: the Next.js app (pages and API routes), deployed on Render.
+- `contract/`: the Rust NEAR contract (testnet: `likeness-near-rohit.testnet`).
 
-## Local setup
+## Run it
+
+Needs Node 22 and pnpm 12 (`corepack enable`), and Rust (the version in `contract/rust-toolchain.toml`).
+
+**Tests and build: no keys, no `.env.local`.**
 
 ```sh
-pnpm -C web install
-cp .env.example web/.env.local   # then fill in the values
-pnpm -C web dev
+git clone https://github.com/rohitshukla11/likeness-near && cd likeness-near
+pnpm -C web install --frozen-lockfile
+pnpm -C web test                 # 33 tests (agent rules, prompts, video caps, safety rule, origins, ...)
+pnpm -C web build
+(cd contract && cargo test)      # 70 tests, incl. reading the real pre-upgrade testnet state with the new code
 ```
+
+**The app locally:**
+
+```sh
+cp .env.example web/.env.local   # fill in what you need (below)
+pnpm -C web db:migrate           # once, if DATABASE_URL is set
+pnpm -C web dev                  # http://localhost:3000
+```
+
+What each feature needs:
+
+| Feature | Needs |
+|---|---|
+| Verify, /creators, /licence/&lt;id&gt; (read straight from the contract) | `NEXT_PUBLIC_CONTRACT_ID`, `NEXT_PUBLIC_NEAR_NETWORK=testnet` (a public RPC is the fallback) |
+| Sign-in, dashboards, the agent's activity log, licence history | `DATABASE_URL` (Postgres), `SESSION_SECRET` |
+| Find creators (banned-use screen, ranking), ad images, the safety screen | `NEARAI_API_KEY` (NEAR AI Cloud). `AI_MODE=test` makes no model call and uses the labelled rule-based path |
+| Licence requests and ad submissions on-chain | `AGENT_ACCOUNT_ID` + `AGENT_PRIVATE_KEY`: the brand's function-call key (`request_licence`, `submit_render` only) |
+
+`pnpm -C web secrets:init <brand>.testnet` writes `SESSION_SECRET` and a new agent key into `web/.env.local` (never to
+the screen) and prints only the agent's public key, which the brand adds from the dashboard (one AddKey in the wallet).
+| Video (optional) | `VIDEO_ENABLED=true` and the video key named in `web/lib/video/config.ts` |
+| Deploying the contract | near-cli-rs and a testnet account key in `~/.near-credentials` (`contract/README.md`) |
+
+Keys live only in `web/.env.local` and `~/.near-credentials`, both outside git. Or skip all of it and use the hosted
+demo: https://likenesss.onrender.com
 
 Licence: MIT.
