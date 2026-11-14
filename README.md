@@ -6,7 +6,7 @@ A brand's AI agent licenses a real creator's face for ads; the creator approves 
 per approved ad from the brand's escrow on NEAR. Anyone can verify an ad: Licensed, Expired, Revoked or Unknown.
 
 **Live demo (NEAR testnet):** https://likenesss.onrender.com · **Tracks:** `nfts`, `security`, `business`, `open`,
-`privacy`, `agents`
+`privacy`, `agents` ([how it meets each](#how-likeness-meets-each-track))
 
 ## For judges
 
@@ -103,6 +103,81 @@ Every hash below was checked on NEAR testnet (14–15 Nov 2026).
 | NEAR AI Cloud | FLUX.2-klein edits of the creator's photo; Qwen for the brief screen, ranking and safety screen | `web/lib/ai/image.ts:17`, `web/lib/ai/nearai.ts:35`, `web/lib/ai/faceCheck.ts:20`, `web/lib/agent/rank.ts:81` |
 | NEAR AI TEE attestation | Before each FLUX edit and Qwen safety screen: fresh nonce, `/v1/attestation/report`, Intel TDX quote to Intel's root CA, `report_data` binding, NVIDIA NRAS; recorded per ad | `web/lib/tee/verify.ts:87` (`verifyTdxQuote`), `:135` (`reportDataBinds`), `:145` (`verifyNras`), `:191` (`verifyAttestation`), `:281` (10-min cache); `web/lib/tee/attestation.ts:29` (fetch + NRAS), `:74` (`attestForRender`); `web/lib/agent/pipeline.ts:55`, `:99` (the hooks); `web/app/api/tee/status/route.ts` (`/trust`) |
 
+## How Likeness meets each track
+
+The demo is a self-licence: the author is both creator and brand. On-chain, the agent's **function-call key** signed
+`request_licence` [`52fKFkkQ…`](https://testnet.nearblocks.io/txns/52fKFkkQpJMoGUhquUs4FLW4UbaG2EKSvAutSk64rbDP) and `submit_render` [`DixBQ81Q…`](https://testnet.nearblocks.io/txns/DixBQ81QrtUkzop1rXupBKV9nHo75RNrxJYt2wCyFjAU); the creator's **full-access wallet key** signed `approve_render` [`FwD8eaMr…`](https://testnet.nearblocks.io/txns/FwD8eaMrwzwrnstXuDqC1zxWYBpFTxqsp6BisTdbsEoZ).
+
+### Open Innovation
+
+| | |
+|---|---|
+| **NEAR tech** | Escrow + licence NFT contract (`contract/src/render.rs:12`), agent function-call key (`web/lib/near/methods.ts:60-62`), NEP-413 sign-in (`web/lib/session.ts:56`), NEAR AI Cloud (`web/lib/ai/nearai.ts:35`) |
+| **Real, not simulated** | Live on testnet: [Verify `7158c9be…`](https://likenesss.onrender.com/verify?sha256=7158c9bef04e232bbe72678395d7b3de013ace2a03d6f61503f3b8e3872f070f) is Licensed, [Verify `cb3c7115…`](https://likenesss.onrender.com/verify?sha256=cb3c711510d2280036121a4df1de7bea7a4f7f2739877e568226c029e6b2ff9a) is Revoked; paid `approve_render` [`87bdJZEp…`](https://testnet.nearblocks.io/txns/87bdJZEp4gmLaW4KRYatgfsG4TTGAgEmkGmwhX5YRsrd) |
+| **Track fit** | A consent and payment rail for AI ads that use a real person's face; anyone can check an ad by its hash |
+| **Execution** | Hosted app; 51 web + 70 contract tests, [CI](https://github.com/rohitshukla11/likeness-near/actions/workflows/ci.yml); `contract/scripts/verify-deployed.sh` matches the deployed code hash |
+| **Not built** | Mainnet; payouts through NEAR Intents |
+
+### NFTs That Do Something
+
+| | |
+|---|---|
+| **NEAR tech** | NEP-171/177/181 token, metadata computed on read, SVG drawn on-chain (`contract/src/nft.rs:84`, `:189`); `nft_metadata_update` events (`contract/src/events.rs:14`) |
+| **Real, not simulated** | [`/licence/5`](https://likenesss.onrender.com/licence/5) ACTIVE, [`/licence/0`](https://likenesss.onrender.com/licence/0) REVOKED, redrawn from live state; NFT upgrade [`9bxx1Pf6…`](https://testnet.nearblocks.io/txns/9bxx1Pf64VTXMRLSmMHv1mb4VtRa9U7BvRvm2xGxqWL5) (code only, state kept) |
+| **Track fit** | The token *is* the licence: status flips on expiry with no write (`contract/src/types.rs:250`), money in `licence_summary` (`contract/src/views.rs:129`), `verify(sha256)` (`contract/src/views.rs:72`); transfer refused (`contract/src/nft.rs:195`) |
+| **Execution** | Storage sizes pinned in `contract/src/tests/nft.rs`; the real pre-upgrade state read by the new code in `contract/src/tests/onchain.rs` |
+| **Not built** | Consent-gated transfer (non-transferable by design); no marketplace |
+
+### AI Security & Defense
+
+| | |
+|---|---|
+| **NEAR tech** | Function-call key: 2 methods, no deposits, 0.25 NEAR allowance (`web/lib/near/methods.ts:60-62`); DeleteKey kill switch (`web/components/brand/AgentKeyCard.tsx:69`); single-use NEP-413 nonce (`web/lib/session.ts:56`) |
+| **Real, not simulated** | Agent txs [`52fKFkkQ…`](https://testnet.nearblocks.io/txns/52fKFkkQpJMoGUhquUs4FLW4UbaG2EKSvAutSk64rbDP), [`DixBQ81Q…`](https://testnet.nearblocks.io/txns/DixBQ81QrtUkzop1rXupBKV9nHo75RNrxJYt2wCyFjAU) signed by the function-call key; payment [`FwD8eaMr…`](https://testnet.nearblocks.io/txns/FwD8eaMrwzwrnstXuDqC1zxWYBpFTxqsp6BisTdbsEoZ) only by the creator's own key |
+| **Track fit** | The agent can't pay anyone: only the creator's `approve_render` pays (`contract/src/render.rs:57`); safety screen fails closed (`web/lib/ai/faceRule.ts:52`, `:69`); video face check fails closed (`web/lib/video/startframe.ts:50`); AI spend cap (`web/lib/costcap.ts:38`) |
+| **Execution** | `web/test/faceRule.test.ts`, `web/test/video.test.ts` (check error → no video model call); caps in `contract/src/tests/render.rs` |
+| **Not built** | Intel TCB status and chat-answer signatures in the TEE check |
+
+### Autonomous Business
+
+| | |
+|---|---|
+| **NEAR tech** | Brand escrow and limits (`contract/src/brand.rs:12`, `:30`); price reserved per ad (`contract/src/render.rs:20-26`), paid on approval (`:81`); failed payouts claimable (`:120`) |
+| **Real, not simulated** | Paid `approve_render` [`87bdJZEp…`](https://testnet.nearblocks.io/txns/87bdJZEp4gmLaW4KRYatgfsG4TTGAgEmkGmwhX5YRsrd); licence 5 paid per approved ad ([`/licence/5`](https://likenesss.onrender.com/licence/5)) |
+| **Track fit** | The agent finds (`web/lib/agent/brandAgent.ts:32`), ranks (`web/lib/agent/rank.ts:81`), requests (`web/lib/agent/brandAgent.ts:81`), makes (`web/lib/agent/pipeline.ts:41`) and submits ads; people only approve |
+| **Execution** | Every step logged with its reason (`web/lib/db/records.ts:115`, shown by `web/components/brand/BrandAgentConsole.tsx:135`); video caps $0.50 each, 3 a day (`web/lib/video/caps.ts:19`) |
+| **Not built** | Payouts through NEAR Intents; a NEAR sub-account per licence holding its escrow |
+
+### Privacy & Private AI
+
+| | |
+|---|---|
+| **NEAR tech** | NEAR AI Cloud in TEEs, attestation verified before each FLUX edit and safety screen (`web/lib/tee/verify.ts:191`; `web/lib/agent/pipeline.ts:55`, `:99`) |
+| **Real, not simulated** | [`/trust`](https://likenesss.onrender.com/trust): both models TEE-verified live; [Verify `7158c9be…`](https://likenesss.onrender.com/verify?sha256=7158c9bef04e232bbe72678395d7b3de013ace2a03d6f61503f3b8e3872f070f) shows the TEE-verified edit; raw report via `/api/tee/status?model=…&raw=1` |
+| **Track fit** | Photos stay private until an ad is Licensed: 401 / 404 for anyone else (`web/app/api/media/[sha256]/route.ts:33-34`); ranking sees text only, no images (`web/lib/agent/rank.ts:47`) |
+| **Execution** | `web/test/tee.test.ts` checks a saved real report offline |
+| **Not built** | Intel TCB status, chat-answer signatures; video (Google Gemini Omni Flash and its start-frame model) runs outside any TEE |
+
+### Agent Economy
+
+| | |
+|---|---|
+| **NEAR tech** | The agent acts for the brand's account with a function-call key; the contract holds the market rules (`contract/src/licence.rs:12`, `contract/src/render.rs:12`); creators' terms on-chain (`contract/src/creator.rs:13`) |
+| **Real, not simulated** | Agent `request_licence` [`52fKFkkQ…`](https://testnet.nearblocks.io/txns/52fKFkkQpJMoGUhquUs4FLW4UbaG2EKSvAutSk64rbDP) and `submit_render` [`DixBQ81Q…`](https://testnet.nearblocks.io/txns/DixBQ81QrtUkzop1rXupBKV9nHo75RNrxJYt2wCyFjAU); creator `approve_render` [`FwD8eaMr…`](https://testnet.nearblocks.io/txns/FwD8eaMrwzwrnstXuDqC1zxWYBpFTxqsp6BisTdbsEoZ) |
+| **Track fit** | An agent buys a human's likeness per approved deliverable; on-chain terms filter who it may ask (`web/lib/agent/shortlist.ts:51`) |
+| **Execution** | One agent key on the hosted demo; other signed-in brands get demo mode (`web/lib/agent/mode.ts:12`) |
+| **Not built** | NEAR's Agent API; agent-to-agent negotiation; per-brand agent keys on the hosted demo |
+
+## Why a function-call key, not the Agent API
+
+- **NEAR-native, enforced by the protocol:** the key may call only `request_licence` and `submit_render` on this
+  contract, can't attach deposits, and has a 0.25 NEAR gas allowance (`web/lib/near/methods.ts:60-62`); one DeleteKey
+  stops it (`web/components/brand/AgentKeyCard.tsx:69`).
+- **What a generic policy can't do, the contract does:**
+  - Payment only when the **creator** approves the exact sha256 (`contract/src/render.rs:57`, paid at `:81`).
+  - Per-licence caps (`contract/src/render.rs:20`) and the brand's limits (`:25-26`).
+  - Refunds: reject (`contract/src/render.rs:103`); revoke or expiry (`contract/src/licence.rs:109` → `:128`).
+
 ## The licence NFT
 
 - **Drawn on-chain.** `nft_token(id).metadata.media` is an SVG the contract draws on every read
@@ -159,16 +234,6 @@ Safety and identity: Qwen screens each ad: a minor or sexualised content blocks 
 then dropped; no valid answer → asked once more, then dropped (fail closed). No AI identity check gates any payment or is shown as a verdict; the creator's approval is the only identity gate. The video start frame gets an internal face match first (never shown as a verdict), failing closed: no match, or a
 check that can't run or gives no valid answer → one new frame; still not → the job is dropped before the video model
 is called (nothing submitted, only the start frames paid for).
-
-## Why this contract
-
-- **The agent key can't move funds:** two methods, no deposits, a 0.25 NEAR gas allowance; one DeleteKey stops it.
-- **Escrow is released only by the creator's approval of the exact sha256;** reject, revoke or expiry release the
-  reservation back to the brand.
-- **Per-licence caps:** each licence's render cap, use and expiry are checked on every submission, with the brand's
-  per-render limit and total budget.
-- **Beyond a generic permissions API:** it can limit what an agent spends; it can't make each payment wait for a third
-  party (the creator) to approve one exact file, tied to a licence token anyone can verify.
 
 ## Known limitations
 
