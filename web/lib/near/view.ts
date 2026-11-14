@@ -13,7 +13,8 @@ export class ViewError extends Error {}
  * rpc.testnet.near.org is slow and rate-limited for shared cloud IPs (our host), so a 429, a 5xx, a network error or an
  * 8 s timeout moves on to the next. A contract-level answer (an error the contract returned) is final.
  */
-const FALLBACK_RPCS = ["https://rpc.testnet.fastnear.com", "https://rpc.testnet.near.org"];
+// rpc.testnet.near.org is deprecated (it answers every call with -429 "STOP USING IT"): fastnear only.
+const FALLBACK_RPCS = ["https://rpc.testnet.fastnear.com"];
 const RPC_TIMEOUT_MS = 8_000;
 
 class RpcUnavailable extends Error {}

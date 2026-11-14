@@ -12,7 +12,7 @@ import { neon } from "@neondatabase/serverless";
 import { OWNER } from "../lib/profiles.ts";
 
 const CONTRACT = process.env.NEXT_PUBLIC_CONTRACT_ID || "likeness-near-rohit.testnet";
-const RPC = process.env.NEXT_PUBLIC_NEAR_RPC_URL || "https://rpc.testnet.near.org";
+const RPC = process.env.NEXT_PUBLIC_NEAR_RPC_URL || "https://rpc.testnet.fastnear.com";
 const WEB = join(dirname(fileURLToPath(import.meta.url)), "..");
 const confirm = process.argv.includes("--confirm");
 

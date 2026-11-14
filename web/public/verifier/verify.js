@@ -8,7 +8,7 @@
   "use strict";
   var q = new URLSearchParams(location.search);
   var CONTRACT = q.get("contract") || "likeness-near-rohit.testnet";
-  var RPC = q.get("rpc") || "https://rpc.testnet.near.org";
+  var RPC = q.get("rpc") || "https://rpc.testnet.fastnear.com";
   var $ = function (id) { return document.getElementById(id); };
   $("contract").textContent = CONTRACT;
   $("rpc").textContent = RPC;

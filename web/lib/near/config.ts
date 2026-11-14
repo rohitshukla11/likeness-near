@@ -12,7 +12,7 @@ export const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID ?? "";
 export const contractConfigured = () => CONTRACT_ID !== "";
 
 /** Public testnet RPC for view calls from the browser. */
-export const RPC_URL = process.env.NEXT_PUBLIC_NEAR_RPC_URL || "https://rpc.testnet.near.org";
+export const RPC_URL = process.env.NEXT_PUBLIC_NEAR_RPC_URL || "https://rpc.testnet.fastnear.com";
 /** Real receipts for Verify's examples. Revoked: the 13 Nov live-run ad (approved and paid, then its licence was revoked). */
 export const DEMO_RECEIPT_SHA = process.env.NEXT_PUBLIC_DEMO_RECEIPT_SHA || "cb3c711510d2280036121a4df1de7bea7a4f7f2739877e568226c029e6b2ff9a";
 /** Licensed: an approved ad whose licence is still active; the example is hidden until this is set. */

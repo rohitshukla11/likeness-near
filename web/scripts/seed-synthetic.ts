@@ -25,7 +25,7 @@ import { neon } from "@neondatabase/serverless";
 import { SYNTHETIC, type SyntheticCreator } from "../lib/synthetic.ts";
 
 const CONTRACT = process.env.NEXT_PUBLIC_CONTRACT_ID || "likeness-near-rohit.testnet";
-const RPC = process.env.NEXT_PUBLIC_NEAR_RPC_URL || "https://rpc.testnet.near.org";
+const RPC = process.env.NEXT_PUBLIC_NEAR_RPC_URL || "https://rpc.testnet.fastnear.com";
 const WEB = join(dirname(fileURLToPath(import.meta.url)), "..");
 const NEAR_BIN = join(homedir(), ".cargo/bin/near");
 const args = process.argv.slice(2);
