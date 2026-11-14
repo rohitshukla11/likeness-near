@@ -44,7 +44,7 @@ server's agent key: see the demo video and [Proof it's live](#proof-its-live).
 | ![Creator dashboard and generated ads](docs/screenshots/creator-dashboard-ads.webp) The creator's dashboard: earnings and counts (public on NEAR), the ad waiting for approval, and the ads (images and videos) made with their face, each with its licence | ![Creator review with TEE panels](docs/screenshots/creator-review-tee.webp) The creator's review page: both models **🔒 verified in a TEE**; nothing is paid until the creator approves |
 | ![Licence NFT 5](docs/screenshots/licence-5-active.webp) The licence NFT drawn on-chain from live state: **ACTIVE**, 0.08 NEAR paid, 🔒 TEE verified ad | ![Trust](docs/screenshots/trust-tee-attestation.webp) `/trust`: FLUX.2-klein and Qwen **TEE verified** |
 | ![Set up once](docs/screenshots/brand-setup-once.webp) Escrow, limits, and an agent key that **can't move NEAR** | ![Shortlist](docs/screenshots/brand-shortlist.webp) The agent's shortlist with reasons, and who isn't eligible |
-| ![Landing](docs/screenshots/landing.webp) The hosted app | |
+| ![Landing](docs/screenshots/landing.webp) The hosted app | ![Agent activity](docs/screenshots/agent-activity.webp) The agent's activity log: its shortlist with reasons, who it skipped and why, and each ad it made and submitted, with Verify and transaction links |
 
 ## Problem
 
