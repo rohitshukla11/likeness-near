@@ -2,7 +2,7 @@
  * Synthetic demo creators: AI-generated faces of people who don't exist, so the app can be tried and judged without
  * anyone's real face. Each is an ordinary testnet account registered on the contract (scripts/seed-synthetic.ts), and
  * is labelled as synthetic everywhere it appears. Their faces are our own generated files (provenance in
- * public/synthetic/PROVENANCE.md and docs/HACKATHON.md); they're public because no real person is shown.
+ * public/synthetic/PROVENANCE.md); they're public because no real person is shown.
  * Decisions for a synthetic creator (approve/decline a licence or an ad) are made by the operator with that account's
  * key, and labelled as such: there is no person to consent.
  */

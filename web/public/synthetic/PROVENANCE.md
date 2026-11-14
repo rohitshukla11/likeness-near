@@ -11,4 +11,4 @@ origin, no real person. Each file's sha256 is the `capture_sha256` its testnet a
 Asha's prompt began "A photorealistic head-and-shoulders portrait photograph of a fictional adult who does not exist
 (not a real or famous person)"; Maya's full prompt is in `web/scripts/synthetic-faces.ts` and ends "This is
 a fictional person who does not exist. The face must be entirely invented and must not resemble any real person,
-celebrity, public figure or famous person." The full origin is in `docs/HACKATHON.md`.
+celebrity, public figure or famous person."
