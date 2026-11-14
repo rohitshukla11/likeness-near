@@ -52,7 +52,7 @@ async function main() {
   const product = camp?.product || "<the agent writes it first>";
 
   console.log(`DRY RUN (no call to the video model): a video ad for licence ${licenceId} (${l.creator} ← ${l.brand}, ${l.status})\n`);
-  console.log(`provider ${VIDEO_PROVIDER}, model ${videoModel()} (outside NEAR AI's TEE)`);
+  console.log(`provider ${VIDEO_PROVIDER}, model ${videoModel()} (not NEAR AI)`);
   console.log(`clip     ${VIDEO_SECONDS} s, ${VIDEO_RESOLUTION}, ${VIDEO_ASPECT}, no audio, background job polled every 5 s`);
   console.log(`start    approved ad ${fromSha.slice(0, 12)}… (${media ? `${media.mime}, ${media.size} B` : "not in the database"}; receipt ${receipt?.status ?? "none"})`);
   console.log(`prompt   ${videoPrompt(scene, product).split("\n").join("\n         ")}`);

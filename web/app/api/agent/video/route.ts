@@ -1,5 +1,5 @@
 /**
- * Video ads (Google Gemini Omni Flash on the Gemini API, outside NEAR AI's TEE; lib/video).
+ * Video ads (Google Gemini Omni Flash on the Gemini API, not NEAR AI; lib/video).
  *   GET  → whether video is on, today's count and cap, the estimate per clip, and the brand's recent jobs.
  *   POST {licenceId, fromSha256?} → starts a background job: direct (its own safety-screened opening still from the
  *        creator's reference photo) or, with fromSha256, from an ad image the creator approved; returns the job.

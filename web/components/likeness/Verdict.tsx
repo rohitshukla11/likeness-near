@@ -2,6 +2,7 @@
  * Verify's answer for one file, read from the contract: Licensed / Expired / Revoked / Unknown, the licence token,
  * who licensed whom for what, and what the receipt records (the amount, and that the creator approved this exact file).
  */
+import Link from "next/link";
 import { StatusPill, type PillKind } from "@/components/ds";
 import { accountUrl } from "@/lib/near/config";
 import { formatNear, USE_LABELS } from "@/lib/rules";
@@ -26,7 +27,11 @@ export function Verdict({ r }: { r: VerifyResult }) {
     <section aria-live="polite" className="flex flex-col gap-3 rounded-[20px] bg-white p-5 text-[15px]">
       <span className="flex flex-wrap items-center gap-3">
         <StatusPill kind={look.pill}>{look.title}</StatusPill>
-        {r.tokenId && <span className="text-grey">Licence token #{r.tokenId}</span>}
+        {r.tokenId && (
+          <Link href={`/licence/${r.tokenId}`} className="font-semibold text-ink underline">
+            Licence token #{r.tokenId} →
+          </Link>
+        )}
       </span>
       <p className="m-0">{look.body}</p>
       {l && isSelfLicence(l) && <p className="m-0 text-[14px] font-semibold text-wait">{SELF_LICENCE_NOTE}</p>}

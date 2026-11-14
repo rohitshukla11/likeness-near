@@ -57,7 +57,7 @@ agent's function-call key can only call `request_licence` and `submit_render`, n
   **Google Gemini Omni Flash** on its public API, **not NEAR AI**. It is made directly: the server makes its own opening
   still from the creator's consented photo (one NEAR AI image edit, safety-screened like an ad and never submitted on
   its own), and Omni Flash animates that still. A brand can also animate an ad image the creator already approved. Video is on by default for every creator: there is no opt-in
-  setting; this README and the review page disclose that videos are made by Google's model, not NEAR AI. The clip is stored as uploaded (sha256 over the stored bytes), submitted with `submit_render`
+  setting; this README and the review page disclose that videos are made by Google Gemini Omni Flash, not NEAR AI. The clip is stored as uploaded (sha256 over the stored bytes), submitted with `submit_render`
   (`needs_creator_review`: no frames are compared), counts toward the licence's render cap, and is paid only when the
   creator approves it, like any ad. It carries the label "AI-generated video · licensed likeness" over the player and in
   its record; the pixels aren't re-encoded. Caps: about $0.41 estimated per clip, refused over $0.50; 3 clips a day

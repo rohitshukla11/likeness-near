@@ -75,7 +75,7 @@ export async function makeAd(brand: string, licenceId: string, retryOf?: string)
     creator: l.creator,
     campaign_id: Number(campaign.id),
     prompt,
-    provenance: { provider: "NEAR AI Cloud", model: edited.model, requestId: edited.requestId, ms: edited.ms, attempt: n, labelled: f.labelled, catalog: "Private TEE (near.ai/models)" },
+    provenance: { provider: "NEAR AI Cloud", model: edited.model, requestId: edited.requestId, ms: edited.ms, attempt: n, labelled: f.labelled },
     submit_tx: null,
     status: "generated",
     attempt: n,

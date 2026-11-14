@@ -1,5 +1,5 @@
 /**
- * Video jobs (Google Gemini Omni Flash, outside NEAR AI's TEE), as background work the brand's page drives:
+ * Video jobs (Google Gemini Omni Flash, not NEAR AI), as background work the brand's page drives:
  *   startVideo  checks everything first (flag, the creator not opted out, room left on the licence, the per-video cost
  *               cap, today's cap; with a start image, that it's an ad the creator APPROVED on this licence) and refuses
  *               with the reason, calling nothing; then reserves today's slot atomically. DIRECT video (no start image,
@@ -154,7 +154,7 @@ export async function startVideo(brand: string, licenceId: string, fromSha?: str
     await setJob(job.id, { status: "running", interaction_id: it.id });
     await log(brand, {
       kind: "render",
-      summary: `started a ${VIDEO_SECONDS} s ${VIDEO_RESOLUTION} video (${VIDEO_PROVIDER}, outside NEAR AI's TEE) from ${fromSha ? "approved ad" : "its own opening still"} ${startSha.slice(0, 12)}…; estimated $${est.toFixed(2)}; not submitted until it's stored`,
+      summary: `started a ${VIDEO_SECONDS} s ${VIDEO_RESOLUTION} video (${VIDEO_PROVIDER}, not NEAR AI) from ${fromSha ? "approved ad" : "its own opening still"} ${startSha.slice(0, 12)}…; estimated $${est.toFixed(2)}; not submitted until it's stored`,
       licenceId,
       sha256: startSha,
     });
@@ -212,7 +212,6 @@ export async function pollVideo(brand: string, id: number): Promise<VideoJob> {
         aspect: VIDEO_ASPECT,
         startFrame: job.from_sha256,
         label: VIDEO_LABEL,
-        outsideTee: true,
         estUsd: Number(job.est_usd),
         bytes: bytes.length,
       },

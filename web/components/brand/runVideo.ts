@@ -1,5 +1,5 @@
 /**
- * One video under an Active licence, step by step (the video provider in lib/video, outside NEAR AI's TEE). Direct:
+ * One video under an Active licence, step by step (the third-party video model in lib/video, not NEAR AI). Direct:
  * the server makes its own opening still from the creator's reference photo, safety-screens it, and animates it; with
  * `fromSha` it animates that approved ad instead. Then the page checks every 5 s until the clip is stored and submitted
  * for the creator's review. The price is only reserved until the creator approves the video. Returns how it ended.
@@ -17,8 +17,8 @@ export async function makeOneVideo(
   const alive = o.alive ?? (() => true);
   add({
     text: o.fromSha
-      ? `Starting a ${o.seconds} s video from the approved ad (made outside NEAR AI's TEE; about $${o.estUsd.toFixed(2)})…`
-      : `Making a ${o.seconds} s video: an opening still from the creator's photo, the safety screen, then the animation (outside NEAR AI's TEE; about $${o.estUsd.toFixed(2)})…`,
+      ? `Starting a ${o.seconds} s video from the approved ad (made by a third-party video model, not NEAR AI; about $${o.estUsd.toFixed(2)})…`
+      : `Making a ${o.seconds} s video: an opening still from the creator's photo, the safety screen, then the animation (a third-party video model, not NEAR AI; about $${o.estUsd.toFixed(2)})…`,
     tone: "wait",
   });
   let job = await api<VideoJobView>("/api/agent/video", { licenceId, ...(o.fromSha ? { fromSha256: o.fromSha } : {}) });

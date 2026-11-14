@@ -125,6 +125,39 @@ export interface ReceiptJson {
   created_at_ms: number;
   decided_at_ms: number | null;
 }
+/** nft_token(id): NEP-171 token with NEP-177 metadata, all computed by the contract on read. */
+export interface TokenJson {
+  token_id: string;
+  owner_id: string;
+  metadata: {
+    title: string | null;
+    description: string | null;
+    /** data:image/svg+xml;base64,… drawn by the contract from the licence's current state. */
+    media: string | null;
+    /** base64(sha256) of exactly the SVG in `media`. */
+    media_hash: string | null;
+    issued_at: string | null;
+    expires_at: string | null;
+    extra: string | null;
+  } | null;
+}
+
+/** licence_summary(id): the licence's money and render counts, computed on read (yoctoNEAR as strings). */
+export interface LicenceSummary {
+  licence_id: string;
+  token_id: string | null;
+  status: LicenceStatus;
+  price_per_render: string;
+  render_cap: number;
+  renders_used: number;
+  renders_reserved: number;
+  renders_left: number;
+  paid_to_creator: string;
+  reserved: string;
+  refundable_on_end: string;
+  expires_at_ms: number | null;
+}
+
 export interface VerifyJson {
   sha256: string;
   verdict: Verdict;
@@ -180,6 +213,8 @@ export const views = {
     const r = await viewCall<ReceiptJson | null>("get_receipt", { sha256 });
     return r && toReceipt(r);
   },
+  getToken: (id: string) => viewCall<TokenJson | null>("nft_token", { token_id: id }),
+  getLicenceSummary: (id: string) => viewCall<LicenceSummary | null>("licence_summary", { licence_id: id }),
   licencesForCreator: async (accountId: string, from = 0, limit = 50) =>
     (await viewCall<LicenceJson[]>("licences_for_creator", { creator_id: accountId, from_index: from, limit })).map(toLicence),
   licencesForBrand: async (accountId: string, from = 0, limit = 50) =>

@@ -84,7 +84,7 @@ export function RequestPage({ sha256 }: { sha256: string }) {
             </div>
             <p className="m-0 text-[13px] text-grey">
               {isVideo(item.mime)
-                ? `${VIDEO_LABEL}: a video made from your consented photo, outside NEAR AI's TEE. Only you can confirm it's you: watch it and decide.`
+                ? `${VIDEO_LABEL}: a video made from your consented photo by a third-party video model (not NEAR AI). Only you can confirm it's you: watch it and decide.`
                 : "AI-edited from the creator's consented photo."}
             </p>
             <p className="m-0 break-all text-[13px]">

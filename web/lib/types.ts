@@ -233,3 +233,11 @@ export interface VideoJobView {
   estUsd: number;
   ageMs: number;
 }
+
+/** One on-chain transaction of a licence, as GET /api/licences/<id>/history returns it. */
+export interface LicenceHistoryItem {
+  at: string;
+  kind: "request" | "submit" | "decision";
+  tx: string;
+  sha256: string | null;
+}

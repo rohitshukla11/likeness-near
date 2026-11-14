@@ -61,7 +61,16 @@ export function BrandLicences({
                 </span>
                 <span className={`text-[13px] ${MUTED}`}>
                   {l.rendersUsed}/{l.renderCap} renders used{l.rendersReserved ? `, ${l.rendersReserved} waiting for the creator` : ""}
-                  {l.tokenId ? ` · licence token #${l.tokenId}` : " · no token until the creator approves"}
+                  {l.tokenId ? (
+                    <>
+                      {" · "}
+                      <Link href={`/licence/${l.tokenId}`} className="underline">
+                        licence token #{l.tokenId} →
+                      </Link>
+                    </>
+                  ) : (
+                    " · no token until the creator approves"
+                  )}
                 </span>
                 {l.status === "Active" && l.rendersUsed + l.rendersReserved < l.renderCap &&
                   (unproven.has(l.creator) ? (

@@ -323,7 +323,11 @@ function LicenceRow({ l, act }: { l: LicenceView; act: Act }) {
           <b className="truncate">{l.brand}</b>
           <StatusPill kind={LICENCE_PILL[l.status]}>{l.status}</StatusPill>
           <SelfLicenceBadge l={l} />
-          {l.tokenId && <span className="text-grey">token #{l.tokenId}</span>}
+          {l.tokenId && (
+            <Link href={`/licence/${l.tokenId}`} className="text-grey underline">
+              token #{l.tokenId} →
+            </Link>
+          )}
         </span>
         <span className="text-grey">
           {USE_LABELS[l.use]} · {formatNear(l.price)} per render · {l.rendersUsed}/{l.renderCap} used{l.rendersReserved ? `, ${l.rendersReserved} waiting` : ""} · until {shortDay(l.expiresAt)}
