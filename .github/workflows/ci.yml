@@ -1,0 +1,48 @@
+# Tests on every push and pull request. No secrets: the contract tests run in near-sdk's mock VM and the web tests are
+# pure (no database, no model calls, no keys).
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: contract (cargo test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contract
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust toolchain (from rust-toolchain.toml)
+        run: rustup toolchain install
+      - name: cargo test
+        run: cargo test --locked
+
+  web:
+    name: web (typecheck, lint, test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    env:
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: pnpm (the version in web/package.json, via corepack)
+        run: corepack enable && pnpm --version
+      - name: install
+        run: pnpm install --frozen-lockfile
+      - name: typecheck
+        run: pnpm typecheck
+      - name: lint
+        run: pnpm lint
+      - name: test
+        run: pnpm test

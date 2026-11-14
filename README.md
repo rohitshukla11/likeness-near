@@ -1,5 +1,7 @@
 # Likeness
 
+[![CI](https://github.com/rohitshukla11/likeness-near/actions/workflows/ci.yml/badge.svg)](https://github.com/rohitshukla11/likeness-near/actions/workflows/ci.yml)
+
 Creators license their face to AI ads: a price per render, the uses they allow, a render cap and an expiry. They
 approve every licence and every ad, are paid per render from the brand's escrow on NEAR, and can revoke at any time.
 A brand's AI agent proposes the renders; every ad has a receipt anyone can verify as Licensed, Expired, Revoked or
@@ -8,10 +10,24 @@ Unknown.
 **Live demo (NEAR testnet):** https://likenesss.onrender.com · Verify works without a wallet. Video is on for this demo,
 capped at 3 clips a day site-wide.
 
-**Tracks:** `nfts`, `security`, `agents`, `open`, `privacy`.
+**Tracks:** `nfts`, `security`, `business`, `open`, `privacy`, `agents`.
 
 **Contract:** `likeness-near-rohit.testnet`
 ([explorer](https://testnet.nearblocks.io/address/likeness-near-rohit.testnet)).
+
+## Proof it's live
+
+Every hash below was checked on NEAR testnet on 14 Nov 2026.
+
+| What | On-chain |
+|---|---|
+| Contract account | [`likeness-near-rohit.testnet`](https://testnet.nearblocks.io/address/likeness-near-rohit.testnet), current code hash `AggUALRhRf7kSK4c44J5ZXa74knNSrbeJtaJQxSGTnnJ` |
+| The licence-NFT upgrade (code-only redeploy, state kept) | [`9bxx1Pf64VTXMRLSmMHv1mb4VtRa9U7BvRvm2xGxqWL5`](https://testnet.nearblocks.io/txns/9bxx1Pf64VTXMRLSmMHv1mb4VtRa9U7BvRvm2xGxqWL5) (DeployContract) |
+| A paid `approve_render` (the creator approves an exact file; 0.04 NEAR paid from escrow) | [`87bdJZEp4gmLaW4KRYatgfsG4TTGAgEmkGmwhX5YRsrd`](https://testnet.nearblocks.io/txns/87bdJZEp4gmLaW4KRYatgfsG4TTGAgEmkGmwhX5YRsrd) |
+| A `revoke_licence` (licence 0) | [`7VRgDYFxbbS3ihfXTnFKJYZWZCRKc7wVb1uiZUueQKJ7`](https://testnet.nearblocks.io/txns/7VRgDYFxbbS3ihfXTnFKJYZWZCRKc7wVb1uiZUueQKJ7) |
+| Verify: a **Licensed** ad | [`43c05e2c…`](https://likenesss.onrender.com/verify?sha256=43c05e2cf8d2fff9c2b874484b67e1f4aa18c4aced2e43e1425d88848707b6d4) (licence 3) |
+| Verify: a **Revoked** ad | [`cb3c7115…`](https://likenesss.onrender.com/verify?sha256=cb3c711510d2280036121a4df1de7bea7a4f7f2739877e568226c029e6b2ff9a) (licence 0) |
+| Licence NFT pages (the token's own on-chain SVG) | [`/licence/0`](https://likenesss.onrender.com/licence/0) (Revoked), [`/licence/1`](https://likenesss.onrender.com/licence/1), [`/licence/3`](https://likenesss.onrender.com/licence/3) |
 
 ## NEAR features, with code pointers
 
@@ -74,8 +90,8 @@ agent's function-call key can only call `request_licence` and `submit_render`, n
 - **Images:** every ad image is an edit of the creator's reference photo made on **NEAR AI Cloud** (FLUX.2-klein-4B).
   Qwen on NEAR AI Cloud then screens the ad alone for safety: a minor or sexualised content blocks it; other people in it
   regenerate it once, then drop it; if the screen gives no valid answer, it's asked once more, and still none drops the
-  ad (fail closed). **No AI judges whether the ad shows the creator** (an identity check was removed on
-  13 Nov after a false positive in our live run): only the creator can confirm it's them, by approving that exact file.
+  ad (fail closed). No AI identity check gates any payment or is shown as a verdict; the creator's approval is the only identity gate. The video start frame uses an internal face-match retry that only regenerates the frame. Only the creator can confirm it's them, by
+  approving that exact file.
   Every receipt records `needs_creator_review`. The brief, the creator ranking and the banned-use screen also run
   there, on NEAR AI Cloud (`cloud-api.near.ai`). See "Privacy" below for exactly what is and isn't claimed.
 - Video: start frame and clip made with Google's models from the creator's reference photo (outside NEAR AI); the creator approves every video. On by default for this demo; a per-creator opt-in is on the roadmap.
@@ -173,8 +189,8 @@ exactly. What we tested on 13 Nov 2026, with the author's own face, and what we 
 In short: the face is kept only when the edit leaves the person untouched; the output can't be varied by seed; extra
 people appear even when the prompt forbids them.
 
-Mitigations in the app: **the creator reviews and approves every image** (nothing is paid before that, and no AI says
-whether it's really them); **the safety screen** blocks minors and sexualised content, regenerates once and then drops an
+Mitigations in the app: **the creator reviews and approves every image** (nothing is paid before that; no AI identity
+check gates any payment or is shown as a verdict); **the safety screen** blocks minors and sexualised content, regenerates once and then drops an
 ad with other people in it, and fails closed. An earlier AI identity check was removed after it rated an ad that wasn't
 the author "likely the same person, 0.95".
 

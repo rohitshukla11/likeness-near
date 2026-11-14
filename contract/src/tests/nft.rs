@@ -123,7 +123,8 @@ fn enumeration_is_capped_at_fifty() {
     assert_eq!(c.list_creators(None, Some(1000)).len(), 1);
 }
 
-/// The measured storage (`cargo test -- --nocapture measured_storage` prints it).
+/// The measured storage (`cargo test -- --nocapture measured_storage` prints it), pinned to the sizes in
+/// contract/README.md: a change in what's stored shows up here (and in the escrow the brand is charged).
 #[test]
 fn measured_storage() {
     let mut c = world();
@@ -134,5 +135,8 @@ fn measured_storage() {
     submit(&mut c, id, 1);
     let receipt = logged_bytes("bytes stored");
     println!("MEASURED STORAGE: licence request {licence} B, mint {mint} B (reserve {MINT_RESERVE_BYTES} B), receipt {receipt} B");
+    assert_eq!(licence, 403, "licence request bytes (contract/README.md)");
+    assert_eq!(mint, 175, "mint bytes (contract/README.md)");
+    assert_eq!(receipt, 140, "receipt bytes (contract/README.md)");
     assert!(mint <= MINT_RESERVE_BYTES);
 }
