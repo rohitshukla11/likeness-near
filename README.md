@@ -73,7 +73,7 @@ agent's function-call key can only call `request_licence` and `submit_render`, n
   product, keeping the first frame's person and face. The clip is stored as uploaded (sha256 over the stored bytes),
   submitted with `submit_render` (`needs_creator_review`), counts toward the licence's render cap, and is paid only when
   the creator approves it. It carries the label "AI-generated video · licensed likeness" over the player and in its
-  record. Video is on by default for every creator (no opt-in). Caps: about $0.44 estimated per video (start frame +
+  record. Clips may include AI-generated ambient audio. Video is on by default for every creator (no opt-in). Caps: about $0.44 estimated per video (start frame +
   clip), refused over $0.50; 3 a day site-wide. `pnpm -C web video:dry <licenceId>` prints both prompts and the cost
   without calling anything. The key goes in `web/.env.local` under the variable named in `web/lib/video/config.ts`.
 - **On-chain (NEAR testnet):** terms, licences (non-transferable tokens), escrow, receipts by sha256, payments.
