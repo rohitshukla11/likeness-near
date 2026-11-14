@@ -8,10 +8,14 @@ Face licences, escrow and per-render receipts, with non-transferable NEP-171 lic
 cd contract
 cargo test                       # 70 unit tests (incl. the real pre-upgrade testnet state, read by the new code)
 scripts/build.sh                 # tests, then cargo near build non-reproducible-wasm --no-abi --locked
+scripts/verify-deployed.sh       # build.sh, then base58(sha256(wasm)) vs the deployed code_hash; exit 0 only on a match
 ```
 
-There is no Docker on the build machine, so the wasm is built with `cargo near build non-reproducible-wasm`: it
-works on testnet, but the binary isn't byte-for-byte reproducible from source. The script prints its size and sha256.
+There is no Docker on the build machine, so the wasm is built with `cargo near build non-reproducible-wasm`. The
+script prints its size and sha256. A rebuild matches the deployed code hash with the same toolchain
+(`rust-toolchain.toml`) and the same cargo home path: the wasm embeds the cargo registry's absolute source paths
+(panic locations), so a build on another machine or in CI gives a different hash. That's why `verify-deployed.sh` is a
+documented script and not a CI step.
 
 ## Deploy (testnet)
 
@@ -81,14 +85,18 @@ function-call key can't call any approval. `one_account_can_license_itself_end_t
   `licences_for_creator` / `licences_for_brand` skip the gaps.
 - **Failed payouts go to `unclaimed`.** If the transfer to a creator fails, a callback credits it to
   `unclaimed[creator]` (see `unclaimed_of`); the creator calls `claim_unclaimed()`. Money never leaves the accounting.
-- **The wasm build isn't reproducible.** It's built locally with `cargo near build non-reproducible-wasm` (no Docker),
-  so the deployed binary can be checked against a local build of the same commit (sha256 below), not rebuilt
-  bit-for-bit by a third party.
+- **The wasm build isn't Docker-reproducible.** It's built locally with `cargo near build non-reproducible-wasm` (no
+  Docker). `scripts/verify-deployed.sh` checks the deployed code hash against a build of this source, but the wasm
+  embeds the builder's cargo registry paths, so a third party gets the same hash only with the same toolchain and
+  cargo home path.
 
 ## Deployed (testnet)
 
 - Account: `likeness-near-rohit.testnet`, deployed and initialised 12 Nov 2026 (tx
   `t4MegCBQbNoWCNMaa3ESGqp8mgE2BdVA5rhJi7ExDWe`).
 - Code redeployed 13 Nov 2026 (code only, state kept; tx `Hip8z8PiidxZ8QFetZDhJ3jbNf7SsEBUi1Vcsa49YG4m`) to add
-  `set_capture`. Code sha256: `0aac3cf0de146d7b833e8f0ce8b634dd866eaa6d4cc42ba87c5d62f977658b4d` (301,250 bytes), equal to
-  `scripts/build.sh` output for the commit that added `set_capture`.
+  `set_capture`.
+- Code redeployed 14 Nov 2026 (code only, state kept; tx `9bxx1Pf64VTXMRLSmMHv1mb4VtRa9U7BvRvm2xGxqWL5`) for the dynamic
+  licence NFT (on-chain SVG, `licence_summary`, `nft_metadata_update` events). **Current code:** code hash
+  `AggUALRhRf7kSK4c44J5ZXa74knNSrbeJtaJQxSGTnnJ` (sha256 `8fe375f90b1b111aec4803776885ffa954f266a7560150483d6fe687830bba77`,
+  310,334 bytes); `scripts/verify-deployed.sh` rebuilds it and checks it against the account's `code_hash`.

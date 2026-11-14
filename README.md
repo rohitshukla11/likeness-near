@@ -25,7 +25,7 @@ per approved ad from the brand's escrow on NEAR. Anyone can verify an ad: Licens
 
 ```sh
 pnpm -C web install --frozen-lockfile
-pnpm -C web test                 # 50 tests (TEE checks on a saved real report)
+pnpm -C web test                 # 51 tests (TEE checks on a saved real report)
 (cd contract && cargo test)      # 70 tests
 ```
 
@@ -83,7 +83,7 @@ Every hash below was checked on NEAR testnet (14–15 Nov 2026).
 | What | On-chain |
 |---|---|
 | Contract | [`likeness-near-rohit.testnet`](https://testnet.nearblocks.io/address/likeness-near-rohit.testnet), code hash `AggUALRhRf7kSK4c44J5ZXa74knNSrbeJtaJQxSGTnnJ` |
-| Reproducible build | A fresh-clone contract build reproduces the deployed code hash `AggUALRhRf7k…` (same toolchain, `rust-toolchain.toml`; `contract/scripts/build.sh`). |
+| Deployed code = this source | `contract/scripts/verify-deployed.sh` builds the wasm with `scripts/build.sh`, computes NEAR's code hash (base58 of its sha256), reads `code_hash` from public testnet RPC (`view_account`) and exits 0 only on a match. Run on 15 Nov 2026: `local build hash: AggUALRhRf7k…`, `deployed code_hash: AggUALRhRf7k…`, `MATCH`. Same toolchain (`rust-toolchain.toml`) and cargo home path needed: the wasm embeds the cargo registry's paths, so it isn't a CI step. |
 | Licence-NFT upgrade (code-only, state kept) | [`9bxx1Pf6…`](https://testnet.nearblocks.io/txns/9bxx1Pf64VTXMRLSmMHv1mb4VtRa9U7BvRvm2xGxqWL5) |
 | A TEE-verified ad, approved and paid | [`7158c9be…`](https://likenesss.onrender.com/verify?sha256=7158c9bef04e232bbe72678395d7b3de013ace2a03d6f61503f3b8e3872f070f) on [`/licence/5`](https://likenesss.onrender.com/licence/5): `submit_render` [`DixBQ81Q…`](https://testnet.nearblocks.io/txns/DixBQ81QrtUkzop1rXupBKV9nHo75RNrxJYt2wCyFjAU), `approve_render` [`FwD8eaMr…`](https://testnet.nearblocks.io/txns/FwD8eaMrwzwrnstXuDqC1zxWYBpFTxqsp6BisTdbsEoZ) |
 | A paid `approve_render` (0.04 NEAR) | [`87bdJZEp…`](https://testnet.nearblocks.io/txns/87bdJZEp4gmLaW4KRYatgfsG4TTGAgEmkGmwhX5YRsrd) |
@@ -156,7 +156,9 @@ report: it passes; a different nonce, one flipped quote byte, an expired or forg
 | Video provider (video only) | Google Gemini Omni Flash and the start-frame image model | No |
 
 Safety and identity: Qwen screens each ad: a minor or sexualised content blocks it; other people → one regeneration,
-then dropped; no valid answer → asked once more, then dropped (fail closed). No AI identity check gates any payment or is shown as a verdict; the creator's approval is the only identity gate. The video start frame uses an internal face-match retry that only regenerates the frame.
+then dropped; no valid answer → asked once more, then dropped (fail closed). No AI identity check gates any payment or is shown as a verdict; the creator's approval is the only identity gate. The video start frame gets an internal face match first (never shown as a verdict), failing closed: no match, or a
+check that can't run or gives no valid answer → one new frame; still not → the job is dropped before the video model
+is called (nothing submitted, only the start frames paid for).
 
 ## Why this contract
 

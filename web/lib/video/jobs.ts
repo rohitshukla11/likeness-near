@@ -100,11 +100,12 @@ export async function videoReferenceOf(creator: string): Promise<{ sha256: strin
 }
 
 /**
- * The video's start frame, exactly as likeness-paypal makes it: Google's image model from the reference photo with
- * paypal's still prompt (16:9, 1K), then paypal's face match as an internal retry (not the same person, or not exactly
- * one person → one more start frame → still not → no video), then our safety screen on NEAR AI (blocked → no video;
- * other people → the one retry; no valid answer → no video, fail closed). The face match is never shown as a verdict.
- * Nothing here calls the video model; the start frame is never submitted on its own.
+ * The video's start frame, as likeness-paypal makes it: Google's image model from the reference photo with paypal's
+ * still prompt (16:9, 1K), then paypal's face match, failing closed (not the same person, not exactly one person, or a
+ * check that can't run or gives no valid answer → one more start frame → still not → no video), then our safety
+ * screen on NEAR AI (blocked → no video; other people → the one retry; no valid answer → no video, fail closed). The
+ * face match is never shown as a verdict. Nothing here calls the video model; the start frame is never submitted on
+ * its own. A dropped job never reaches the video model: only its start frames were paid for.
  */
 async function startFrame(brand: string, creator: string, brief: string, licenceId: string) {
   const ref = await videoReferenceOf(creator);

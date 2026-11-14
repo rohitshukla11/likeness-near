@@ -170,10 +170,44 @@ test("start frame: one face-match failure regenerates once; then the safety scre
   assert.ok((await runStartFrame(others.s)).ok && others.n.generate === 2);
 });
 
-test("face match as paypal: one person who is the reference person; a check that can't run counts as a pass", async () => {
+test("face match: one person who is the reference person; a check that can't run or gives no valid answer is a FAIL", async () => {
   assert.deepEqual(await faceMatchFrom(async () => '{"people":1,"sameAsReference":true,"reason":"same"}'), { ran: true, match: true });
   assert.deepEqual(await faceMatchFrom(async () => '{"people":2,"sameAsReference":true,"reason":"two"}'), { ran: true, match: false });
   assert.deepEqual(await faceMatchFrom(async () => '{"people":1,"sameAsReference":false,"reason":"other"}'), { ran: true, match: false });
-  assert.deepEqual(await faceMatchFrom(async () => { throw new Error("HTTP 503"); }), { ran: false, match: true });
-  assert.deepEqual(await faceMatchFrom(async () => "not json"), { ran: false, match: true });
+  assert.deepEqual(await faceMatchFrom(async () => { throw new Error("HTTP 503"); }), { ran: false, match: false });
+  assert.deepEqual(await faceMatchFrom(async () => "not json"), { ran: false, match: false });
+  assert.deepEqual(await faceMatchFrom(async () => ""), { ran: false, match: false });
+  assert.deepEqual(await faceMatchFrom(async () => "null"), { ran: false, match: false });
+  assert.deepEqual(await faceMatchFrom(async () => '{"reason":"no fields"}'), { ran: false, match: false });
+  assert.deepEqual(await faceMatchFrom(async () => '{"people":"1","sameAsReference":"true"}'), { ran: false, match: false });
+});
+
+test("start frame, fail closed: a face check that errors twice drops the job; no frame is stored, screened or animated", async () => {
+  // The real faceMatchFrom with a checker that always errors, wired into the loop the way startFrame wires it.
+  const n = { generate: 0, store: 0, safety: 0, video: 0 };
+  const r = await runStartFrame({
+    generate: async () => ({ bytes: new Uint8Array([++n.generate]), mime: "image/png" }),
+    faceMatch: () => faceMatchFrom(async () => { throw new Error("HTTP 503"); }),
+    store: async () => (n.store++, "sha"),
+    safety: async () => (n.safety++, "passed"),
+  });
+  assert.ok(!r.ok && /couldn't run or gave no valid answer, twice \(fail closed\)/.test(r.reason));
+  assert.deepEqual(n, { generate: MAX_START_FRAMES, store: 0, safety: 0, video: 0 });
+  // startVideo calls the video model (startInteraction) only after an ok start frame; a failed one ends the job as
+  // "refused" before that call (lib/video/jobs.ts), so the video model is never reached.
+  const src = readFileSync(new URL("../lib/video/jobs.ts", import.meta.url), "utf8");
+  const refuse = src.indexOf("if (!still.ok)");
+  const omni = src.indexOf("await startInteraction(");
+  assert.ok(refuse > 0 && omni > refuse, "the start frame is checked before the video model is called");
+  assert.match(src.slice(refuse, omni), /status: "refused"[\s\S]*throw new HttpError\(409/);
+
+  // An error on the first frame, then a real match: one regeneration, then the safety screen decides.
+  let k = 0;
+  const second = await runStartFrame({
+    generate: async () => ({ bytes: new Uint8Array([++k]), mime: "image/png" }),
+    faceMatch: () => faceMatchFrom(async () => (k === 1 ? "not json" : '{"people":1,"sameAsReference":true,"reason":"same"}')),
+    store: async () => "sha2",
+    safety: async () => "passed",
+  });
+  assert.ok(second.ok && second.frames === 2);
 });

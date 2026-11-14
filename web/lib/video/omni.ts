@@ -82,9 +82,9 @@ const FACE_SCHEMA = {
 };
 
 /**
- * likeness-paypal's face match on the start frame, word for word: one person, the same person as the reference. An
- * INTERNAL retry signal only (never a verdict shown anywhere). As in paypal, a check that can't run counts as a match
- * (ran: false); the safety screen after it still fails closed.
+ * likeness-paypal's face match on the start frame (its prompt and schema): one person, the same person as the
+ * reference. An INTERNAL check only (never a verdict shown anywhere), and fail closed: a check that can't run or gives
+ * no valid answer is not a match (ran: false), so the frame is regenerated once, then the job is dropped.
  */
 export function faceMatch(ref: { bytes: Uint8Array; mime: string }, still: { bytes: Uint8Array; mime: string }): Promise<{ ran: boolean; match: boolean }> {
   return faceMatchFrom(async () => {
